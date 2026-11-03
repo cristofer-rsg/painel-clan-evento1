@@ -16,7 +16,7 @@ from supabase import create_client
 
 TZ = ZoneInfo("America/Sao_Paulo")
 NOW = datetime.now(TZ)
-CURRENT_MONTH = "2026-12"
+CURRENT_MONTH = NOW.strftime("%Y-%m")
 
 st.set_page_config(page_title="Ghost Hunt", page_icon="👻", layout="wide")
 
