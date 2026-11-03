@@ -1,4 +1,7 @@
 import io
+import hashlib
+import hmac
+import secrets
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
@@ -72,22 +75,90 @@ except Exception as e:
     st.code(str(e))
     st.stop()
 
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
+# --- Autenticação: administrador e contas individuais dos jogadores ---
+if "auth_role" not in st.session_state:
+    st.session_state.auth_role = None
+if "auth_player" not in st.session_state:
+    st.session_state.auth_player = None
 
-if not st.session_state.logged_in:
-    st.markdown("<div class='small-note'>ÁREA RESTRITA • LIDERANÇA GHOST HUNT</div>", unsafe_allow_html=True)
-    with st.form("login"):
-        st.subheader("🔐 Acesso da liderança")
-        password = st.text_input("Senha de administrador", type="password")
-        submitted = st.form_submit_button("Entrar no painel", use_container_width=True)
-    if submitted:
-        if password == ADMIN_PASSWORD:
-            st.session_state.logged_in = True
-            st.rerun()
-        else:
-            st.error("Senha incorreta.")
+
+def hash_password(password, salt=None):
+    salt = salt or secrets.token_hex(16)
+    digest = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt.encode("utf-8"), 260000).hex()
+    return f"{salt}${digest}"
+
+
+def verify_password(password, stored):
+    try:
+        salt, expected = stored.split("$", 1)
+        actual = hash_password(password, salt).split("$", 1)[1]
+        return hmac.compare_digest(actual, expected)
+    except Exception:
+        return False
+
+
+if st.session_state.auth_role is None:
+    login_tab, register_tab = st.tabs(["🔐 Entrar", "📝 Criar meu acesso"])
+    with login_tab:
+        st.subheader("🔐 Acesso Ghost Hunt")
+        with st.form("login_admin_player"):
+            login_name = st.text_input("Nome no Clash of Clans (jogadores)")
+            login_password = st.text_input("Senha", type="password")
+            login_submit = st.form_submit_button("Entrar", use_container_width=True)
+        if login_submit:
+            if login_password == ADMIN_PASSWORD:
+                st.session_state.auth_role = "admin"
+                st.session_state.auth_player = None
+                st.rerun()
+            else:
+                try:
+                    account = (db.table("player_accounts").select("player_name,password_hash,status")
+                               .ilike("player_name", login_name.strip()).limit(1).execute().data or [])
+                    if account and account[0].get("status") == "approved" and verify_password(login_password, account[0]["password_hash"]):
+                        st.session_state.auth_role = "player"
+                        st.session_state.auth_player = account[0]["player_name"]
+                        st.rerun()
+                    elif account and account[0].get("status") == "pending":
+                        st.warning("Seu cadastro está aguardando aprovação da liderança.")
+                    else:
+                        st.error("Nome ou senha incorretos, ou cadastro ainda não aprovado.")
+                except Exception:
+                    st.error("Não foi possível consultar os acessos. Confira se a tabela player_accounts foi criada no Supabase.")
+    with register_tab:
+        st.subheader("📝 Criar acesso de jogador")
+        st.caption("Use exatamente seu nome cadastrado no clã. A liderança precisará aprovar seu primeiro acesso.")
+        with st.form("register_player_account"):
+            register_name = st.text_input("Seu nome no Clash of Clans")
+            register_password = st.text_input("Crie uma senha", type="password")
+            register_confirm = st.text_input("Repita a senha", type="password")
+            register_submit = st.form_submit_button("Criar meu login", use_container_width=True)
+        if register_submit:
+            clean_name = register_name.strip()
+            known_names = [x["name"] for x in (db.table("players").select("name").execute().data or [])]
+            if clean_name not in known_names:
+                st.error("Esse nome não está cadastrado no clã. Confira a escrita ou fale com a liderança.")
+            elif len(register_password) < 8:
+                st.error("A senha precisa ter pelo menos 8 caracteres.")
+            elif register_password != register_confirm:
+                st.error("As senhas não são iguais.")
+            else:
+                try:
+                    existing = (db.table("player_accounts").select("id")
+                                .ilike("player_name", clean_name).limit(1).execute().data or [])
+                    if existing:
+                        st.error("Já existe um acesso solicitado para esse jogador. Fale com a liderança.")
+                    else:
+                        db.table("player_accounts").insert({
+                            "player_name": clean_name,
+                            "password_hash": hash_password(register_password),
+                            "status": "pending"
+                        }).execute()
+                        st.success("Cadastro enviado! Aguarde a aprovação da liderança para entrar.")
+                except Exception:
+                    st.error("Não foi possível criar o acesso. Confira se a tabela player_accounts foi criada no Supabase.")
     st.stop()
+
+is_admin = st.session_state.auth_role == "admin"
 
 # --- Carregamento dos dados: nenhuma tabela é apagada ou recriada ---
 PLAYERS_FALLBACK = [
@@ -246,6 +317,37 @@ def month_label(month_key):
     except Exception:
         return month_key
 
+# Jogadores autenticados só recebem a tela de consulta; abas e ações administrativas não são renderizadas.
+if not is_admin:
+    st.subheader(f"🏆 Ranking do mês — {month_label(CURRENT_MONTH)}")
+    st.caption(f"Bem-vindo(a), {st.session_state.auth_player}! Este acesso permite somente visualizar a classificação.")
+    c1, c2, c3 = st.columns(3)
+    c1.metric("👥 Jogadores", len(players))
+    c2.metric("🥇 Pontos do líder", int(ranking.iloc[0]["Total"]) if not ranking.empty else 0)
+    c3.metric("📝 Lançamentos no mês", len(current_events))
+    st.markdown("### 🏅 Pódio do mês")
+    if not ranking.empty:
+        top = ranking.head(3).to_dict("records")
+        order = [(1, "🥇", "first"), (2, "🥈", ""), (3, "🥉", "")]
+        cols = st.columns(3)
+        for col, (pos, medal, cls) in zip(cols, order):
+            with col:
+                if len(top) >= pos:
+                    item = top[pos - 1]
+                    st.markdown(f"<div class='podium {cls}'><div class='medal'>{medal}</div><div class='name'>{item['Jogador']}</div><div class='score'>{int(item['Total'])} pts</div><div class='small-note'>{pos}º LUGAR</div></div>", unsafe_allow_html=True)
+                else:
+                    st.markdown("<div class='podium'><div class='medal'>🏆</div><div class='name'>Aguardando</div><div class='small-note'>SEM PONTUAÇÃO</div></div>", unsafe_allow_html=True)
+    st.markdown("### 📊 Classificação completa")
+    st.dataframe(ranking[["Posição", "Jogador", "Guerras", "Liga", "Doações", "Jogos", "Penalidades", "Total"]], use_container_width=True, hide_index=True, height=620)
+    with st.sidebar:
+        st.success("🟢 Acesso de jogador")
+        st.caption(f"Conta: {st.session_state.auth_player}")
+        if st.button("🚪 Sair", use_container_width=True):
+            st.session_state.auth_role = None
+            st.session_state.auth_player = None
+            st.rerun()
+    st.stop()
+
 # --- Navegação ---
 aba = st.tabs(["🏆 Ranking do mês", "➕ Lançar pontos", "✏️ Editar lançamento", "👥 Jogadores", "📜 Histórico mensal", "📤 Exportar"])
 
@@ -381,6 +483,21 @@ with aba[2]:
 
 with aba[3]:
     st.subheader("👥 Gerenciar jogadores")
+    st.markdown("### 🔐 Aprovar acessos dos jogadores")
+    try:
+        pending_accounts = (db.table("player_accounts").select("id,player_name,created_at")
+                            .eq("status", "pending").order("created_at").execute().data or [])
+        if not pending_accounts:
+            st.caption("Nenhum acesso aguardando aprovação.")
+        for account in pending_accounts:
+            with st.container(border=True):
+                st.write(f"**{account['player_name']}** — aguardando aprovação")
+                if st.button("✅ Aprovar acesso", key=f"approve_{account['id']}"):
+                    db.table("player_accounts").update({"status": "approved"}).eq("id", account["id"]).execute()
+                    st.success(f"Acesso de {account['player_name']} aprovado.")
+                    st.rerun()
+    except Exception:
+        st.warning("A tabela de acessos ainda não está disponível. Crie-a no Supabase usando o SQL fornecido.")
     with st.form("new_player"):
         new_name = st.text_input("Nome no jogo")
         add = st.form_submit_button("➕ Adicionar jogador")
@@ -516,5 +633,6 @@ with st.sidebar:
     st.caption(f"Temporada atual: {month_label(CURRENT_MONTH)}")
     st.markdown("---")
     if st.button("🚪 Sair", use_container_width=True):
-        st.session_state.logged_in = False
+        st.session_state.auth_role = None
+        st.session_state.auth_player = None
         st.rerun()
