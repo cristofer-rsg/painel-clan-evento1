@@ -2,12 +2,43 @@ import io
 from datetime import datetime
 import pandas as pd
 import streamlit as st
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from openpyxl.utils import get_column_letter
 from supabase import create_client
 
 st.set_page_config(page_title="ClanEvento", page_icon="🏆", layout="wide")
 
-st.title("🏆 Painel ClanEvento")
-st.caption("Ranking e controle de pontuação do clã")
+# Identidade visual — não altera dados nem regras de pontuação.
+st.markdown("""
+<style>
+:root { --gold:#f5c451; --gold2:#ffe39a; --panel:#171b26; --line:#343b4c; }
+.stApp { background: radial-gradient(ellipse at top, #20283a 0%, #10131b 52%, #0c0f16 100%); }
+.block-container { padding-top: 2rem; padding-bottom: 3rem; max-width: 1450px; }
+h1 { color:#fff; letter-spacing:-1.2px; font-weight:850 !important; }
+h2,h3 { color:#f7f8fb !important; }
+[data-testid="stCaptionContainer"] p { color:#aeb7c8; }
+[data-testid="stMetric"] { background:linear-gradient(145deg,#202838,#151b27); border:1px solid #39445a; padding:18px 20px; border-radius:16px; box-shadow:0 8px 22px #0004; }
+[data-testid="stMetricLabel"] { color:#c5ccda !important; }
+[data-testid="stMetricValue"] { color:#f5c451 !important; font-weight:800; }
+.stTabs [data-baseweb="tab-list"] { gap:8px; border-bottom:1px solid #39445a; }
+.stTabs [data-baseweb="tab"] { color:#cbd3e1; border-radius:10px 10px 0 0; padding:12px 15px; }
+.stTabs [aria-selected="true"] { color:#ffe39a !important; border-bottom:3px solid #f5c451 !important; }
+.stButton button, .stFormSubmitButton button, .stDownloadButton button { border-radius:11px; border:1px solid #b88a2d; font-weight:700; }
+.stButton button[kind="primary"], .stFormSubmitButton button[kind="primary"] { background:linear-gradient(110deg,#d99d2b,#f5c451); color:#17130a; }
+div[data-testid="stExpander"] { border:1px solid #39445a; border-radius:12px; background:#151b27; }
+div[data-testid="stDataFrame"] { border:1px solid #39445a; border-radius:12px; overflow:hidden; }
+.podium { background:linear-gradient(145deg,#242d40,#151b27); border:1px solid #59647a; border-radius:16px; padding:18px 12px; text-align:center; min-height:132px; box-shadow:0 8px 20px #0004; }
+.podium .medal { font-size:30px; }
+.podium .name { color:#fff; font-size:18px; font-weight:800; overflow-wrap:anywhere; }
+.podium .score { color:#f5c451; font-size:25px; font-weight:900; }
+.podium.first { border:2px solid #e7b943; background:linear-gradient(145deg,#3a3020,#1c202b); }
+.small-note { color:#9ca8bb; font-size:13px; }
+@media (max-width: 640px) { .block-container { padding-left: .8rem; padding-right: .8rem; } h1 {font-size:2rem !important;} }
+</style>
+""", unsafe_allow_html=True)
+
+st.title("🏆 PAINEL CLANEVENTO")
+st.caption("⚔️ Ranking oficial • Controle de pontuação • Desempenho do clã")
 
 # --- Configuração e autenticação ---
 try:
@@ -34,10 +65,11 @@ if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
 if not st.session_state.logged_in:
+    st.markdown("<div class='small-note'>ÁREA RESTRITA • ACESSO DA LIDERANÇA</div>", unsafe_allow_html=True)
     with st.form("login"):
-        st.subheader("Acesso do administrador")
+        st.subheader("🔐 Acesso do administrador")
         password = st.text_input("Senha de administrador", type="password")
-        submitted = st.form_submit_button("Entrar", use_container_width=True)
+        submitted = st.form_submit_button("Entrar no painel", use_container_width=True)
     if submitted:
         if password == ADMIN_PASSWORD:
             st.session_state.logged_in = True
@@ -64,7 +96,6 @@ def load_events():
 try:
     players = load_players()
     if not players:
-        # Importa os nomes da planilha atualizada; usa lista de segurança se a planilha não estiver preenchida.
         names = []
         try:
             df_names = pd.read_excel("ClanEvento.xlsx", sheet_name="Ranking Principal")
@@ -86,7 +117,7 @@ except Exception as e:
 
 player_names = [p["name"] for p in players]
 
-# --- Cálculo do ranking ---
+# --- Cálculo do ranking: regras originais preservadas ---
 def build_ranking(players_data, events_data):
     rows = []
     for p in players_data:
@@ -117,15 +148,29 @@ ranking = build_ranking(players, events)
 aba = st.tabs(["🏆 Ranking", "➕ Lançar pontos", "👥 Jogadores", "📜 Histórico", "📤 Exportar"])
 
 with aba[0]:
-    st.subheader("Ranking geral")
+    st.subheader("🏆 Ranking geral")
     c1, c2, c3 = st.columns(3)
-    c1.metric("Jogadores", len(players))
-    c2.metric("Pontos do líder", int(ranking.iloc[0]["Total"]) if not ranking.empty else 0)
-    c3.metric("Lançamentos", len(events))
-    st.dataframe(ranking, use_container_width=True, hide_index=True)
+    c1.metric("👥 Jogadores", len(players))
+    c2.metric("🥇 Pontos do líder", int(ranking.iloc[0]["Total"]) if not ranking.empty else 0)
+    c3.metric("📜 Lançamentos", len(events))
+    st.markdown("### 🏅 Pódio dos campeões")
+    if not ranking.empty:
+        top = ranking.head(3).to_dict("records")
+        order = [(1, "🥇", "first"), (2, "🥈", ""), (3, "🥉", "")]
+        cols = st.columns(3)
+        for col, (pos, medal, cls) in zip(cols, order):
+            with col:
+                if len(top) >= pos:
+                    item = top[pos-1]
+                    st.markdown(f"<div class='podium {cls}'><div class='medal'>{medal}</div><div class='name'>{item['Jogador']}</div><div class='score'>{int(item['Total'])} pts</div><div class='small-note'>{pos}º LUGAR</div></div>", unsafe_allow_html=True)
+                else:
+                    st.markdown("<div class='podium'><div class='medal'>🏆</div><div class='name'>Aguardando</div><div class='small-note'>SEM PONTUAÇÃO</div></div>", unsafe_allow_html=True)
+    st.markdown("### 📊 Classificação completa")
+    st.dataframe(ranking, use_container_width=True, hide_index=True, height=620)
+    st.caption("A classificação é atualizada automaticamente após cada lançamento.")
 
 with aba[1]:
-    st.subheader("Lançar pontuação")
+    st.subheader("➕ Lançar pontuação")
     if not player_names:
         st.warning("Cadastre um jogador primeiro.")
     else:
@@ -152,7 +197,7 @@ with aba[1]:
                 category_db = "Guerras"
             else:
                 category_db = kind
-            ok = st.form_submit_button("Salvar lançamento", use_container_width=True)
+            ok = st.form_submit_button("💾 Salvar lançamento", use_container_width=True)
         if ok:
             try:
                 db.table("events").insert({"player": who, "category": category_db, "activity": activity, "points": int(pts)}).execute()
@@ -164,10 +209,10 @@ with aba[1]:
                 st.code(str(e))
 
 with aba[2]:
-    st.subheader("Gerenciar jogadores")
+    st.subheader("👥 Gerenciar jogadores")
     with st.form("new_player"):
         new_name = st.text_input("Nome no jogo")
-        add = st.form_submit_button("Adicionar jogador")
+        add = st.form_submit_button("➕ Adicionar jogador")
     if add and new_name.strip():
         try:
             db.table("players").upsert({"name": new_name.strip(), "eligible": "Elegível", "whatsapp": "Sim"}).execute()
@@ -179,7 +224,7 @@ with aba[2]:
             st.code(str(e))
     st.divider()
     for p in players:
-        with st.expander(p["name"]):
+        with st.expander("⚔️ " + p["name"]):
             with st.form("edit_" + p["name"]):
                 elig = st.selectbox("Elegibilidade", ["Elegível", "Inelegível"], index=0 if p["eligible"] == "Elegível" else 1, key="elig_" + p["name"])
                 whats = st.selectbox("Grupo WhatsApp", ["Sim", "Não"], index=0 if p["whatsapp"] == "Sim" else 1, key="wa_" + p["name"])
@@ -191,26 +236,52 @@ with aba[2]:
                 st.rerun()
 
 with aba[3]:
-    st.subheader("Histórico de lançamentos")
+    st.subheader("📜 Histórico de lançamentos")
     if events:
         hist = pd.DataFrame(events)
         hist["created_at"] = pd.to_datetime(hist["created_at"], errors="coerce")
-        st.dataframe(hist[["created_at", "player", "category", "activity", "points"]], use_container_width=True, hide_index=True)
+        hist = hist.rename(columns={"created_at":"Data", "player":"Jogador", "category":"Categoria", "activity":"Atividade", "points":"Pontos"})
+        st.dataframe(hist[["Data", "Jogador", "Categoria", "Atividade", "Pontos"]], use_container_width=True, hide_index=True)
     else:
         st.info("Ainda não há lançamentos.")
 
 with aba[4]:
-    st.subheader("Exportar ranking")
+    st.subheader("📤 Exportar ranking")
     out = io.BytesIO()
     with pd.ExcelWriter(out, engine="openpyxl") as writer:
         ranking.to_excel(writer, index=False, sheet_name="Ranking")
         pd.DataFrame(events).to_excel(writer, index=False, sheet_name="Historico")
-    st.download_button("Baixar Excel", data=out.getvalue(), file_name=f"ClanEvento_{datetime.now():%Y%m%d_%H%M}.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-    st.download_button("Baixar CSV", data=ranking.to_csv(index=False).encode("utf-8-sig"), file_name="ClanEvento_Ranking.csv", mime="text/csv")
+        for ws in writer.book.worksheets:
+            ws.freeze_panes = "A2"
+            ws.auto_filter.ref = ws.dimensions
+            ws.sheet_view.showGridLines = False
+            for cell in ws[1]:
+                cell.fill = PatternFill("solid", fgColor="17365D")
+                cell.font = Font(color="FFFFFF", bold=True)
+                cell.alignment = Alignment(horizontal="center", vertical="center")
+            ws.row_dimensions[1].height = 26
+            for col in ws.columns:
+                letter = get_column_letter(col[0].column)
+                max_len = max((len(str(c.value)) if c.value is not None else 0) for c in col)
+                ws.column_dimensions[letter].width = min(max(max_len + 3, 12), 34)
+            if ws.title == "Ranking":
+                for row in range(2, ws.max_row + 1):
+                    if row <= 4:
+                        fill = "FFF2CC" if row == 2 else ("E7E6E6" if row == 3 else "FCE4D6")
+                        for cell in ws[row]:
+                            cell.fill = PatternFill("solid", fgColor=fill)
+                    ws.cell(row, ws.max_column).font = Font(bold=True, color="17365D")
+            for row in ws.iter_rows(min_row=2):
+                for cell in row:
+                    cell.alignment = Alignment(vertical="center")
+                    cell.border = Border(bottom=Side(style="hair", color="D9E2F3"))
+    st.download_button("⬇️ Baixar Excel formatado", data=out.getvalue(), file_name=f"ClanEvento_{datetime.now():%Y%m%d_%H%M}.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True)
+    st.download_button("⬇️ Baixar CSV", data=ranking.to_csv(index=False).encode("utf-8-sig"), file_name="ClanEvento_Ranking.csv", mime="text/csv", use_container_width=True)
 
 with st.sidebar:
-    st.success("Conectado ao Supabase")
+    st.success("🟢 Conectado ao Supabase")
     st.caption("Painel administrativo ClanEvento")
-    if st.button("Sair"):
+    st.markdown("---")
+    if st.button("🚪 Sair", use_container_width=True):
         st.session_state.logged_in = False
         st.rerun()
