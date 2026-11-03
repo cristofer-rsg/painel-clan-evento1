@@ -247,7 +247,7 @@ def month_label(month_key):
         return month_key
 
 # --- Navegação ---
-aba = st.tabs(["🏆 Ranking do mês", "➕ Lançar pontos", "👥 Jogadores", "📜 Histórico mensal", "📤 Exportar"])
+aba = st.tabs(["🏆 Ranking do mês", "➕ Lançar pontos", "✏️ Editar lançamento", "👥 Jogadores", "📜 Histórico mensal", "📤 Exportar"])
 
 with aba[0]:
     st.subheader(f"🏆 Ranking de {month_label(CURRENT_MONTH)}")
@@ -337,6 +337,49 @@ with aba[1]:
                 st.code(str(e))
 
 with aba[2]:
+    st.subheader("✏️ Editar lançamento")
+    st.caption("Escolha um lançamento do mês atual para corrigir. O registro original será atualizado, sem duplicar pontos.")
+    current_event_options = []
+    current_event_lookup = {}
+    for e in current_events:
+        try:
+            event_date = pd.to_datetime(e.get("created_at"), utc=True).tz_convert(TZ).strftime("%d/%m/%Y %H:%M")
+        except Exception:
+            event_date = "Data indisponível"
+        label = f"{event_date} | {e.get('player', '')} | {e.get('category', '')} | {e.get('activity', '')} | {int(e.get('points') or 0)} pts | ID {e.get('id')}"
+        current_event_options.append(label)
+        current_event_lookup[label] = e
+
+    if not current_event_options:
+        st.info("Não há lançamentos neste mês para editar.")
+    else:
+        selected_event_label = st.selectbox("Selecione o lançamento", current_event_options)
+        selected_event = current_event_lookup[selected_event_label]
+        with st.form("edit_event_form"):
+            edit_player = st.selectbox("Jogador", player_names, index=player_names.index(selected_event["player"]) if selected_event.get("player") in player_names else 0)
+            category_options = ["Guerras", "Liga dos Clãs", "Doações", "Jogos do Clã"]
+            current_category = selected_event.get("category", "Guerras")
+            edit_category = st.selectbox("Categoria", category_options, index=category_options.index(current_category) if current_category in category_options else 0)
+            edit_activity = st.text_input("Descrição do lançamento", value=str(selected_event.get("activity") or ""))
+            edit_points = st.number_input("Pontos (use valor negativo para penalidade)", min_value=-200, max_value=200, value=int(selected_event.get("points") or 0), step=1)
+            confirm_edit = st.form_submit_button("💾 Salvar alterações", use_container_width=True)
+
+        if confirm_edit:
+            try:
+                db.table("events").update({
+                    "player": edit_player,
+                    "category": edit_category,
+                    "activity": edit_activity.strip(),
+                    "points": int(edit_points)
+                }).eq("id", selected_event["id"]).execute()
+                load_events.clear()
+                st.success("Lançamento atualizado com sucesso! O ranking será recalculado.")
+                st.rerun()
+            except Exception as e:
+                st.error("Não foi possível atualizar o lançamento.")
+                st.code(str(e))
+
+with aba[3]:
     st.subheader("👥 Gerenciar jogadores")
     with st.form("new_player"):
         new_name = st.text_input("Nome no jogo")
@@ -364,7 +407,7 @@ with aba[2]:
                 st.success("Cadastro atualizado.")
                 st.rerun()
 
-with aba[3]:
+with aba[4]:
     st.subheader("📜 Histórico mensal")
     st.caption("Escolha um mês para consultar o ranking final e todos os lançamentos daquele período. O histórico completo é mantido no Supabase.")
     selected_month = st.selectbox(
@@ -419,7 +462,7 @@ with aba[3]:
     else:
         st.info("Não há lançamentos registrados neste mês.")
 
-with aba[4]:
+with aba[5]:
     st.subheader("📤 Exportar dados")
     st.caption(f"O ranking exportado corresponde ao mês atual: {month_label(CURRENT_MONTH)}. O histórico exportado inclui todos os meses.")
     out = io.BytesIO()
