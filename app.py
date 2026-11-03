@@ -166,7 +166,21 @@ with aba[0]:
                 else:
                     st.markdown("<div class='podium'><div class='medal'>🏆</div><div class='name'>Aguardando</div><div class='small-note'>SEM PONTUAÇÃO</div></div>", unsafe_allow_html=True)
     st.markdown("### 📊 Classificação completa")
-    st.dataframe(ranking, use_container_width=True, hide_index=True, height=620)
+    st.caption("🥇 1º lugar • 🥈 2º lugar • 🥉 3º lugar")
+    def destacar_podio(row):
+        posicao = int(row.get("Posição", 0))
+        if posicao == 1:
+            cor = "background-color: #5a461d; color: #fff2c2; font-weight: 800;"
+        elif posicao == 2:
+            cor = "background-color: #3d4653; color: #f0f3f7; font-weight: 800;"
+        elif posicao == 3:
+            cor = "background-color: #55392c; color: #ffe0cc; font-weight: 800;"
+        else:
+            cor = ""
+        return [cor] * len(row)
+
+    ranking_formatado = ranking.style.apply(destacar_podio, axis=1)
+    st.dataframe(ranking_formatado, use_container_width=True, hide_index=True, height=620)
     st.caption("A classificação é atualizada automaticamente após cada lançamento.")
 
 with aba[1]:
