@@ -102,7 +102,7 @@ if st.session_state.auth_role is None:
     with login_tab:
         st.subheader("🔐 Acesso Ghost Hunt")
         with st.form("login_admin_player"):
-            login_name = st.text_input("Nome no Clash of Clans (jogadores)")
+            login_name = st.text_input("Nome de usuário")
             login_password = st.text_input("Senha", type="password")
             login_submit = st.form_submit_button("Entrar", use_container_width=True)
         if login_submit:
@@ -126,27 +126,36 @@ if st.session_state.auth_role is None:
                     st.error("Não foi possível consultar os acessos. Confira se a tabela player_accounts foi criada no Supabase.")
     with register_tab:
         st.subheader("📝 Criar acesso de jogador")
-        st.caption("Use exatamente seu nome cadastrado no clã. A liderança precisará aprovar seu primeiro acesso.")
+        st.caption("Escolha qualquer nome de usuário. Não precisa ser igual ao nome no jogo. A liderança precisará aprovar seu acesso.")
         with st.form("register_player_account"):
-            register_name = st.text_input("Seu nome no Clash of Clans")
+            register_name = st.text_input("Escolha seu nome de usuário", max_chars=30)
             register_password = st.text_input("Crie uma senha", type="password")
             register_confirm = st.text_input("Repita a senha", type="password")
             register_submit = st.form_submit_button("Criar meu login", use_container_width=True)
         if register_submit:
             clean_name = register_name.strip()
-            known_names = [x["name"] for x in (db.table("players").select("name").execute().data or [])]
-            if clean_name not in known_names:
-                st.error("Esse nome não está cadastrado no clã. Confira a escrita ou fale com a liderança.")
+            if len(clean_name) < 3:
+                st.error("O nome de usuário precisa ter pelo menos 3 caracteres.")
+            elif "%" in clean_name or "_" in clean_name:
+                st.error("Não use os caracteres % ou _ no nome de usuário.")
             elif len(register_password) < 8:
                 st.error("A senha precisa ter pelo menos 8 caracteres.")
             elif register_password != register_confirm:
                 st.error("As senhas não são iguais.")
             else:
                 try:
-                    existing = (db.table("player_accounts").select("id")
-                                .ilike("player_name", clean_name).limit(1).execute().data or [])
+                    # A tabela comporta no máximo 1.000 contas. Busca até 1.001
+                    # registros para bloquear novos cadastros ao atingir o limite.
+                    account_rows = (db.table("player_accounts").select("id,player_name")
+                                    .limit(1001).execute().data or [])
+                    existing = any(
+                        (row.get("player_name") or "").strip().casefold() == clean_name.casefold()
+                        for row in account_rows
+                    )
                     if existing:
-                        st.error("Já existe um acesso solicitado para esse jogador. Fale com a liderança.")
+                        st.error("Esse nome de usuário já está em uso. Escolha outro.")
+                    elif len(account_rows) >= 1000:
+                        st.error("Limite de 1.000 contas atingido. Não é possível criar novos acessos.")
                     else:
                         db.table("player_accounts").insert({
                             "player_name": clean_name,
