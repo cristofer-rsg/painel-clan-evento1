@@ -37,7 +37,7 @@ div[data-testid="stDataFrame"] { border:1px solid #39445a; border-radius:12px; o
 </style>
 """, unsafe_allow_html=True)
 
-st.title("🏆 PAINEL CLANEVENTO")
+st.title("🏆👻 GHOST HUNT")
 st.caption("⚔️ Ranking oficial • Controle de pontuação • Desempenho do clã")
 
 # --- Configuração e autenticação ---
