@@ -336,9 +336,17 @@ with aba[4]:
     st.subheader("📤 Exportar dados")
     st.caption(f"O ranking exportado corresponde ao mês atual: {month_label(CURRENT_MONTH)}. O histórico exportado inclui todos os meses.")
     out = io.BytesIO()
+    # O Excel não aceita datas com fuso horário; convertemos apenas a cópia exportada.
+    export_events_df = events_df.copy()
+    if not export_events_df.empty:
+        if "created_at" in export_events_df.columns:
+            export_events_df["created_at"] = export_events_df["created_at"].astype(str)
+        if "data_local" in export_events_df.columns:
+            export_events_df["data_local"] = export_events_df["data_local"].dt.strftime("%d/%m/%Y %H:%M:%S")
+
     with pd.ExcelWriter(out, engine="openpyxl") as writer:
         ranking.to_excel(writer, index=False, sheet_name="Ranking do mês")
-        events_df.to_excel(writer, index=False, sheet_name="Historico completo")
+        export_events_df.to_excel(writer, index=False, sheet_name="Historico completo")
         for ws in writer.book.worksheets:
             ws.freeze_panes = "A2"
             ws.auto_filter.ref = ws.dimensions
