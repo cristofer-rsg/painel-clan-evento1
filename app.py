@@ -165,6 +165,69 @@ def build_ranking(players_data, events_data):
         df.insert(0, "Posição", range(1, len(df) + 1))
     return df
 
+
+# Arquiva uma fotografia dos rankings de meses encerrados.
+# A rotina roda quando o painel é aberto; não depende de apagar os lançamentos.
+def archive_closed_months():
+    closed_months = sorted(
+        set(events_df["mes"].dropna().tolist()) - {CURRENT_MONTH}
+    ) if not events_df.empty else []
+
+    for month_key in closed_months:
+        existing = (
+            db.table("monthly_rankings")
+            .select("id")
+            .eq("month_key", month_key)
+            .limit(1)
+            .execute()
+            .data or []
+        )
+        if existing:
+            continue
+
+        month_df = events_df[events_df["mes"] == month_key].copy()
+        month_events = month_df[
+            ["id", "player", "category", "activity", "points", "created_at"]
+        ].to_dict("records")
+
+        month_ranking = build_ranking(players, month_events)
+        snapshot = []
+        for row in month_ranking.to_dict("records"):
+            snapshot.append({
+                "month_key": month_key,
+                "player": row["Jogador"],
+                "position": int(row["Posição"]),
+                "eligible": row["Elegibilidade"],
+                "whatsapp": row["WhatsApp"],
+                "wars": int(row["Guerras"]),
+                "league": int(row["Liga"]),
+                "donations": int(row["Doações"]),
+                "games": int(row["Jogos"]),
+                "penalties": int(row["Penalidades"]),
+                "total": int(row["Total"]),
+            })
+
+        if snapshot:
+            db.table("monthly_rankings").upsert(
+                snapshot, on_conflict="month_key,player"
+            ).execute()
+
+
+try:
+    archive_closed_months()
+    archived_month_rows = (
+        db.table("monthly_rankings")
+        .select("month_key")
+        .execute()
+        .data or []
+    )
+    archived_months = {r["month_key"] for r in archived_month_rows}
+except Exception as e:
+    st.error("Não foi possível consultar ou arquivar os rankings mensais.")
+    st.code(str(e))
+    st.stop()
+
+
 current_events = [
     e for e in events
     if e.get("created_at") and pd.to_datetime(e["created_at"], errors="coerce", utc=True).tz_convert(TZ).strftime("%Y-%m") == CURRENT_MONTH
@@ -173,6 +236,7 @@ ranking = build_ranking(players, current_events)
 
 # Meses disponíveis no histórico. O mês atual sempre aparece, mesmo sem lançamentos.
 available_months = set(events_df["mes"].dropna().tolist()) if not events_df.empty else set()
+available_months.update(archived_months)
 available_months.add(CURRENT_MONTH)
 month_options = sorted(available_months, reverse=True)
 
@@ -312,7 +376,30 @@ with aba[3]:
 
     month_events_df = events_df[events_df["mes"] == selected_month].copy() if not events_df.empty else pd.DataFrame()
     month_events = month_events_df[["id", "player", "category", "activity", "points", "created_at"]].to_dict("records") if not month_events_df.empty else []
-    historical_ranking = build_ranking(players, month_events)
+    saved_snapshot = (
+        db.table("monthly_rankings")
+        .select("*")
+        .eq("month_key", selected_month)
+        .order("position")
+        .execute()
+        .data or []
+    )
+
+    if saved_snapshot:
+        historical_ranking = pd.DataFrame([{
+            "Posição": int(r["position"]),
+            "Jogador": r["player"],
+            "Elegibilidade": r.get("eligible") or "",
+            "WhatsApp": r.get("whatsapp") or "",
+            "Guerras": int(r.get("wars") or 0),
+            "Liga": int(r.get("league") or 0),
+            "Doações": int(r.get("donations") or 0),
+            "Jogos": int(r.get("games") or 0),
+            "Penalidades": int(r.get("penalties") or 0),
+            "Total": int(r.get("total") or 0),
+        } for r in saved_snapshot])
+    else:
+        historical_ranking = build_ranking(players, month_events)
 
     st.markdown(f"### 🏆 Classificação de {month_label(selected_month)}")
     st.dataframe(historical_ranking, use_container_width=True, hide_index=True, height=520)
