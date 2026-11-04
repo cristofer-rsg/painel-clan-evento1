@@ -88,37 +88,33 @@ if "auth_player" not in st.session_state:
 DEVICE_COOKIE = "ghost_hunt_device"
 DEVICE_DAYS = 30
 
-# IMPORTANTE: o CookieManager é instanciado uma vez por execução, sempre com a
-# mesma chave. O componente já devolve os cookies em .cookies; não fazemos uma
-# segunda chamada get_all() com outra chave, que criava uma segunda instância.
+# O CookieManager precisa ser chamado em TODA execução do script.
+# Guardar o objeto em st.session_state congela seu dicionário .cookies, que pode
+# ter vindo vazio na primeira renderização. get_all() atualiza a leitura do
+# navegador usando sempre a mesma chave de componente.
 try:
-    if stx is None:
-        cookie_manager = None
-    else:
-        if "ghost_hunt_cookie_manager_instance" not in st.session_state:
-            st.session_state["ghost_hunt_cookie_manager_instance"] = stx.CookieManager(
-                key="ghost_hunt_cookie_manager"
-            )
-        cookie_manager = st.session_state["ghost_hunt_cookie_manager_instance"]
+    # O construtor já executa getAll no componente; não chamar get_all() de novo,
+    # pois isso criaria uma segunda instância/iframe com outra chave.
+    cookie_manager = stx.CookieManager(key="ghost_hunt_cookie_manager") if stx is not None else None
+    browser_cookies = cookie_manager.cookies if cookie_manager is not None else {}
+    if not isinstance(browser_cookies, dict):
+        browser_cookies = {}
 except Exception:
     cookie_manager = None
+    browser_cookies = {}
 
 
 def get_device_cookie():
-    """Lê primeiro o cookie enviado pelo navegador e usa o componente como fallback."""
+    """Lê o cookie do request inicial; usa a leitura atual do componente como fallback."""
     try:
         value = st.context.cookies.get(DEVICE_COOKIE)
         if value:
             return value
     except Exception:
         pass
-    if cookie_manager is not None:
-        try:
-            value = (cookie_manager.cookies or {}).get(DEVICE_COOKIE)
-            if value:
-                return value
-        except Exception:
-            pass
+    value = browser_cookies.get(DEVICE_COOKIE) if isinstance(browser_cookies, dict) else None
+    if value:
+        return value
     return None
 
 
