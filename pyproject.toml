@@ -3,8 +3,8 @@ name = "clanevento"
 version = "0.1.0"
 requires-python = ">=3.12,<3.14"
 dependencies = [
-    "streamlit>=1.61.1",
-    "pandas>=2.2.0",
-    "openpyxl>=3.1.0",
-    "supabase>=2.0.0"
+    "streamlit>=1.66.1",
+    "pandas>=3.1.0",
+    "openpyxl>=3.1.5",
+    "supabase>=2.33.0"
 ]
