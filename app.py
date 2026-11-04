@@ -2,11 +2,12 @@ import io
 import hashlib
 import hmac
 import secrets
-from datetime import datetime
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 import pandas as pd
 import streamlit as st
+import extra_streamlit_components as stx
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 from supabase import create_client
@@ -75,11 +76,15 @@ except Exception as e:
     st.code(str(e))
     st.stop()
 
-# --- Autenticação: administrador e contas individuais dos jogadores ---
+# --- Autenticação persistente por aparelho/navegador ---
 if "auth_role" not in st.session_state:
     st.session_state.auth_role = None
 if "auth_player" not in st.session_state:
     st.session_state.auth_player = None
+
+DEVICE_COOKIE = "ghost_hunt_device"
+DEVICE_DAYS = 30
+cookie_manager = stx.CookieManager(key="ghost_hunt_cookie_manager")
 
 
 def hash_password(password, salt=None):
@@ -97,6 +102,69 @@ def verify_password(password, stored):
         return False
 
 
+def issue_device_session(role, player_name=None):
+    raw_token = secrets.token_urlsafe(48)
+    token_hash = hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
+    expires_at = datetime.now(TZ) + timedelta(days=DEVICE_DAYS)
+    db.table("device_sessions").insert({
+        "token_hash": token_hash,
+        "role": role,
+        "player_name": player_name,
+        "expires_at": expires_at.isoformat()
+    }).execute()
+    cookie_manager.set(DEVICE_COOKIE, raw_token, expires_at=expires_at.replace(tzinfo=None))
+    st.session_state.auth_role = role
+    st.session_state.auth_player = player_name
+
+
+def revoke_current_device():
+    raw_token = cookie_manager.get(DEVICE_COOKIE)
+    if raw_token:
+        token_hash = hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
+        try:
+            db.table("device_sessions").delete().eq("token_hash", token_hash).execute()
+        except Exception:
+            pass
+    try:
+        cookie_manager.delete(DEVICE_COOKIE)
+    except Exception:
+        pass
+    st.session_state.auth_role = None
+    st.session_state.auth_player = None
+
+
+# Recupera o acesso salvo neste navegador quando a sessão do Streamlit é reiniciada.
+if st.session_state.auth_role is None:
+    saved_token = cookie_manager.get(DEVICE_COOKIE)
+    if saved_token:
+        saved_hash = hashlib.sha256(saved_token.encode("utf-8")).hexdigest()
+        try:
+            saved_sessions = (db.table("device_sessions")
+                              .select("role,player_name,expires_at")
+                              .eq("token_hash", saved_hash)
+                              .gt("expires_at", datetime.now(TZ).isoformat())
+                              .limit(1).execute().data or [])
+            if saved_sessions:
+                saved = saved_sessions[0]
+                if saved.get("role") == "admin":
+                    st.session_state.auth_role = "admin"
+                    st.session_state.auth_player = None
+                elif saved.get("role") == "player" and saved.get("player_name"):
+                    approved = (db.table("player_accounts").select("status")
+                                .ilike("player_name", saved["player_name"]).limit(1).execute().data or [])
+                    if approved and approved[0].get("status") == "approved":
+                        st.session_state.auth_role = "player"
+                        st.session_state.auth_player = saved["player_name"]
+                    else:
+                        revoke_current_device()
+                else:
+                    revoke_current_device()
+            else:
+                revoke_current_device()
+        except Exception:
+            st.warning("Não foi possível validar o acesso salvo. Entre novamente.")
+            revoke_current_device()
+
 if st.session_state.auth_role is None:
     login_tab, register_tab = st.tabs(["🔐 Entrar", "📝 Criar meu acesso"])
     with login_tab:
@@ -104,26 +172,39 @@ if st.session_state.auth_role is None:
         with st.form("login_admin_player"):
             login_name = st.text_input("Nome de usuário")
             login_password = st.text_input("Senha", type="password")
+            remember_device = st.checkbox("Lembrar deste aparelho por 30 dias", value=True)
             login_submit = st.form_submit_button("Entrar", use_container_width=True)
         if login_submit:
             if login_password == ADMIN_PASSWORD:
-                st.session_state.auth_role = "admin"
-                st.session_state.auth_player = None
-                st.rerun()
+                try:
+                    if remember_device:
+                        issue_device_session("admin")
+                    else:
+                        st.session_state.auth_role = "admin"
+                        st.session_state.auth_player = None
+                    st.rerun()
+                except Exception:
+                    st.error("Não foi possível salvar o acesso deste aparelho. Confira se a tabela device_sessions foi criada no Supabase.")
             else:
                 try:
                     account = (db.table("player_accounts").select("player_name,password_hash,status")
                                .ilike("player_name", login_name.strip()).limit(1).execute().data or [])
                     if account and account[0].get("status") == "approved" and verify_password(login_password, account[0]["password_hash"]):
-                        st.session_state.auth_role = "player"
-                        st.session_state.auth_player = account[0]["player_name"]
-                        st.rerun()
+                        try:
+                            if remember_device:
+                                issue_device_session("player", account[0]["player_name"])
+                            else:
+                                st.session_state.auth_role = "player"
+                                st.session_state.auth_player = account[0]["player_name"]
+                            st.rerun()
+                        except Exception:
+                            st.error("Não foi possível salvar o acesso deste aparelho. Confira se a tabela device_sessions foi criada no Supabase.")
                     elif account and account[0].get("status") == "pending":
                         st.warning("Seu cadastro está aguardando aprovação da liderança.")
                     else:
                         st.error("Nome ou senha incorretos, ou cadastro ainda não aprovado.")
                 except Exception:
-                    st.error("Não foi possível consultar os acessos. Confira se a tabela player_accounts foi criada no Supabase.")
+                    st.error("Não foi possível consultar os acessos. Confira se as tabelas do Supabase foram criadas.")
     with register_tab:
         st.subheader("📝 Criar acesso de jogador")
         st.caption("Escolha qualquer nome de usuário. Não precisa ser igual ao nome no jogo. A liderança precisará aprovar seu acesso.")
@@ -144,14 +225,9 @@ if st.session_state.auth_role is None:
                 st.error("As senhas não são iguais.")
             else:
                 try:
-                    # A tabela comporta no máximo 1.000 contas. Busca até 1.001
-                    # registros para bloquear novos cadastros ao atingir o limite.
                     account_rows = (db.table("player_accounts").select("id,player_name")
                                     .limit(1001).execute().data or [])
-                    existing = any(
-                        (row.get("player_name") or "").strip().casefold() == clean_name.casefold()
-                        for row in account_rows
-                    )
+                    existing = any((row.get("player_name") or "").strip().casefold() == clean_name.casefold() for row in account_rows)
                     if existing:
                         st.error("Esse nome de usuário já está em uso. Escolha outro.")
                     elif len(account_rows) >= 1000:
@@ -352,8 +428,7 @@ if not is_admin:
         st.success("🟢 Acesso de jogador")
         st.caption(f"Conta: {st.session_state.auth_player}")
         if st.button("🚪 Sair", use_container_width=True):
-            st.session_state.auth_role = None
-            st.session_state.auth_player = None
+            revoke_current_device()
             st.rerun()
     st.stop()
 
@@ -642,6 +717,5 @@ with st.sidebar:
     st.caption(f"Temporada atual: {month_label(CURRENT_MONTH)}")
     st.markdown("---")
     if st.button("🚪 Sair", use_container_width=True):
-        st.session_state.auth_role = None
-        st.session_state.auth_player = None
+        revoke_current_device()
         st.rerun()
