@@ -103,7 +103,7 @@ try:
     SUPABASE_URL = st.secrets["SUPABASE_URL"]
     SUPABASE_SECRET_KEY = st.secrets["SUPABASE_SECRET_KEY"]
     ADMIN_PASSWORD = st.secrets["ADMIN_PASSWORD"]
-    OPERATOR_PASSWORD = st.secrets.get("ghosthunt", "")
+    OPERATOR_PASSWORD = "ghosthunt"  # Login do Operador já configurado no código
 except Exception:
     st.error("Configurações ausentes. Confira SUPABASE_URL, SUPABASE_SECRET_KEY e ADMIN_PASSWORD em Settings → Secrets no Streamlit.")
     st.stop()
@@ -307,13 +307,8 @@ if st.session_state.auth_role is None:
                     st.session_state.auth_role = "admin"
                     st.session_state.auth_player = None
                 elif saved.get("role") == "player" and saved.get("player_name"):
-                    approved = (db.table("player_accounts").select("status")
-                                .ilike("player_name", saved["player_name"]).limit(1).execute().data or [])
-                    if approved and approved[0].get("status") == "approved":
-                        st.session_state.auth_role = "player"
-                        st.session_state.auth_player = saved["player_name"]
-                    else:
-                        revoke_current_device()
+                    st.session_state.auth_role = "player"
+                    st.session_state.auth_player = saved["player_name"]
                 else:
                     revoke_current_device()
             else:
@@ -357,7 +352,7 @@ if st.session_state.auth_role is None:
                 try:
                     account = (db.table("player_accounts").select("player_name,password_hash,status")
                                .ilike("player_name", login_name.strip()).limit(1).execute().data or [])
-                    if account and account[0].get("status") == "approved" and verify_password(login_password, account[0]["password_hash"]):
+                    if account and verify_password(login_password, account[0]["password_hash"]):
                         st.session_state.auth_role = "player"
                         st.session_state.auth_player = account[0]["player_name"]
                         if remember_device:
@@ -366,8 +361,6 @@ if st.session_state.auth_role is None:
                             except Exception:
                                 st.warning("Login realizado. Não foi possível solicitar o salvamento deste aparelho; talvez seja necessário entrar novamente na próxima visita.")
                         st.rerun()
-                    elif account and account[0].get("status") == "pending":
-                        st.warning("Seu cadastro está aguardando aprovação da liderança.")
                     else:
                         st.error("Nome ou senha incorretos, ou cadastro ainda não aprovado.")
                 except Exception:
@@ -400,9 +393,9 @@ if st.session_state.auth_role is None:
                         db.table("player_accounts").insert({
                             "player_name": clean_name,
                             "password_hash": hash_password(register_password),
-                            "status": "pending"
+                            "status": "approved"
                         }).execute()
-                        st.success("Cadastro enviado! Aguarde a aprovação da liderança para entrar.")
+                        st.success("Cadastro criado! Você já pode entrar no aplicativo.")
                 except Exception:
                     st.error("Não foi possível criar o acesso. Confira se a tabela player_accounts foi criada no Supabase.")
     st.stop()
@@ -776,21 +769,6 @@ if aba == "✏️ Editar lançamento":
 
 if aba == "👥 Jogadores":
     st.subheader("👥 Gerenciar jogadores")
-    st.markdown("### 🔐 Aprovar acessos dos jogadores")
-    try:
-        pending_accounts = (db.table("player_accounts").select("id,player_name,created_at")
-                            .eq("status", "pending").order("created_at").execute().data or [])
-        if not pending_accounts:
-            st.caption("Nenhum acesso aguardando aprovação.")
-        for account in pending_accounts:
-            with st.container(border=True):
-                st.write(f"**{account['player_name']}** — aguardando aprovação")
-                if st.button("✅ Aprovar acesso", key=f"approve_{account['id']}"):
-                    db.table("player_accounts").update({"status": "approved"}).eq("id", account["id"]).execute()
-                    st.success(f"Acesso de {account['player_name']} aprovado.")
-                    st.rerun()
-    except Exception:
-        st.warning("A tabela de acessos ainda não está disponível. Crie-a no Supabase usando o SQL fornecido.")
     with st.form("new_player"):
         new_name = st.text_input("Nome no jogo")
         add = st.form_submit_button("➕ Adicionar jogador")
