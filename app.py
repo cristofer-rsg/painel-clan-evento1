@@ -24,75 +24,17 @@ CURRENT_MONTH = NOW.strftime("%Y-%m")
 
 st.set_page_config(page_title="Ghost Hunt", page_icon="👻", layout="wide")
 
-st.markdown("""
-<style>
-:root { --gold:#f5c451; --gold2:#ffe39a; --panel:#171b26; --line:#343b4c; }
-.stApp { background: radial-gradient(ellipse at top, #20283a 0%, #10131b 52%, #0c0f16 100%); }
-.block-container { padding-top: 2rem; padding-bottom: 3rem; max-width: 1450px; }
-h1 { color:#fff; letter-spacing:-1.2px; font-weight:850 !important; }
-h2,h3 { color:#f7f8fb !important; }
-[data-testid="stCaptionContainer"] p { color:#aeb7c8; }
-[data-testid="stMetric"] { background:linear-gradient(145deg,#202838,#151b27); border:1px solid #39445a; padding:18px 20px; border-radius:16px; box-shadow:0 8px 22px #0004; }
-[data-testid="stMetricLabel"] { color:#c5ccda !important; }
-[data-testid="stMetricValue"] { color:#f5c451 !important; font-weight:800; }
-.stTabs [data-baseweb="tab-list"] { gap:8px; border-bottom:1px solid #39445a; }
-.stTabs [data-baseweb="tab"] { color:#cbd3e1; border-radius:10px 10px 0 0; padding:12px 15px; }
-.stTabs [aria-selected="true"] { color:#ffe39a !important; border-bottom:3px solid #f5c451 !important; }
-.stButton button, .stFormSubmitButton button, .stDownloadButton button { border-radius:11px; border:1px solid #b88a2d; font-weight:700; }
-.stButton button[kind="primary"], .stFormSubmitButton button[kind="primary"] { background:linear-gradient(110deg,#d99d2b,#f5c451); color:#17130a; }
-div[data-testid="stExpander"] { border:1px solid #39445a; border-radius:12px; background:#151b27; }
-div[data-testid="stDataFrame"] { border:1px solid #39445a; border-radius:12px; overflow:hidden; }
-.podium {
-    position:relative; isolation:isolate; overflow:hidden;
-    background:linear-gradient(145deg,#252e40 0%,#171d2a 58%,#111722 100%);
-    border:1px solid #46536a; border-radius:20px; padding:24px 16px 20px;
-    text-align:center; min-height:178px; box-shadow:0 12px 28px #0006;
-    transition:transform .18s ease, box-shadow .18s ease;
-}
-.podium:before {
-    content:""; position:absolute; z-index:-1; inset:0;
-    background:radial-gradient(ellipse at 50% 0%,#ffffff18,transparent 68%);
-    pointer-events:none;
-}
-.podium .medal { font-size:38px; line-height:1.25; margin-bottom:8px; filter:drop-shadow(0 4px 5px #0007); }
-.podium .name { color:#fff; font-size:20px; font-weight:850; overflow-wrap:anywhere; text-shadow:0 2px 8px #0008; }
-.podium .score { font-size:29px; font-weight:950; margin-top:7px; letter-spacing:-.5px; }
-.podium .small-note { font-size:11px; font-weight:800; letter-spacing:1.8px; margin-top:5px; }
-.podium.gold {
-    border:2px solid #f3c64e;
-    background:linear-gradient(145deg,#59451b 0%,#302719 48%,#191d27 100%);
-    box-shadow:0 0 0 1px #f3c64e35,0 14px 32px #c28a2530;
-}
-.podium.gold .score { color:#ffda70; text-shadow:0 0 18px #e5ad3d55; }
-.podium.gold .small-note { color:#f5d98d; }
-.podium.silver {
-    border:2px solid #c8d2df;
-    background:linear-gradient(145deg,#465366 0%,#2b3442 48%,#191f2b 100%);
-    box-shadow:0 0 0 1px #dce5f033,0 12px 28px #aebed01c;
-}
-.podium.silver .score { color:#e5edf7; text-shadow:0 0 16px #d7e2f044; }
-.podium.silver .small-note { color:#d0dae7; }
-.podium.bronze {
-    border:2px solid #c98750;
-    background:linear-gradient(145deg,#5a3828 0%,#342820 48%,#1b1d27 100%);
-    box-shadow:0 0 0 1px #d18b5233,0 12px 28px #a75d3020;
-}
-.podium.bronze .score { color:#f0b17d; text-shadow:0 0 16px #d58b5744; }
-.podium.bronze .small-note { color:#e4b18e; }
-.podium.empty { border-style:dashed; opacity:.72; }
-.small-note { color:#aeb8c8; }
-@media (max-width: 640px) {
-    .podium { min-height:155px; padding:20px 12px 17px; border-radius:18px; }
-    .podium .medal { font-size:34px; }
-    .podium .name { font-size:19px; }
-    .podium .score { font-size:27px; }
-}
-@media (max-width: 640px) { .block-container { padding-left: .8rem; padding-right: .8rem; } h1 {font-size:2rem !important;} }
-</style>
-""", unsafe_allow_html=True)
+st.markdown('\n<style>\n:root {\n  --gh-gold:#f4c45e; --gh-gold-light:#ffe7a3; --gh-bg:#080d18;\n  --gh-panel:#111a2a; --gh-panel2:#172338; --gh-border:#2a3a53;\n  --gh-muted:#a9b7ca; --gh-text:#f5f7fb;\n}\n.stApp {\n  background:\n    radial-gradient(ellipse at 12% -8%, #263958 0%, transparent 34%),\n    radial-gradient(ellipse at 95% 8%, #3a2b17 0%, transparent 25%),\n    linear-gradient(155deg,#0b1220 0%,#080d18 55%,#0b111d 100%);\n  color:var(--gh-text);\n}\n.block-container {max-width:1480px;padding-top:1.35rem;padding-bottom:3rem;}\nheader[data-testid="stHeader"] {background:rgba(8,13,24,.78);}\nh1,h2,h3 {color:#fff!important;letter-spacing:-.45px;}\nh1 {font-weight:900!important;letter-spacing:-1.5px;}\np, label, .stMarkdown {color:inherit;}\n[data-testid="stCaptionContainer"] p {color:var(--gh-muted)!important;}\n.gh-hero {\n  position:relative; overflow:hidden; padding:26px 28px; margin:8px 0 24px;\n  border:1px solid #42516a; border-radius:24px;\n  background:linear-gradient(115deg,rgba(27,42,64,.97),rgba(17,25,40,.96) 58%,rgba(50,39,20,.88));\n  box-shadow:0 18px 48px #0006;\n}\n.gh-hero:after {\n  content:"👻"; position:absolute; right:34px; top:50%; transform:translateY(-50%);\n  font-size:88px; opacity:.13; filter:grayscale(.2);\n}\n.gh-kicker {font-size:11px;font-weight:900;letter-spacing:3px;color:var(--gh-gold-light);text-transform:uppercase;}\n.gh-title {font-size:clamp(30px,5vw,48px);font-weight:950;line-height:1.05;color:#fff;margin:7px 0;}\n.gh-subtitle {font-size:14px;color:#c1ccdc;max-width:650px;}\n[data-testid="stMetric"] {\n  background:linear-gradient(145deg,rgba(29,43,64,.96),rgba(15,24,39,.98));\n  border:1px solid #344761; padding:17px 19px; border-radius:18px;\n  box-shadow:0 10px 28px #0004; min-height:112px;\n}\n[data-testid="stMetricLabel"] {color:#c2cede!important;font-weight:650;}\n[data-testid="stMetricValue"] {color:var(--gh-gold-light)!important;font-weight:900;}\n[data-testid="stMetricDelta"] {color:#b9d9c5!important;}\n.stTabs [data-baseweb="tab-list"] {gap:8px;background:#101a2a;padding:7px;border:1px solid var(--gh-border);border-radius:15px;}\n.stTabs [data-baseweb="tab"] {color:#c8d3e3;border-radius:10px;padding:10px 15px;}\n.stTabs [aria-selected="true"] {background:#28364b;color:var(--gh-gold-light)!important;border-bottom:2px solid var(--gh-gold)!important;}\n.stRadio [role="radiogroup"] {gap:8px;}\n.stRadio [role="radio"] {\n  background:linear-gradient(145deg,#18263a,#111b2b);border:1px solid #344761;\n  border-radius:12px;padding:10px 14px;min-height:42px;\n}\n.stRadio [role="radio"][aria-checked="true"] {border-color:var(--gh-gold);background:linear-gradient(120deg,#4a391d,#263044);color:#ffe7a3;}\n.stButton button,.stFormSubmitButton button,.stDownloadButton button {\n  border-radius:12px;border:1px solid #9b762f;font-weight:800;min-height:43px;\n  transition:transform .15s ease,filter .15s ease,box-shadow .15s ease;\n}\n.stButton button:hover,.stFormSubmitButton button:hover,.stDownloadButton button:hover {\n  transform:translateY(-1px);filter:brightness(1.08);box-shadow:0 8px 22px #0005;\n  border-color:var(--gh-gold);\n}\n.stButton button[kind="primary"],.stFormSubmitButton button[kind="primary"] {\n  background:linear-gradient(115deg,#c9922e,#f4c45e);color:#17130a;border:0;\n}\ninput,textarea,[data-baseweb="select"]>div {\n  background:#111b2a!important;border-color:#344761!important;border-radius:11px!important;\n}\ndiv[data-testid="stForm"] {\n  background:linear-gradient(145deg,rgba(22,34,52,.92),rgba(13,21,34,.96));\n  border:1px solid #2c3e58;border-radius:18px;padding:20px;\n}\ndiv[data-testid="stExpander"] {border:1px solid #344761;border-radius:14px;background:#111b2a;}\ndiv[data-testid="stDataFrame"] {border:1px solid #344761;border-radius:14px;overflow:hidden;}\n[data-testid="stSidebar"] {\n  background:linear-gradient(180deg,#111b2b,#0b1220 75%);\n  border-right:1px solid #293a52;\n}\n[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p {color:#c0ccdc;}\nhr {border-color:#2b3b52!important;}\n.podium {\n  position:relative;isolation:isolate;overflow:hidden;text-align:center;\n  background:linear-gradient(145deg,#26364d,#141e2e 68%,#101827);\n  border:1px solid #485a74;border-radius:22px;padding:25px 16px 21px;\n  min-height:184px;box-shadow:0 15px 34px #0006;\n  transition:transform .18s ease,box-shadow .18s ease;\n}\n.podium:hover {transform:translateY(-4px);box-shadow:0 20px 38px #0008;}\n.podium:before {content:"";position:absolute;z-index:-1;inset:0;background:radial-gradient(ellipse at 50% 0%,#ffffff20,transparent 70%);pointer-events:none;}\n.podium .medal {font-size:40px;line-height:1.2;margin-bottom:9px;filter:drop-shadow(0 4px 6px #0008);}\n.podium .name {color:#fff;font-size:20px;font-weight:900;overflow-wrap:anywhere;}\n.podium .score {font-size:30px;font-weight:950;margin-top:8px;letter-spacing:-.5px;}\n.podium .small-note {font-size:10px;font-weight:900;letter-spacing:2px;margin-top:6px;}\n.podium.gold {border:2px solid #f3c64e;background:linear-gradient(145deg,#624b1c,#342a1a 54%,#171d29);box-shadow:0 0 0 1px #f3c64e35,0 16px 36px #c28a2530;}\n.podium.gold .score {color:#ffda70;text-shadow:0 0 18px #e5ad3d55;}.podium.gold .small-note{color:#f5d98d;}\n.podium.silver {border:2px solid #c8d2df;background:linear-gradient(145deg,#4b5a70,#2b3545 54%,#171e2b);}\n.podium.silver .score {color:#e5edf7;}.podium.silver .small-note{color:#d0dae7;}\n.podium.bronze {border:2px solid #c98750;background:linear-gradient(145deg,#60402e,#382a23 54%,#1b1d27);}\n.podium.bronze .score {color:#f0b17d;}.podium.bronze .small-note{color:#e4b18e;}\n.podium.empty {border-style:dashed;opacity:.72;}\n@media(max-width:700px){\n .block-container{padding-left:.75rem;padding-right:.75rem;padding-top:.7rem;}\n .gh-hero{padding:21px 18px;border-radius:18px;margin-bottom:17px;}\n .gh-hero:after{right:12px;font-size:58px;}\n .gh-subtitle{max-width:78%;font-size:12px;}\n .podium{min-height:155px;padding:18px 9px;border-radius:17px;}\n .podium .medal{font-size:32px}.podium .name{font-size:16px;}.podium .score{font-size:23px;}\n [data-testid="stMetric"]{padding:12px;border-radius:14px;min-height:95px;}\n [data-testid="stMetricLabel"]{font-size:11px;}\n [data-testid="stMetricValue"]{font-size:24px;}\n}\n</style>\n', unsafe_allow_html=True)
 
-st.title("👻 GHOST HUNT")
-st.caption("⚔️ Ranking mensal • Controle de pontuação • Histórico de temporadas")
+st.markdown('\n<style>\n.gh-hero {\n  min-height:148px;display:flex;flex-direction:column;justify-content:center;\n  background:radial-gradient(circle at 88% 45%,rgba(246,190,62,.20),transparent 23%),\n  linear-gradient(112deg,rgba(7,17,34,.98),rgba(19,37,64,.96) 58%,rgba(45,34,19,.96));\n  border:1px solid rgba(245,197,83,.52);\n  box-shadow:0 0 0 1px rgba(255,215,125,.08),0 18px 55px rgba(0,0,0,.48),inset 0 1px rgba(255,255,255,.08);\n}\n.gh-hero:after {right:5%;font-size:clamp(70px,10vw,112px);opacity:.23;text-shadow:0 0 28px rgba(255,203,87,.5);}\n.gh-title {background:linear-gradient(180deg,#fff 15%,#e8edf5 52%,#b8c4d6 100%);-webkit-background-clip:text;background-clip:text;color:transparent;}\n.podium {display:flex;flex-direction:column;justify-content:center;min-height:205px;border-radius:20px;}\n.podium.gold {min-height:232px;transform:translateY(-10px);}\n.podium.gold:hover {transform:translateY(-14px);}\n.podium .medal {font-size:46px;}\n.podium.gold .medal {font-size:54px;filter:drop-shadow(0 0 13px rgba(255,205,70,.6));}\n.podium.gold:after {content:"CAMPEÃO DO MÊS";display:block;color:#ffe6a0;font-size:9px;font-weight:950;letter-spacing:2px;margin-top:9px;}\n[data-testid="stMetric"] {position:relative;overflow:hidden;background:linear-gradient(145deg,rgba(23,43,68,.98),rgba(10,19,33,.98));border-color:rgba(105,137,177,.45);}\n[data-testid="stMetric"]:after {content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,#ffe49a,#c28a2d);}\n@media(max-width:700px) {\n .gh-hero{min-height:125px;}\n .podium,.podium.gold{min-height:150px;transform:none;}\n .podium.gold:hover{transform:translateY(-2px);}\n .podium .medal{font-size:30px;}.podium.gold .medal{font-size:35px;}\n .podium.gold:after{font-size:7px;letter-spacing:1px;}\n}\n</style>\n', unsafe_allow_html=True)
+
+st.markdown("""
+<div class="gh-hero">
+  <div class="gh-kicker">Clash of Clans • Painel oficial do clã</div>
+  <div class="gh-title">👻 GHOST HUNT</div>
+  <div class="gh-subtitle">Ranking mensal, controle de pontuação e histórico de temporadas em um só lugar.</div>
+</div>
+""", unsafe_allow_html=True)
 
 # --- Configuração e autenticação ---
 try:
@@ -426,7 +368,7 @@ def render_live_ranking(player_mode=False):
     c3.metric("📝 Lançamentos no mês", len(month_events))
     st.markdown("### 🏅 Pódio do mês")
     top = live_ranking.head(3).to_dict("records") if not live_ranking.empty else []
-    order = [(1, "🥇", "gold"), (2, "🥈", "silver"), (3, "🥉", "bronze")]
+    order = [(2, "🥈", "silver"), (1, "🥇", "gold"), (3, "🥉", "bronze")]
     cols = st.columns(3, gap="medium")
     for col, (pos, medal, cls) in zip(cols, order):
         with col:
