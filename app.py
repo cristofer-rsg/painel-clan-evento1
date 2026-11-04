@@ -130,6 +130,58 @@ def get_device_cookie(force_refresh=False):
     return None
 
 
+def diagnose_device_session():
+    """Diagnóstico somente de leitura; nunca exibe o token nem dados secretos."""
+    result = {
+        "cookie_found": False,
+        "session_record_found": False,
+        "session_valid": False,
+        "session_role": None,
+        "problem": "Cookie não encontrado no navegador.",
+    }
+    token = get_device_cookie()
+    if not token:
+        return result
+
+    result["cookie_found"] = True
+    token_hash = hashlib.sha256(str(token).encode("utf-8")).hexdigest()
+    try:
+        rows = (db.table("device_sessions")
+                .select("role,player_name,expires_at")
+                .eq("token_hash", token_hash)
+                .limit(1).execute().data or [])
+        if not rows:
+            result["problem"] = "Cookie existe, mas não há sessão correspondente no Supabase."
+            return result
+
+        result["session_record_found"] = True
+        row = rows[0]
+        result["session_role"] = row.get("role")
+        expires = pd.to_datetime(row.get("expires_at"), utc=True, errors="coerce")
+        if pd.isna(expires):
+            result["problem"] = "A sessão existe, mas a data de validade não pôde ser interpretada."
+            return result
+
+        if expires <= pd.Timestamp.now(tz="UTC"):
+            result["problem"] = "A sessão encontrada no Supabase está expirada."
+            return result
+
+        if row.get("role") == "player" and row.get("player_name"):
+            approved = (db.table("player_accounts").select("status")
+                        .ilike("player_name", row["player_name"])
+                        .limit(1).execute().data or [])
+            if not approved or approved[0].get("status") != "approved":
+                result["problem"] = "A sessão existe, mas a conta do jogador não está aprovada."
+                return result
+
+        result["session_valid"] = True
+        result["problem"] = "Cookie encontrado e sessão válida no Supabase."
+        return result
+    except Exception:
+        result["problem"] = "Não foi possível consultar a sessão no Supabase. Pode ser uma falha temporária de conexão."
+        return result
+
+
 def hash_password(password, salt=None):
     salt = salt or secrets.token_hex(16)
     digest = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt.encode("utf-8"), 260000).hex()
@@ -250,6 +302,16 @@ if st.session_state.auth_role is None and not st.session_state.get("pending_devi
             st.warning("Não foi possível validar o acesso salvo neste momento. Tente atualizar novamente ou entre manualmente.")
 
 if st.session_state.auth_role is None:
+    with st.expander("🔎 Diagnóstico do acesso neste aparelho", expanded=False):
+        if st.button("Verificar cookie e sessão", key="run_device_diagnostic"):
+            diagnostic = diagnose_device_session()
+            st.write("Cookie encontrado no navegador:", "Sim" if diagnostic["cookie_found"] else "Não")
+            st.write("Registro correspondente no Supabase:", "Sim" if diagnostic["session_record_found"] else "Não")
+            st.write("Sessão válida:", "Sim" if diagnostic["session_valid"] else "Não")
+            st.info(diagnostic["problem"])
+        else:
+            st.caption("A verificação não mostra senha nem token. Ela apenas confere a presença do cookie e a validade da sessão.")
+
     login_tab, register_tab = st.tabs(["🔐 Entrar", "📝 Criar meu acesso"])
     with login_tab:
         st.subheader("🔐 Acesso Ghost Hunt")
