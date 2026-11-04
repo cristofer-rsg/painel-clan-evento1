@@ -88,36 +88,33 @@ if "auth_player" not in st.session_state:
 DEVICE_COOKIE = "ghost_hunt_device"
 DEVICE_DAYS = 30
 
-
-def get_cookie_manager():
-    """Mantém uma única instância do CookieManager durante a sessão."""
+# IMPORTANTE: o CookieManager é instanciado uma vez por execução, sempre com a
+# mesma chave. O componente já devolve os cookies em .cookies; não fazemos uma
+# segunda chamada get_all() com outra chave, que criava uma segunda instância.
+try:
     if stx is None:
-        return None
-    if "ghost_hunt_cookie_manager_instance" not in st.session_state:
-        try:
+        cookie_manager = None
+    else:
+        if "ghost_hunt_cookie_manager_instance" not in st.session_state:
             st.session_state["ghost_hunt_cookie_manager_instance"] = stx.CookieManager(
                 key="ghost_hunt_cookie_manager"
             )
-        except Exception:
-            return None
-    return st.session_state.get("ghost_hunt_cookie_manager_instance")
+        cookie_manager = st.session_state["ghost_hunt_cookie_manager_instance"]
+except Exception:
+    cookie_manager = None
 
 
 def get_device_cookie():
-    """Lê o cookie HTTP nativo; usa o componente como alternativa."""
+    """Lê primeiro o cookie enviado pelo navegador e usa o componente como fallback."""
     try:
         value = st.context.cookies.get(DEVICE_COOKIE)
         if value:
             return value
     except Exception:
         pass
-
-    manager = get_cookie_manager()
-    if manager is not None:
+    if cookie_manager is not None:
         try:
-            # Atualiza a leitura do componente com uma chave estável.
-            cookies = manager.get_all(key="read_ghost_hunt_cookies") or {}
-            value = cookies.get(DEVICE_COOKIE)
+            value = (cookie_manager.cookies or {}).get(DEVICE_COOKIE)
             if value:
                 return value
         except Exception:
@@ -150,13 +147,19 @@ def issue_device_session(role, player_name=None):
         "player_name": player_name,
         "expires_at": expires_at.isoformat()
     }).execute()
-    # O login permanece válido nesta sessão mesmo se o componente de cookie falhar.
-    manager = get_cookie_manager()
-    if manager is not None:
-        try:
-            manager.set(DEVICE_COOKIE, raw_token, key="set_ghost_hunt_device", expires_at=expires_at.replace(tzinfo=None), path="/", same_site="lax", secure=True)
-        except Exception:
-            pass
+    # Se o componente estiver indisponível, não bloqueia o login atual.
+    # Nesse caso, a sessão funciona até fechar/recarregar o navegador, mas não
+    # promete persistência de 30 dias.
+    if cookie_manager is not None:
+        cookie_manager.set(
+            DEVICE_COOKIE,
+            raw_token,
+            key="set_ghost_hunt_device_cookie",
+            expires_at=expires_at.replace(tzinfo=None),
+            path="/",
+            same_site="lax",
+            secure=True,
+        )
     st.session_state.auth_role = role
     st.session_state.auth_player = player_name
 
@@ -169,15 +172,13 @@ def revoke_current_device():
             db.table("device_sessions").delete().eq("token_hash", token_hash).execute()
         except Exception:
             pass
-    manager = get_cookie_manager()
-    if manager is not None:
+    if cookie_manager is not None:
         try:
-            manager.delete(DEVICE_COOKIE)
+            cookie_manager.delete(DEVICE_COOKIE, key="delete_ghost_hunt_device_cookie")
         except Exception:
             pass
     st.session_state.auth_role = None
     st.session_state.auth_player = None
-
 
 # Recupera o acesso salvo neste navegador quando a sessão do Streamlit é reiniciada.
 if st.session_state.auth_role is None:
@@ -207,9 +208,9 @@ if st.session_state.auth_role is None:
                     revoke_current_device()
             else:
                 revoke_current_device()
-        except Exception:
-            st.warning("Não foi possível validar o acesso salvo. Entre novamente.")
-            revoke_current_device()
+        except Exception as e:
+            # Falha temporária de rede/Supabase não deve apagar o cookie nem a sessão.
+            st.warning("Não foi possível validar o acesso salvo neste momento. Tente atualizar novamente ou entre manualmente.")
 
 if st.session_state.auth_role is None:
     login_tab, register_tab = st.tabs(["🔐 Entrar", "📝 Criar meu acesso"])
@@ -302,7 +303,7 @@ PLAYERS_FALLBACK = [
 def load_players():
     return db.table("players").select("name,eligible,whatsapp").order("name").execute().data or []
 
-@st.cache_data(ttl=60, max_entries=4)
+@st.cache_data(ttl=300, max_entries=4)
 def load_events():
     return db.table("events").select("id,player,category,activity,points,created_at").order("created_at", desc=True).execute().data or []
 
