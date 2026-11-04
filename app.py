@@ -28,11 +28,14 @@ st.markdown('\n<style>\n:root {\n  --gh-gold:#f4c45e; --gh-gold-light:#ffe7a3; -
 
 st.markdown('\n<style>\n.gh-hero {\n  min-height:148px;display:flex;flex-direction:column;justify-content:center;\n  background:radial-gradient(circle at 88% 45%,rgba(246,190,62,.20),transparent 23%),\n  linear-gradient(112deg,rgba(7,17,34,.98),rgba(19,37,64,.96) 58%,rgba(45,34,19,.96));\n  border:1px solid rgba(245,197,83,.52);\n  box-shadow:0 0 0 1px rgba(255,215,125,.08),0 18px 55px rgba(0,0,0,.48),inset 0 1px rgba(255,255,255,.08);\n}\n.gh-hero:after {right:5%;font-size:clamp(70px,10vw,112px);opacity:.23;text-shadow:0 0 28px rgba(255,203,87,.5);}\n.gh-title {background:linear-gradient(180deg,#fff 15%,#e8edf5 52%,#b8c4d6 100%);-webkit-background-clip:text;background-clip:text;color:transparent;}\n.podium {display:flex;flex-direction:column;justify-content:center;min-height:205px;border-radius:20px;}\n.podium.gold {min-height:232px;transform:translateY(-10px);}\n.podium.gold:hover {transform:translateY(-14px);}\n.podium .medal {font-size:46px;}\n.podium.gold .medal {font-size:54px;filter:drop-shadow(0 0 13px rgba(255,205,70,.6));}\n.podium.gold:after {content:"CAMPEÃO DO MÊS";display:block;color:#ffe6a0;font-size:9px;font-weight:950;letter-spacing:2px;margin-top:9px;}\n[data-testid="stMetric"] {position:relative;overflow:hidden;background:linear-gradient(145deg,rgba(23,43,68,.98),rgba(10,19,33,.98));border-color:rgba(105,137,177,.45);}\n[data-testid="stMetric"]:after {content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,#ffe49a,#c28a2d);}\n@media(max-width:700px) {\n .gh-hero{min-height:125px;}\n .podium,.podium.gold{min-height:150px;transform:none;}\n .podium.gold:hover{transform:translateY(-2px);}\n .podium .medal{font-size:30px;}.podium.gold .medal{font-size:35px;}\n .podium.gold:after{font-size:7px;letter-spacing:1px;}\n}\n</style>\n', unsafe_allow_html=True)
 
+st.markdown('\n<style>\n.block-container {max-width:1320px!important;padding-top:1rem!important;}\n.gh-brandbar{display:flex;align-items:center;gap:12px;padding:13px 20px;margin:4px 0 22px;border:1px solid #263e5c;border-radius:17px;background:linear-gradient(100deg,#030914,#0c1b30 55%,#101a2a);box-shadow:0 10px 30px #0008,inset 0 -2px 0 #d9a83b;}\n.gh-brand-mark{font-size:34px;filter:drop-shadow(0 0 9px #e7b94c88);}\n.gh-brand-name{font-size:clamp(23px,4vw,34px);font-weight:1000;letter-spacing:1.2px;color:#f4f6fa;text-shadow:0 3px 8px #000;}\n.gh-brand-line{height:30px;width:2px;background:linear-gradient(transparent,#e6b64d,transparent);margin:0 5px;}\n.gh-brand-tag{font-size:10px;font-weight:900;letter-spacing:2px;color:#d9b765;}\ndiv[data-testid="stTabs"]{margin-top:6px;}\ndiv[data-testid="stTabs"] [data-baseweb="tab-list"]{background:linear-gradient(90deg,#071326,#101f35);border:1px solid #24415f;border-radius:13px;padding:6px;gap:6px;}\ndiv[data-testid="stTabs"] [data-baseweb="tab"]{flex:1;justify-content:center;font-weight:850;}\ndiv[data-testid="stTabs"] [aria-selected="true"]{background:linear-gradient(110deg,#4c3918,#1c2c43)!important;color:#ffe39a!important;border:1px solid #d9aa42;}\ndiv[data-testid="stForm"]:has(input[type="password"]){background:linear-gradient(155deg,rgba(4,14,29,.98),rgba(9,25,46,.98));border:1px solid #2d79b7;border-radius:21px;padding:22px;box-shadow:0 0 0 1px #1686d522,0 15px 45px #0009;}\ndiv[data-testid="stForm"] button[kind="primary"]{background:linear-gradient(180deg,#ffe66b,#f3b900 65%,#ca8300)!important;color:#100e08!important;border:1px solid #ffdf54!important;box-shadow:0 4px 0 #8e5c00,0 9px 22px #e5a50033;font-size:17px!important;font-weight:950!important;}\n.gh-login-note{border-left:3px solid #e4b64e;padding:10px 14px;margin:8px 0 15px;background:linear-gradient(90deg,#17263b88,transparent);color:#bdcbe0;border-radius:0 10px 10px 0;font-size:13px;}\n.gh-welcome{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 5px 15px;margin:0 0 5px;}\n.gh-welcome-title{font-size:clamp(22px,3vw,30px);font-weight:950;color:#fff;}\n.gh-welcome-sub{font-size:13px;color:#aebed2;margin-top:3px;}\n.gh-month-chip{border:1px solid #526a89;border-radius:12px;padding:10px 13px;background:linear-gradient(120deg,#17283f,#0d1829);color:#f5d98c;font-weight:850;white-space:nowrap;}\n.gh-section-title{font-size:19px;font-weight:950;color:#f7f8fb;margin:16px 0 12px;}\n.stRadio [role="radiogroup"]{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px!important;}\n.stRadio [role="radio"]{min-height:53px;display:flex;align-items:center;justify-content:center;text-align:center;background:linear-gradient(145deg,#10213a,#091426);border:1px solid #304a69;border-radius:13px;padding:9px 8px;font-weight:850;color:#dce6f4;}\n.stRadio [role="radio"][aria-checked="true"]{background:linear-gradient(145deg,#57421c,#1c2d44);border:1px solid #f0c45a;box-shadow:0 0 18px #d69b3025;color:#ffe7a1;}\n.podium.gold:before{background:radial-gradient(ellipse at 50% 0%,#ffe08a30,transparent 70%);}\n[data-testid="stDataFrame"]{background:#0b1626;}\n@media(max-width:700px){\n .gh-brandbar{padding:10px 12px;gap:8px;margin-bottom:15px;}\n .gh-brand-mark{font-size:28px}.gh-brand-name{font-size:22px}.gh-brand-tag{font-size:8px;letter-spacing:1px;}\n .gh-welcome{align-items:flex-start;flex-direction:column}.gh-month-chip{align-self:flex-start;}\n .stRadio [role="radiogroup"]{grid-template-columns:repeat(2,minmax(0,1fr))!important;}\n div[data-testid="stForm"]:has(input[type="password"]){padding:14px;}\n}\n</style>\n', unsafe_allow_html=True)
+
 st.markdown("""
-<div class="gh-hero">
-  <div class="gh-kicker">Clash of Clans • Painel oficial do clã</div>
-  <div class="gh-title">👻 GHOST HUNT</div>
-  <div class="gh-subtitle">Ranking mensal, controle de pontuação e histórico de temporadas em um só lugar.</div>
+<div class="gh-brandbar">
+  <div class="gh-brand-mark">👻</div>
+  <div class="gh-brand-name">GHOST HUNT</div>
+  <div class="gh-brand-line"></div>
+  <div class="gh-brand-tag">CLASH OF CLANS • PAINEL DO CLÃ</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -90,7 +93,7 @@ if st.session_state.auth_role is None:
     login_tab, register_tab = st.tabs(["🔐 Entrar", "📝 Criar meu acesso"])
     with login_tab:
         st.subheader("🔐 Acesso Ghost Hunt")
-        st.caption("Administrador principal: informe a senha. Operador: usuário operador e senha própria. Jogadores: usuário e senha cadastrados.")
+        st.markdown("<div class='gh-login-note'>🔐 Administrador principal: informe sua senha. Operador: entre com seu usuário e senha. Jogadores: use o acesso criado no cadastro.</div>", unsafe_allow_html=True)
         with st.form("login_admin_player"):
             login_name = st.text_input("Nome de usuário")
             login_password = st.text_input("Senha", type="password")
@@ -356,16 +359,19 @@ def render_live_ranking(player_mode=False):
     # não é necessário converter cada timestamp novamente no navegador/servidor.
     month_events = load_events(month_now)
     live_ranking = build_ranking(fresh_players, month_events)
-    st.caption(f"Atualização automática a cada 60 segundos • Última verificação: {now_local.strftime('%H:%M:%S')}")
-    st.subheader(f"🏆 Ranking do mês — {month_label(month_now)}")
-    if player_mode:
-        st.caption(f"Bem-vindo(a), {st.session_state.auth_player}! Este acesso permite somente visualizar a classificação.")
-    else:
-        st.caption("A pontuação é reiniciada automaticamente na virada do mês. Os lançamentos antigos permanecem no histórico.")
-    c1, c2, c3 = st.columns(3)
-    c1.metric("👥 Jogadores", len(fresh_players))
-    c2.metric("🥇 Pontos do líder", int(live_ranking.iloc[0]["Total"]) if not live_ranking.empty else 0)
-    c3.metric("📝 Lançamentos no mês", len(month_events))
+    greeting = st.session_state.auth_player if player_mode else ("Operador" if is_operator else "Administrador")
+    st.markdown(
+        f"<div class='gh-welcome'><div><div class='gh-welcome-title'>👋 Olá, {html.escape(str(greeting))}!</div>"
+        f"<div class='gh-welcome-sub'>Painel de acompanhamento do clã • Atualização automática a cada 60 segundos</div></div>"
+        f"<div class='gh-month-chip'>📅 {month_label(month_now)}</div></div>",
+        unsafe_allow_html=True
+    )
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("🏆 Pontos do líder", int(live_ranking.iloc[0]["Total"]) if not live_ranking.empty else 0)
+    c2.metric("👥 Jogadores", len(fresh_players))
+    wars_count = sum(1 for event in month_events if str(event.get("category", "")).casefold() == "guerras")
+    c3.metric("⚔️ Registros de guerra", wars_count)
+    c4.metric("📝 Lançamentos", len(month_events))
     st.markdown("### 🏅 Pódio do mês")
     top = live_ranking.head(3).to_dict("records") if not live_ranking.empty else []
     order = [(2, "🥈", "silver"), (1, "🥇", "gold"), (3, "🥉", "bronze")]
@@ -413,6 +419,7 @@ if not is_admin:
     st.stop()
 
 # --- Navegação ---
+st.markdown("<div class='gh-section-title'>⚙️ Painel de gerenciamento</div>", unsafe_allow_html=True)
 aba = st.radio(
     "Navegação",
     ["🏆 Ranking do mês", "➕ Lançar pontos", "✏️ Editar lançamento", "👥 Jogadores", "📜 Histórico mensal", "📤 Exportar"],
