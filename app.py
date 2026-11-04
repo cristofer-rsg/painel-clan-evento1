@@ -459,7 +459,7 @@ for nav_col, (nav_icon, nav_label, nav_value) in zip(nav_cols, nav_items):
     with nav_col:
         active = st.session_state.main_navigation == nav_value
         if st.button(
-            f"{nav_icon}\\n{nav_label}",
+            f"{nav_icon} {nav_label}",
             key=f"gh_nav_{nav_label.lower()}",
             type="primary" if active else "secondary",
             use_container_width=True,
