@@ -103,17 +103,30 @@ except Exception:
     browser_cookies = {}
 
 
-def get_device_cookie():
-    """Lê o cookie do request inicial; usa a leitura atual do componente como fallback."""
+def get_device_cookie(force_refresh=False):
+    """Lê o cookie do request e, se necessário, solicita uma leitura nova ao navegador."""
     try:
         value = st.context.cookies.get(DEVICE_COOKIE)
         if value:
             return value
     except Exception:
         pass
+
     value = browser_cookies.get(DEVICE_COOKIE) if isinstance(browser_cookies, dict) else None
     if value:
         return value
+
+    # O construtor faz uma leitura inicial. Se ela ainda vier vazia, solicita
+    # uma segunda leitura com uma chave própria, evitando reutilizar a resposta vazia.
+    if cookie_manager is not None:
+        try:
+            refreshed = cookie_manager.get_all(key="ghost_hunt_cookie_fresh_read")
+            if isinstance(refreshed, dict):
+                value = refreshed.get(DEVICE_COOKIE)
+                if value:
+                    return value
+        except Exception:
+            pass
     return None
 
 
@@ -194,7 +207,15 @@ if pending_token:
     else:
         st.info("Estamos salvando o acesso neste aparelho. Quando o navegador confirmar, clique em **Verificar acesso**.")
         if st.button("Verificar acesso", key="verify_device_cookie"):
-            st.rerun()
+            refreshed_token = get_device_cookie(force_refresh=True)
+            if refreshed_token and hmac.compare_digest(str(refreshed_token), str(pending_token)):
+                st.session_state.auth_role = st.session_state.get("pending_device_role")
+                st.session_state.auth_player = st.session_state.get("pending_device_player")
+                for key in ("pending_device_token", "pending_device_role", "pending_device_player", "pending_device_expires"):
+                    st.session_state.pop(key, None)
+                st.rerun()
+            else:
+                st.warning("O navegador ainda não confirmou o cookie. Tente novamente em alguns segundos.")
 
 # Recupera o acesso salvo neste navegador quando a sessão do Streamlit é reiniciada.
 if st.session_state.auth_role is None and not st.session_state.get("pending_device_token"):
