@@ -193,6 +193,24 @@ div[data-testid="stTabs"] [data-baseweb="tab-border"]{
 }
 div[data-testid="stTabs"] [aria-selected="true"] *,
 div[data-testid="stTabs"] button[aria-selected="true"] *{color:#1a1408!important;}
+
+/* Abas de acesso: botões reais no mesmo padrão do menu principal */
+div[data-testid="stHorizontalBlock"] div.stButton > button{
+  min-height:50px!important;border-radius:13px!important;
+  border:1px solid #294563!important;
+  background:linear-gradient(145deg,#142b45,#0a1728)!important;
+  color:#e9eff7!important;font-weight:850!important;
+  box-shadow:0 5px 14px rgba(0,0,0,.22)!important;
+}
+div[data-testid="stHorizontalBlock"] div.stButton > button[kind="primary"]{
+  border:1px solid #ffe08a!important;
+  background:linear-gradient(180deg,#ffe99a,#f2c34e 55%,#c78b25)!important;
+  color:#1a1408!important;font-weight:900!important;
+  box-shadow:0 4px 0 #805700,0 7px 16px rgba(0,0,0,.24)!important;
+}
+div[data-testid="stHorizontalBlock"] div.stButton > button:hover{
+  border-color:#e6bd5d!important;color:#ffe6a0!important;
+}
 div[data-testid="stForm"] [data-baseweb="input"]{
   border:1px solid #344d6c!important;border-radius:11px!important;
   background:#101f32!important;box-shadow:none!important;
@@ -283,8 +301,30 @@ def revoke_current_device():
     st.session_state.auth_player = None
 
 if st.session_state.auth_role is None:
-    login_tab, register_tab = st.tabs(["🔐 Entrar", "📝 Criar meu acesso"])
-    with login_tab:
+    if "login_screen_tab" not in st.session_state:
+        st.session_state.login_screen_tab = "login"
+
+    access_col1, access_col2 = st.columns(2, gap="small")
+    with access_col1:
+        if st.button(
+            "🔐 Entrar",
+            key="access_tab_login",
+            use_container_width=True,
+            type="primary" if st.session_state.login_screen_tab == "login" else "secondary"
+        ):
+            st.session_state.login_screen_tab = "login"
+            st.rerun()
+    with access_col2:
+        if st.button(
+            "📝 Criar meu acesso",
+            key="access_tab_register",
+            use_container_width=True,
+            type="primary" if st.session_state.login_screen_tab == "register" else "secondary"
+        ):
+            st.session_state.login_screen_tab = "register"
+            st.rerun()
+
+    if st.session_state.login_screen_tab == "login":
         st.markdown("<div class='gh-login-heading'>🔒 Acesso ao Aplicativo</div>", unsafe_allow_html=True)
         st.markdown("<div class='gh-login-note'>🔐 <b>Administrador principal:</b> deixe o usuário em branco e informe sua senha.<br>🛡️ <b>Operador e jogadores:</b> informe seu usuário e sua senha.</div>", unsafe_allow_html=True)
         with st.form("login_admin_player"):
@@ -312,7 +352,7 @@ if st.session_state.auth_role is None:
                         st.error("Nome de usuário ou senha incorretos.")
                 except Exception:
                     st.error("Não foi possível consultar os acessos. Confira se as tabelas do Supabase foram criadas.")
-    with register_tab:
+    else:
         st.subheader("📝 Criar acesso de jogador")
         st.caption("Escolha qualquer nome de usuário e senha. O acesso é liberado automaticamente após o cadastro.")
         with st.form("register_player_account"):
