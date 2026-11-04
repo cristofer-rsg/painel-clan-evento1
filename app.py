@@ -8,10 +8,6 @@ from zoneinfo import ZoneInfo
 
 import pandas as pd
 import streamlit as st
-try:
-    import extra_streamlit_components as stx
-except Exception:
-    stx = None
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 from supabase import create_client
@@ -125,107 +121,7 @@ if "auth_role" not in st.session_state:
 if "auth_player" not in st.session_state:
     st.session_state.auth_player = None
 
-DEVICE_COOKIE = "ghost_hunt_device"
-DEVICE_DAYS = 30
-
-# Uma única instância do CookieManager por sessão Streamlit.
-# O componente é criado uma vez e mantido no session_state para evitar
-# múltiplos iframes/chaves concorrentes durante as reexecuções.
-try:
-    if stx is None:
-        cookie_manager = None
-        browser_cookies = {}
-    else:
-        if "ghost_hunt_cookie_manager_instance" not in st.session_state:
-            st.session_state["ghost_hunt_cookie_manager_instance"] = stx.CookieManager(
-                key="ghost_hunt_cookie_manager"
-            )
-        cookie_manager = st.session_state["ghost_hunt_cookie_manager_instance"]
-        browser_cookies = cookie_manager.cookies
-        if not isinstance(browser_cookies, dict):
-            browser_cookies = {}
-except Exception:
-    cookie_manager = None
-    browser_cookies = {}
-
-
-def get_device_cookie(force_refresh=False):
-    """Lê o cookie do request e, se necessário, solicita uma leitura nova ao navegador."""
-    try:
-        value = st.context.cookies.get(DEVICE_COOKIE)
-        if value:
-            return value
-    except Exception:
-        pass
-
-    value = browser_cookies.get(DEVICE_COOKIE) if isinstance(browser_cookies, dict) else None
-    if value:
-        return value
-
-    # Só força nova leitura quando o usuário solicita verificação.
-    # A chave é fixa para reutilizar o mesmo componente de leitura.
-    if force_refresh and cookie_manager is not None:
-        try:
-            refreshed = cookie_manager.get_all(key="ghost_hunt_cookie_refresh")
-            if isinstance(refreshed, dict):
-                value = refreshed.get(DEVICE_COOKIE)
-                if value:
-                    return value
-        except Exception:
-            pass
-    return None
-
-
-def diagnose_device_session():
-    """Diagnóstico somente de leitura; nunca exibe o token nem dados secretos."""
-    result = {
-        "cookie_found": False,
-        "session_record_found": False,
-        "session_valid": False,
-        "session_role": None,
-        "problem": "Cookie não encontrado no navegador.",
-    }
-    token = get_device_cookie()
-    if not token:
-        return result
-
-    result["cookie_found"] = True
-    token_hash = hashlib.sha256(str(token).encode("utf-8")).hexdigest()
-    try:
-        rows = (db.table("device_sessions")
-                .select("role,player_name,expires_at")
-                .eq("token_hash", token_hash)
-                .limit(1).execute().data or [])
-        if not rows:
-            result["problem"] = "Cookie existe, mas não há sessão correspondente no Supabase."
-            return result
-
-        result["session_record_found"] = True
-        row = rows[0]
-        result["session_role"] = row.get("role")
-        expires = pd.to_datetime(row.get("expires_at"), utc=True, errors="coerce")
-        if pd.isna(expires):
-            result["problem"] = "A sessão existe, mas a data de validade não pôde ser interpretada."
-            return result
-
-        if expires <= pd.Timestamp.now(tz="UTC"):
-            result["problem"] = "A sessão encontrada no Supabase está expirada."
-            return result
-
-        if row.get("role") == "player" and row.get("player_name"):
-            approved = (db.table("player_accounts").select("status")
-                        .ilike("player_name", row["player_name"])
-                        .limit(1).execute().data or [])
-            if not approved or approved[0].get("status") != "approved":
-                result["problem"] = "A sessão existe, mas a conta do jogador não está aprovada."
-                return result
-
-        result["session_valid"] = True
-        result["problem"] = "Cookie encontrado e sessão válida no Supabase."
-        return result
-    except Exception:
-        result["problem"] = "Não foi possível consultar a sessão no Supabase. Pode ser uma falha temporária de conexão."
-        return result
+# Autenticação sem componente externo de cookies; a sessão é mantida pelo Streamlit.
 
 
 def hash_password(password, salt=None):
@@ -243,79 +139,10 @@ def verify_password(password, stored):
         return False
 
 
-def issue_device_session(role, player_name=None):
-    """Cria uma sessão persistente e solicita ao navegador que grave o cookie."""
-    if cookie_manager is None:
-        raise RuntimeError("O componente de cookies não está disponível neste navegador.")
-
-    raw_token = secrets.token_urlsafe(48)
-    token_hash = hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
-    expires_at = datetime.now(TZ) + timedelta(days=DEVICE_DAYS)
-
-    db.table("device_sessions").insert({
-        "token_hash": token_hash,
-        "role": role,
-        "player_name": player_name,
-        "expires_at": expires_at.isoformat()
-    }).execute()
-
-    # A gravação é solicitada ao navegador em segundo plano.
-    cookie_manager.set(
-        DEVICE_COOKIE,
-        raw_token,
-        key="set_ghost_hunt_device_cookie",
-        expires_at=expires_at.replace(tzinfo=None),
-        path="/",
-        same_site="lax",
-        secure=True,
-    )
-
-
 def revoke_current_device():
-    raw_token = get_device_cookie()
-    if raw_token:
-        token_hash = hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
-        try:
-            db.table("device_sessions").delete().eq("token_hash", token_hash).execute()
-        except Exception:
-            pass
-    if cookie_manager is not None:
-        try:
-            cookie_manager.delete(DEVICE_COOKIE, key="delete_ghost_hunt_device_cookie")
-        except Exception:
-            pass
+    """Encerra apenas a sessão atual do aplicativo."""
     st.session_state.auth_role = None
     st.session_state.auth_player = None
-
-# Recupera o acesso salvo neste navegador quando a sessão do Streamlit é reiniciada.
-if st.session_state.auth_role is None:
-    saved_token = get_device_cookie()
-    if saved_token:
-        saved_hash = hashlib.sha256(saved_token.encode("utf-8")).hexdigest()
-        try:
-            saved_sessions = (db.table("device_sessions")
-                              .select("role,player_name,expires_at")
-                              .eq("token_hash", saved_hash)
-                              .gt("expires_at", datetime.now(TZ).isoformat())
-                              .limit(1).execute().data or [])
-            if saved_sessions:
-                saved = saved_sessions[0]
-                if saved.get("role") == "admin" and saved.get("player_name") == "__operator__":
-                    st.session_state.auth_role = "operator"
-                    st.session_state.auth_player = None
-                elif saved.get("role") == "admin":
-                    st.session_state.auth_role = "admin"
-                    st.session_state.auth_player = None
-                elif saved.get("role") == "player" and saved.get("player_name"):
-                    st.session_state.auth_role = "player"
-                    st.session_state.auth_player = saved["player_name"]
-                else:
-                    revoke_current_device()
-            else:
-                revoke_current_device()
-        except Exception as e:
-            # Falha temporária de rede/Supabase não deve apagar o cookie nem a sessão.
-            st.warning("Não foi possível validar o acesso salvo neste momento. Tente atualizar novamente ou entre manualmente.")
 
 if st.session_state.auth_role is None:
     login_tab, register_tab = st.tabs(["🔐 Entrar", "📝 Criar meu acesso"])
@@ -325,28 +152,15 @@ if st.session_state.auth_role is None:
         with st.form("login_admin_player"):
             login_name = st.text_input("Nome de usuário")
             login_password = st.text_input("Senha", type="password")
-            remember_device = st.checkbox("Lembrar deste aparelho por 30 dias", value=True)
             login_submit = st.form_submit_button("Entrar", use_container_width=True)
         if login_submit:
             if login_name.strip().casefold() == "operador" and OPERATOR_PASSWORD and login_password == OPERATOR_PASSWORD:
                 st.session_state.auth_role = "operator"
                 st.session_state.auth_player = None
-                if remember_device:
-                    try:
-                        # Usa role="admin" permitido pela tabela atual, com marcador próprio
-                        # para restaurar o perfil operador sem conceder a sessão principal.
-                        issue_device_session("admin", "__operator__")
-                    except Exception:
-                        st.warning("Login realizado. Não foi possível solicitar o salvamento deste aparelho; talvez seja necessário entrar novamente na próxima visita.")
                 st.rerun()
             elif login_password == ADMIN_PASSWORD:
                 st.session_state.auth_role = "admin"
                 st.session_state.auth_player = None
-                if remember_device:
-                    try:
-                        issue_device_session("admin")
-                    except Exception:
-                        st.warning("Login realizado. Não foi possível solicitar o salvamento deste aparelho; talvez seja necessário entrar novamente na próxima visita.")
                 st.rerun()
             else:
                 try:
@@ -355,19 +169,14 @@ if st.session_state.auth_role is None:
                     if account and verify_password(login_password, account[0]["password_hash"]):
                         st.session_state.auth_role = "player"
                         st.session_state.auth_player = account[0]["player_name"]
-                        if remember_device:
-                            try:
-                                issue_device_session("player", account[0]["player_name"])
-                            except Exception:
-                                st.warning("Login realizado. Não foi possível solicitar o salvamento deste aparelho; talvez seja necessário entrar novamente na próxima visita.")
                         st.rerun()
                     else:
-                        st.error("Nome ou senha incorretos, ou cadastro ainda não aprovado.")
+                        st.error("Nome de usuário ou senha incorretos.")
                 except Exception:
                     st.error("Não foi possível consultar os acessos. Confira se as tabelas do Supabase foram criadas.")
     with register_tab:
         st.subheader("📝 Criar acesso de jogador")
-        st.caption("Escolha qualquer nome de usuário. Não precisa ser igual ao nome no jogo. A liderança precisará aprovar seu acesso.")
+        st.caption("Escolha qualquer nome de usuário e senha. O acesso é liberado automaticamente após o cadastro.")
         with st.form("register_player_account"):
             register_name = st.text_input("Escolha seu nome de usuário", max_chars=30)
             register_password = st.text_input("Crie uma senha", type="password")
