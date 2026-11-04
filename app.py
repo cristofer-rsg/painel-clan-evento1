@@ -1,4 +1,5 @@
 import io
+import html
 import hashlib
 import hmac
 import secrets
@@ -45,12 +46,51 @@ h2,h3 { color:#f7f8fb !important; }
 .stButton button[kind="primary"], .stFormSubmitButton button[kind="primary"] { background:linear-gradient(110deg,#d99d2b,#f5c451); color:#17130a; }
 div[data-testid="stExpander"] { border:1px solid #39445a; border-radius:12px; background:#151b27; }
 div[data-testid="stDataFrame"] { border:1px solid #39445a; border-radius:12px; overflow:hidden; }
-.podium { background:linear-gradient(145deg,#242d40,#151b27); border:1px solid #59647a; border-radius:16px; padding:18px 12px; text-align:center; min-height:132px; box-shadow:0 8px 20px #0004; }
-.podium .medal { font-size:30px; }
-.podium .name { color:#fff; font-size:18px; font-weight:800; overflow-wrap:anywhere; }
-.podium .score { color:#f5c451; font-size:25px; font-weight:900; }
-.podium.first { border:2px solid #e7b943; background:linear-gradient(145deg,#3a3020,#1c202b); }
-.small-note { color:#9ca8bb; font-size:13px; }
+.podium {
+    position:relative; isolation:isolate; overflow:hidden;
+    background:linear-gradient(145deg,#252e40 0%,#171d2a 58%,#111722 100%);
+    border:1px solid #46536a; border-radius:20px; padding:24px 16px 20px;
+    text-align:center; min-height:178px; box-shadow:0 12px 28px #0006;
+    transition:transform .18s ease, box-shadow .18s ease;
+}
+.podium:before {
+    content:""; position:absolute; z-index:-1; inset:0;
+    background:radial-gradient(ellipse at 50% 0%,#ffffff18,transparent 68%);
+    pointer-events:none;
+}
+.podium .medal { font-size:38px; line-height:1.25; margin-bottom:8px; filter:drop-shadow(0 4px 5px #0007); }
+.podium .name { color:#fff; font-size:20px; font-weight:850; overflow-wrap:anywhere; text-shadow:0 2px 8px #0008; }
+.podium .score { font-size:29px; font-weight:950; margin-top:7px; letter-spacing:-.5px; }
+.podium .small-note { font-size:11px; font-weight:800; letter-spacing:1.8px; margin-top:5px; }
+.podium.gold {
+    border:2px solid #f3c64e;
+    background:linear-gradient(145deg,#59451b 0%,#302719 48%,#191d27 100%);
+    box-shadow:0 0 0 1px #f3c64e35,0 14px 32px #c28a2530;
+}
+.podium.gold .score { color:#ffda70; text-shadow:0 0 18px #e5ad3d55; }
+.podium.gold .small-note { color:#f5d98d; }
+.podium.silver {
+    border:2px solid #c8d2df;
+    background:linear-gradient(145deg,#465366 0%,#2b3442 48%,#191f2b 100%);
+    box-shadow:0 0 0 1px #dce5f033,0 12px 28px #aebed01c;
+}
+.podium.silver .score { color:#e5edf7; text-shadow:0 0 16px #d7e2f044; }
+.podium.silver .small-note { color:#d0dae7; }
+.podium.bronze {
+    border:2px solid #c98750;
+    background:linear-gradient(145deg,#5a3828 0%,#342820 48%,#1b1d27 100%);
+    box-shadow:0 0 0 1px #d18b5233,0 12px 28px #a75d3020;
+}
+.podium.bronze .score { color:#f0b17d; text-shadow:0 0 16px #d58b5744; }
+.podium.bronze .small-note { color:#e4b18e; }
+.podium.empty { border-style:dashed; opacity:.72; }
+.small-note { color:#aeb8c8; }
+@media (max-width: 640px) {
+    .podium { min-height:155px; padding:20px 12px 17px; border-radius:18px; }
+    .podium .medal { font-size:34px; }
+    .podium .name { font-size:19px; }
+    .podium .score { font-size:27px; }
+}
 @media (max-width: 640px) { .block-container { padding-left: .8rem; padding-right: .8rem; } h1 {font-size:2rem !important;} }
 </style>
 """, unsafe_allow_html=True)
@@ -396,6 +436,38 @@ def load_all_events_for_export():
              .order("created_at", desc=True))
     return fetch_all_pages(query)
 
+
+@st.cache_data(ttl=300, max_entries=2, show_spinner=False)
+def make_export_workbook(ranking_records, event_records):
+    """Gera o Excel uma vez e reaproveita o arquivo durante os reruns do Streamlit."""
+    ranking_df = pd.DataFrame(ranking_records)
+    events_df = pd.DataFrame(event_records)
+    if not events_df.empty and "created_at" in events_df.columns:
+        events_df["created_at"] = events_df["created_at"].astype(str)
+
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine="openpyxl") as writer:
+        ranking_df.to_excel(writer, index=False, sheet_name="Ranking do mês")
+        events_df.to_excel(writer, index=False, sheet_name="Historico completo")
+        for ws in writer.book.worksheets:
+            ws.freeze_panes = "A2"
+            ws.auto_filter.ref = ws.dimensions
+            ws.sheet_view.showGridLines = False
+            for cell in ws[1]:
+                cell.fill = PatternFill("solid", fgColor="17365D")
+                cell.font = Font(color="FFFFFF", bold=True)
+                cell.alignment = Alignment(horizontal="center", vertical="center")
+            ws.row_dimensions[1].height = 26
+            for col in ws.columns:
+                letter = get_column_letter(col[0].column)
+                max_len = max((len(str(cell.value)) if cell.value is not None else 0) for cell in col)
+                ws.column_dimensions[letter].width = min(max(max_len + 3, 12), 34)
+            for row in ws.iter_rows(min_row=2):
+                for cell in row:
+                    cell.alignment = Alignment(vertical="center")
+                    cell.border = Border(bottom=Side(style="hair", color="D9E2F3"))
+    return output.getvalue()
+
 try:
     players = load_players()
     if not players:
@@ -406,7 +478,6 @@ try:
         db.table("players").upsert(fallback_rows, on_conflict="name").execute()
         load_players.clear()
         players = load_players()
-    events = load_events(CURRENT_MONTH)
 except Exception as e:
     st.error("Erro ao carregar os dados do Supabase.")
     st.code(str(e))
@@ -414,16 +485,7 @@ except Exception as e:
 
 player_names = [p["name"] for p in players]
 
-# Carrega somente os lançamentos do mês atual na abertura do painel.
-events_df = pd.DataFrame(events)
-if not events_df.empty:
-    events_df["created_at"] = pd.to_datetime(events_df["created_at"], errors="coerce", utc=True)
-    events_df["data_local"] = events_df["created_at"].dt.tz_convert("America/Sao_Paulo")
-    events_df["mes"] = CURRENT_MONTH
-else:
-    events_df = pd.DataFrame(columns=["id", "player", "category", "activity", "points", "created_at", "data_local", "mes"])
-
-# --- Ranking: as regras e os limites são aplicados separadamente em cada mês ---
+# Os lançamentos do mês permanecem em registros simples até a tela que precisar deles.\n\n# --- Ranking: as regras e os limites são aplicados separadamente em cada mês ---
 def build_ranking(players_data, events_data):
     # Agrega os lançamentos uma única vez, em vez de percorrer os eventos
     # novamente para cada jogador.
@@ -515,8 +577,6 @@ except Exception:
     st.warning("Não foi possível atualizar a lista do histórico neste momento.")
     archived_months = set()
 
-current_events = events
-ranking = build_ranking(players, current_events)
 month_options = sorted(archived_months | {CURRENT_MONTH}, reverse=True)
 
 def month_label(month_key):
@@ -530,15 +590,9 @@ def render_live_ranking(player_mode=False):
     fresh_players = load_players()
     now_local = datetime.now(TZ)
     month_now = now_local.strftime("%Y-%m")
-    fresh_events = load_events(month_now)
-    month_events = []
-    for event in fresh_events:
-        try:
-            event_month = pd.to_datetime(event.get("created_at"), errors="coerce", utc=True).tz_convert(TZ).strftime("%Y-%m")
-            if event_month == month_now:
-                month_events.append(event)
-        except Exception:
-            continue
+    # load_events já aplica os limites UTC correspondentes ao mês local;
+    # não é necessário converter cada timestamp novamente no navegador/servidor.
+    month_events = load_events(month_now)
     live_ranking = build_ranking(fresh_players, month_events)
     st.caption(f"Atualização automática a cada 60 segundos • Última verificação: {now_local.strftime('%H:%M:%S')}")
     st.subheader(f"🏆 Ranking do mês — {month_label(month_now)}")
@@ -552,15 +606,27 @@ def render_live_ranking(player_mode=False):
     c3.metric("📝 Lançamentos no mês", len(month_events))
     st.markdown("### 🏅 Pódio do mês")
     top = live_ranking.head(3).to_dict("records") if not live_ranking.empty else []
-    order = [(1, "🥇", "first"), (2, "🥈", ""), (3, "🥉", "")]
-    cols = st.columns(3)
+    order = [(1, "🥇", "gold"), (2, "🥈", "silver"), (3, "🥉", "bronze")]
+    cols = st.columns(3, gap="medium")
     for col, (pos, medal, cls) in zip(cols, order):
         with col:
             if len(top) >= pos:
                 item = top[pos - 1]
-                st.markdown(f"<div class='podium {cls}'><div class='medal'>{medal}</div><div class='name'>{item['Jogador']}</div><div class='score'>{int(item['Total'])} pts</div><div class='small-note'>{pos}º LUGAR</div></div>", unsafe_allow_html=True)
+                safe_name = html.escape(str(item.get("Jogador", "Jogador")))
+                score = int(item.get("Total") or 0)
+                st.markdown(
+                    f"<div class='podium {cls}'><div class='medal'>{medal}</div>"
+                    f"<div class='name'>{safe_name}</div><div class='score'>{score} pts</div>"
+                    f"<div class='small-note'>{pos}º LUGAR</div></div>",
+                    unsafe_allow_html=True
+                )
             else:
-                st.markdown("<div class='podium'><div class='medal'>🏆</div><div class='name'>Aguardando</div><div class='small-note'>SEM PONTUAÇÃO</div></div>", unsafe_allow_html=True)
+                st.markdown(
+                    "<div class='podium empty'><div class='medal'>🏆</div>"
+                    "<div class='name'>Aguardando</div>"
+                    "<div class='small-note'>SEM PONTUAÇÃO</div></div>",
+                    unsafe_allow_html=True
+                )
     st.markdown("### 📊 Classificação completa")
     if player_mode:
         st.dataframe(live_ranking[["Posição", "Jogador", "Guerras", "Liga", "Doações", "Jogos", "Penalidades", "Total"]], use_container_width=True, hide_index=True, height=620)
@@ -637,6 +703,7 @@ if aba == "➕ Lançar pontos":
                 }).execute()
                 load_events.clear()
                 load_all_events_for_export.clear()
+                make_export_workbook.clear()
                 st.success("Lançamento salvo no mês atual!")
                 st.rerun()
             except Exception as e:
@@ -645,6 +712,7 @@ if aba == "➕ Lançar pontos":
 
 if aba == "✏️ Editar lançamento":
     st.subheader("✏️ Editar lançamento")
+    current_events = load_events(CURRENT_MONTH)
     st.caption("Escolha um lançamento do mês atual para corrigir. O registro original será atualizado, sem duplicar pontos.")
     current_event_options = []
     current_event_lookup = {}
@@ -681,6 +749,7 @@ if aba == "✏️ Editar lançamento":
                 }).eq("id", selected_event["id"]).execute()
                 load_events.clear()
                 load_all_events_for_export.clear()
+                make_export_workbook.clear()
                 st.success("Lançamento atualizado com sucesso! O ranking será recalculado.")
                 st.rerun()
             except Exception as e:
@@ -792,36 +861,18 @@ if aba == "📜 Histórico mensal":
 if aba == "📤 Exportar":
     st.subheader("📤 Exportar dados")
     st.caption(f"O ranking exportado corresponde ao mês atual: {month_label(CURRENT_MONTH)}. O histórico completo é carregado somente nesta seção.")
-    out = io.BytesIO()
-    # O Excel não aceita datas com fuso horário; convertemos apenas a cópia exportada.
-    export_events_df = pd.DataFrame(load_all_events_for_export())
-    if not export_events_df.empty:
-        export_events_df["created_at"] = export_events_df["created_at"].astype(str)
-
-    with pd.ExcelWriter(out, engine="openpyxl") as writer:
-        ranking.to_excel(writer, index=False, sheet_name="Ranking do mês")
-        export_events_df.to_excel(writer, index=False, sheet_name="Historico completo")
-        for ws in writer.book.worksheets:
-            ws.freeze_panes = "A2"
-            ws.auto_filter.ref = ws.dimensions
-            ws.sheet_view.showGridLines = False
-            for cell in ws[1]:
-                cell.fill = PatternFill("solid", fgColor="17365D")
-                cell.font = Font(color="FFFFFF", bold=True)
-                cell.alignment = Alignment(horizontal="center", vertical="center")
-            ws.row_dimensions[1].height = 26
-            for col in ws.columns:
-                letter = get_column_letter(col[0].column)
-                max_len = max((len(str(c.value)) if c.value is not None else 0) for c in col)
-                ws.column_dimensions[letter].width = min(max(max_len + 3, 12), 34)
-            for row in ws.iter_rows(min_row=2):
-                for cell in row:
-                    cell.alignment = Alignment(vertical="center")
-                    cell.border = Border(bottom=Side(style="hair", color="D9E2F3"))
+    current_events = load_events(CURRENT_MONTH)
+    ranking = build_ranking(players, current_events)
+    export_events = load_all_events_for_export()
+    with st.spinner("Preparando o arquivo Excel..."):
+        excel_bytes = make_export_workbook(
+            ranking.to_dict("records"),
+            export_events
+        )
 
     st.download_button(
         "⬇️ Baixar Excel (ranking do mês + histórico completo)",
-        data=out.getvalue(),
+        data=excel_bytes,
         file_name=f"Ghost_Hunt_{CURRENT_MONTH}.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         use_container_width=True
