@@ -73,7 +73,6 @@ def get_db(url, key):
 
 try:
     db = get_db(SUPABASE_URL, SUPABASE_SECRET_KEY)
-    db.table("players").select("name").limit(1).execute()
 except Exception as e:
     st.error("Não foi possível conectar ao Supabase. Confira a URL, a chave secreta e se as tabelas players e events foram criadas.")
     st.code(str(e))
@@ -295,23 +294,36 @@ PLAYERS_FALLBACK = [
     "Poseidon", "Extreme", "Allen", "Matheus", "Weslezeira", "Pedroska", "Thawa", "Vinicius", "Zagui", "Silva", "Electros"
 ]
 
-@st.cache_data(ttl=300, max_entries=4)
+@st.cache_data(ttl=300, max_entries=4, show_spinner=False)
 def load_players():
     return db.table("players").select("name,eligible,whatsapp").order("name").execute().data or []
 
-@st.cache_data(ttl=300, max_entries=4)
-def load_events():
-    return db.table("events").select("id,player,category,activity,points,created_at").order("created_at", desc=True).execute().data or []
+def month_utc_bounds(month_key):
+    year, month = map(int, month_key.split("-"))
+    start_local = datetime(year, month, 1, tzinfo=TZ)
+    end_local = datetime(year + (month == 12), 1 if month == 12 else month + 1, 1, tzinfo=TZ)
+    return start_local.astimezone(ZoneInfo("UTC")), end_local.astimezone(ZoneInfo("UTC"))
+
+@st.cache_data(ttl=60, max_entries=8, show_spinner=False)
+def load_events(month_key):
+    start_utc, end_utc = month_utc_bounds(month_key)
+    return (db.table("events").select("id,player,category,activity,points,created_at")
+            .gte("created_at", start_utc.isoformat()).lt("created_at", end_utc.isoformat())
+            .order("created_at", desc=True).execute().data or [])
+
+@st.cache_data(ttl=300, max_entries=2, show_spinner=False)
+def load_all_events_for_export():
+    return (db.table("events").select("id,player,category,activity,points,created_at")
+            .order("created_at", desc=True).execute().data or [])
 
 try:
     players = load_players()
     if not players:
-        names = PLAYERS_FALLBACK
-        for name in dict.fromkeys(names):
+        for name in dict.fromkeys(PLAYERS_FALLBACK):
             db.table("players").upsert({"name": name, "eligible": "Elegível", "whatsapp": "Sim"}).execute()
         load_players.clear()
         players = load_players()
-    events = load_events()
+    events = load_events(CURRENT_MONTH)
 except Exception as e:
     st.error("Erro ao carregar os dados do Supabase.")
     st.code(str(e))
@@ -319,12 +331,12 @@ except Exception as e:
 
 player_names = [p["name"] for p in players]
 
-# Converte os horários para o fuso de Brasília antes de separar os meses.
+# Carrega somente os lançamentos do mês atual na abertura do painel.
 events_df = pd.DataFrame(events)
 if not events_df.empty:
     events_df["created_at"] = pd.to_datetime(events_df["created_at"], errors="coerce", utc=True)
     events_df["data_local"] = events_df["created_at"].dt.tz_convert("America/Sao_Paulo")
-    events_df["mes"] = events_df["data_local"].dt.strftime("%Y-%m")
+    events_df["mes"] = CURRENT_MONTH
 else:
     events_df = pd.DataFrame(columns=["id", "player", "category", "activity", "points", "created_at", "data_local", "mes"])
 
@@ -365,70 +377,42 @@ def build_ranking(players_data, events_data):
     return df
 
 
-# Arquiva uma fotografia dos rankings de meses encerrados.
-# A rotina roda quando o painel é aberto; não depende de apagar os lançamentos.
-def archive_closed_months():
-    """Arquiva somente meses ausentes, consultando os meses existentes uma única vez."""
-    closed_months = sorted(
-        set(events_df["mes"].dropna().tolist()) - {CURRENT_MONTH}
-    ) if not events_df.empty else []
-    if not closed_months:
-        return set()
-
-    existing_rows = db.table("monthly_rankings").select("month_key").execute().data or []
-    existing_months = {r["month_key"] for r in existing_rows if r.get("month_key")}
-
-    for month_key in closed_months:
-        if month_key in existing_months:
-            continue
-        month_df = events_df[events_df["mes"] == month_key].copy()
-        month_events = month_df[["id", "player", "category", "activity", "points", "created_at"]].to_dict("records")
-        month_ranking = build_ranking(players, month_events)
-        snapshot = [{
-            "month_key": month_key,
-            "player": row["Jogador"],
-            "position": int(row["Posição"]),
-            "eligible": row["Elegibilidade"],
-            "whatsapp": row["WhatsApp"],
-            "wars": int(row["Guerras"]),
-            "league": int(row["Liga"]),
-            "donations": int(row["Doações"]),
-            "games": int(row["Jogos"]),
-            "penalties": int(row["Penalidades"]),
-            "total": int(row["Total"]),
-        } for row in month_ranking.to_dict("records")]
-        if snapshot:
-            db.table("monthly_rankings").upsert(snapshot, on_conflict="month_key,player").execute()
-            existing_months.add(month_key)
-    return existing_months
-
-
-@st.cache_data(ttl=300, max_entries=4)
+# Na virada do mês, arquiva somente o mês imediatamente anterior, se necessário.
+@st.cache_data(ttl=300, max_entries=4, show_spinner=False)
 def load_archived_months():
     rows = db.table("monthly_rankings").select("month_key").execute().data or []
     return sorted({r["month_key"] for r in rows if r.get("month_key")})
 
+def ensure_previous_month_archive():
+    previous_month = (datetime.now(TZ).replace(day=1) - timedelta(days=1)).strftime("%Y-%m")
+    if previous_month in set(load_archived_months()):
+        return
+    previous_events = load_events(previous_month)
+    if not previous_events:
+        return
+    previous_ranking = build_ranking(players, previous_events)
+    snapshot = [{
+        "month_key": previous_month, "player": row["Jogador"],
+        "position": int(row["Posição"]), "eligible": row["Elegibilidade"],
+        "whatsapp": row["WhatsApp"], "wars": int(row["Guerras"]),
+        "league": int(row["Liga"]), "donations": int(row["Doações"]),
+        "games": int(row["Jogos"]), "penalties": int(row["Penalidades"]),
+        "total": int(row["Total"]),
+    } for row in previous_ranking.to_dict("records")]
+    if snapshot:
+        db.table("monthly_rankings").upsert(snapshot, on_conflict="month_key,player").execute()
+        load_archived_months.clear()
 
 try:
-    archive_closed_months()
+    ensure_previous_month_archive()
     archived_months = set(load_archived_months())
-except Exception as e:
-    st.error("Não foi possível consultar ou arquivar os rankings mensais.")
-    st.code(str(e))
-    st.stop()
+except Exception:
+    st.warning("Não foi possível atualizar a lista do histórico neste momento.")
+    archived_months = set()
 
-
-current_events = [
-    e for e in events
-    if e.get("created_at") and pd.to_datetime(e["created_at"], errors="coerce", utc=True).tz_convert(TZ).strftime("%Y-%m") == CURRENT_MONTH
-]
+current_events = events
 ranking = build_ranking(players, current_events)
-
-# Meses disponíveis no histórico. O mês atual sempre aparece, mesmo sem lançamentos.
-available_months = set(events_df["mes"].dropna().tolist()) if not events_df.empty else set()
-available_months.update(archived_months)
-available_months.add(CURRENT_MONTH)
-month_options = sorted(available_months, reverse=True)
+month_options = sorted(archived_months | {CURRENT_MONTH}, reverse=True)
 
 def month_label(month_key):
     try:
@@ -439,9 +423,9 @@ def month_label(month_key):
 def render_live_ranking(player_mode=False):
     """Atualiza somente a área do ranking a cada 60 segundos."""
     fresh_players = load_players()
-    fresh_events = load_events()
     now_local = datetime.now(TZ)
     month_now = now_local.strftime("%Y-%m")
+    fresh_events = load_events(month_now)
     month_events = []
     for event in fresh_events:
         try:
@@ -507,12 +491,18 @@ if not is_admin:
     st.stop()
 
 # --- Navegação ---
-aba = st.tabs(["🏆 Ranking do mês", "➕ Lançar pontos", "✏️ Editar lançamento", "👥 Jogadores", "📜 Histórico mensal", "📤 Exportar"])
+aba = st.radio(
+    "Navegação",
+    ["🏆 Ranking do mês", "➕ Lançar pontos", "✏️ Editar lançamento", "👥 Jogadores", "📜 Histórico mensal", "📤 Exportar"],
+    horizontal=True,
+    label_visibility="collapsed",
+    key="main_navigation"
+)
 
-with aba[0]:
+if aba == "🏆 Ranking do mês":
     live_ranking_fragment(player_mode=False)
 
-with aba[1]:
+if aba == "➕ Lançar pontos":
     st.subheader("➕ Lançar pontuação")
     if not player_names:
         st.warning("Cadastre um jogador primeiro.")
@@ -552,13 +542,14 @@ with aba[1]:
                     "points": int(pts)
                 }).execute()
                 load_events.clear()
+                load_all_events_for_export.clear()
                 st.success("Lançamento salvo no mês atual!")
                 st.rerun()
             except Exception as e:
                 st.error("Não foi possível salvar o lançamento.")
                 st.code(str(e))
 
-with aba[2]:
+if aba == "✏️ Editar lançamento":
     st.subheader("✏️ Editar lançamento")
     st.caption("Escolha um lançamento do mês atual para corrigir. O registro original será atualizado, sem duplicar pontos.")
     current_event_options = []
@@ -595,13 +586,14 @@ with aba[2]:
                     "points": int(edit_points)
                 }).eq("id", selected_event["id"]).execute()
                 load_events.clear()
+                load_all_events_for_export.clear()
                 st.success("Lançamento atualizado com sucesso! O ranking será recalculado.")
                 st.rerun()
             except Exception as e:
                 st.error("Não foi possível atualizar o lançamento.")
                 st.code(str(e))
 
-with aba[3]:
+if aba == "👥 Jogadores":
     st.subheader("👥 Gerenciar jogadores")
     st.markdown("### 🔐 Aprovar acessos dos jogadores")
     try:
@@ -644,7 +636,7 @@ with aba[3]:
                 st.success("Cadastro atualizado.")
                 st.rerun()
 
-with aba[4]:
+if aba == "📜 Histórico mensal":
     st.subheader("📜 Histórico mensal")
     st.caption("Escolha um mês para consultar o ranking final e todos os lançamentos daquele período. O histórico completo é mantido no Supabase.")
     selected_month = st.selectbox(
@@ -654,8 +646,12 @@ with aba[4]:
         format_func=month_label
     )
 
-    month_events_df = events_df[events_df["mes"] == selected_month].copy() if not events_df.empty else pd.DataFrame()
-    month_events = month_events_df[["id", "player", "category", "activity", "points", "created_at"]].to_dict("records") if not month_events_df.empty else []
+    month_events = load_events(selected_month)
+    month_events_df = pd.DataFrame(month_events)
+    if not month_events_df.empty:
+        month_events_df["created_at"] = pd.to_datetime(month_events_df["created_at"], errors="coerce", utc=True)
+        month_events_df["data_local"] = month_events_df["created_at"].dt.tz_convert("America/Sao_Paulo")
+        month_events_df["mes"] = selected_month
     saved_snapshot = (
         db.table("monthly_rankings")
         .select("*")
@@ -699,17 +695,14 @@ with aba[4]:
     else:
         st.info("Não há lançamentos registrados neste mês.")
 
-with aba[5]:
+if aba == "📤 Exportar":
     st.subheader("📤 Exportar dados")
-    st.caption(f"O ranking exportado corresponde ao mês atual: {month_label(CURRENT_MONTH)}. O histórico exportado inclui todos os meses.")
+    st.caption(f"O ranking exportado corresponde ao mês atual: {month_label(CURRENT_MONTH)}. O histórico completo é carregado somente nesta seção.")
     out = io.BytesIO()
     # O Excel não aceita datas com fuso horário; convertemos apenas a cópia exportada.
-    export_events_df = events_df.copy()
+    export_events_df = pd.DataFrame(load_all_events_for_export())
     if not export_events_df.empty:
-        if "created_at" in export_events_df.columns:
-            export_events_df["created_at"] = export_events_df["created_at"].astype(str)
-        if "data_local" in export_events_df.columns:
-            export_events_df["data_local"] = export_events_df["data_local"].dt.strftime("%d/%m/%Y %H:%M:%S")
+        export_events_df["created_at"] = export_events_df["created_at"].astype(str)
 
     with pd.ExcelWriter(out, engine="openpyxl") as writer:
         ranking.to_excel(writer, index=False, sheet_name="Ranking do mês")
