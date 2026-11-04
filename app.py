@@ -7,10 +7,7 @@ from zoneinfo import ZoneInfo
 
 import pandas as pd
 import streamlit as st
-try:
-    import extra_streamlit_components as stx
-except Exception:
-    stx = None
+import extra_streamlit_components as stx
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 from supabase import create_client
@@ -87,42 +84,7 @@ if "auth_player" not in st.session_state:
 
 DEVICE_COOKIE = "ghost_hunt_device"
 DEVICE_DAYS = 30
-cookie_manager = None
-
-
-def get_cookie_manager():
-    """Carrega o componente apenas quando precisa gravar/apagar o cookie."""
-    global cookie_manager
-    if cookie_manager is None and stx is not None:
-        try:
-            cookie_manager = stx.CookieManager(key="ghost_hunt_cookie_manager")
-        except Exception:
-            cookie_manager = None
-    return cookie_manager
-
-
-# Inicializa o componente de cookies em TODA execução do app.
-# Assim, após um refresh, o navegador tem oportunidade de devolver os
-# cookies antes de a tela de login ser exibida.
-cookie_manager = get_cookie_manager()
-
-def get_device_cookie():
-    """Lê primeiro o cookie HTTP e depois o valor já carregado pelo componente."""
-    try:
-        value = st.context.cookies.get(DEVICE_COOKIE)
-        if value:
-            return value
-    except Exception:
-        pass
-    manager = get_cookie_manager()
-    if manager is not None:
-        try:
-            value = manager.get(DEVICE_COOKIE)
-            if value:
-                return value
-        except Exception:
-            pass
-    return None
+cookie_manager = stx.CookieManager(key="ghost_hunt_cookie_manager")
 
 
 def hash_password(password, salt=None):
@@ -150,38 +112,30 @@ def issue_device_session(role, player_name=None):
         "player_name": player_name,
         "expires_at": expires_at.isoformat()
     }).execute()
-    # O login permanece válido nesta sessão mesmo se o componente de cookie falhar.
-    manager = get_cookie_manager()
-    if manager is not None:
-        try:
-            manager.set(DEVICE_COOKIE, raw_token, key="set_ghost_hunt_device", expires_at=expires_at.replace(tzinfo=None), path="/", same_site="lax", secure=True)
-        except Exception:
-            pass
+    cookie_manager.set(DEVICE_COOKIE, raw_token, expires_at=expires_at.replace(tzinfo=None))
     st.session_state.auth_role = role
     st.session_state.auth_player = player_name
 
 
 def revoke_current_device():
-    raw_token = get_device_cookie()
+    raw_token = cookie_manager.get(DEVICE_COOKIE)
     if raw_token:
         token_hash = hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
         try:
             db.table("device_sessions").delete().eq("token_hash", token_hash).execute()
         except Exception:
             pass
-    manager = get_cookie_manager()
-    if manager is not None:
-        try:
-            manager.delete(DEVICE_COOKIE)
-        except Exception:
-            pass
+    try:
+        cookie_manager.delete(DEVICE_COOKIE)
+    except Exception:
+        pass
     st.session_state.auth_role = None
     st.session_state.auth_player = None
 
 
 # Recupera o acesso salvo neste navegador quando a sessão do Streamlit é reiniciada.
 if st.session_state.auth_role is None:
-    saved_token = get_device_cookie()
+    saved_token = cookie_manager.get(DEVICE_COOKIE)
     if saved_token:
         saved_hash = hashlib.sha256(saved_token.encode("utf-8")).hexdigest()
         try:
@@ -298,11 +252,11 @@ PLAYERS_FALLBACK = [
     "Poseidon", "Extreme", "Allen", "Matheus", "Weslezeira", "Pedroska", "Thawa", "Vinicius", "Zagui", "Silva", "Electros"
 ]
 
-@st.cache_data(ttl=300, max_entries=4)
+@st.cache_data(ttl=20)
 def load_players():
     return db.table("players").select("name,eligible,whatsapp").order("name").execute().data or []
 
-@st.cache_data(ttl=60, max_entries=4)
+@st.cache_data(ttl=20)
 def load_events():
     return db.table("events").select("id,player,category,activity,points,created_at").order("created_at", desc=True).execute().data or []
 
@@ -371,50 +325,59 @@ def build_ranking(players_data, events_data):
 # Arquiva uma fotografia dos rankings de meses encerrados.
 # A rotina roda quando o painel é aberto; não depende de apagar os lançamentos.
 def archive_closed_months():
-    """Arquiva somente meses ausentes, consultando os meses existentes uma única vez."""
     closed_months = sorted(
         set(events_df["mes"].dropna().tolist()) - {CURRENT_MONTH}
     ) if not events_df.empty else []
-    if not closed_months:
-        return set()
-
-    existing_rows = db.table("monthly_rankings").select("month_key").execute().data or []
-    existing_months = {r["month_key"] for r in existing_rows if r.get("month_key")}
 
     for month_key in closed_months:
-        if month_key in existing_months:
+        existing = (
+            db.table("monthly_rankings")
+            .select("id")
+            .eq("month_key", month_key)
+            .limit(1)
+            .execute()
+            .data or []
+        )
+        if existing:
             continue
+
         month_df = events_df[events_df["mes"] == month_key].copy()
-        month_events = month_df[["id", "player", "category", "activity", "points", "created_at"]].to_dict("records")
+        month_events = month_df[
+            ["id", "player", "category", "activity", "points", "created_at"]
+        ].to_dict("records")
+
         month_ranking = build_ranking(players, month_events)
-        snapshot = [{
-            "month_key": month_key,
-            "player": row["Jogador"],
-            "position": int(row["Posição"]),
-            "eligible": row["Elegibilidade"],
-            "whatsapp": row["WhatsApp"],
-            "wars": int(row["Guerras"]),
-            "league": int(row["Liga"]),
-            "donations": int(row["Doações"]),
-            "games": int(row["Jogos"]),
-            "penalties": int(row["Penalidades"]),
-            "total": int(row["Total"]),
-        } for row in month_ranking.to_dict("records")]
+        snapshot = []
+        for row in month_ranking.to_dict("records"):
+            snapshot.append({
+                "month_key": month_key,
+                "player": row["Jogador"],
+                "position": int(row["Posição"]),
+                "eligible": row["Elegibilidade"],
+                "whatsapp": row["WhatsApp"],
+                "wars": int(row["Guerras"]),
+                "league": int(row["Liga"]),
+                "donations": int(row["Doações"]),
+                "games": int(row["Jogos"]),
+                "penalties": int(row["Penalidades"]),
+                "total": int(row["Total"]),
+            })
+
         if snapshot:
-            db.table("monthly_rankings").upsert(snapshot, on_conflict="month_key,player").execute()
-            existing_months.add(month_key)
-    return existing_months
-
-
-@st.cache_data(ttl=300, max_entries=4)
-def load_archived_months():
-    rows = db.table("monthly_rankings").select("month_key").execute().data or []
-    return sorted({r["month_key"] for r in rows if r.get("month_key")})
+            db.table("monthly_rankings").upsert(
+                snapshot, on_conflict="month_key,player"
+            ).execute()
 
 
 try:
     archive_closed_months()
-    archived_months = set(load_archived_months())
+    archived_month_rows = (
+        db.table("monthly_rankings")
+        .select("month_key")
+        .execute()
+        .data or []
+    )
+    archived_months = {r["month_key"] for r in archived_month_rows}
 except Exception as e:
     st.error("Não foi possível consultar ou arquivar os rankings mensais.")
     st.code(str(e))
@@ -439,68 +402,28 @@ def month_label(month_key):
     except Exception:
         return month_key
 
-def render_live_ranking(player_mode=False):
-    """Atualiza somente a área do ranking a cada 60 segundos."""
-    fresh_players = load_players()
-    fresh_events = load_events()
-    now_local = datetime.now(TZ)
-    month_now = now_local.strftime("%Y-%m")
-    month_events = []
-    for event in fresh_events:
-        try:
-            event_month = pd.to_datetime(event.get("created_at"), errors="coerce", utc=True).tz_convert(TZ).strftime("%Y-%m")
-            if event_month == month_now:
-                month_events.append(event)
-        except Exception:
-            continue
-    live_ranking = build_ranking(fresh_players, month_events)
-    st.caption(f"Atualização automática a cada 60 segundos • Última verificação: {now_local.strftime('%H:%M:%S')}")
-    st.subheader(f"🏆 Ranking do mês — {month_label(month_now)}")
-    if player_mode:
-        st.caption(f"Bem-vindo(a), {st.session_state.auth_player}! Este acesso permite somente visualizar a classificação.")
-    else:
-        st.caption("A pontuação é reiniciada automaticamente na virada do mês. Os lançamentos antigos permanecem no histórico.")
-    c1, c2, c3 = st.columns(3)
-    c1.metric("👥 Jogadores", len(fresh_players))
-    c2.metric("🥇 Pontos do líder", int(live_ranking.iloc[0]["Total"]) if not live_ranking.empty else 0)
-    c3.metric("📝 Lançamentos no mês", len(month_events))
-    st.markdown("### 🏅 Pódio do mês")
-    top = live_ranking.head(3).to_dict("records") if not live_ranking.empty else []
-    order = [(1, "🥇", "first"), (2, "🥈", ""), (3, "🥉", "")]
-    cols = st.columns(3)
-    for col, (pos, medal, cls) in zip(cols, order):
-        with col:
-            if len(top) >= pos:
-                item = top[pos - 1]
-                st.markdown(f"<div class='podium {cls}'><div class='medal'>{medal}</div><div class='name'>{item['Jogador']}</div><div class='score'>{int(item['Total'])} pts</div><div class='small-note'>{pos}º LUGAR</div></div>", unsafe_allow_html=True)
-            else:
-                st.markdown("<div class='podium'><div class='medal'>🏆</div><div class='name'>Aguardando</div><div class='small-note'>SEM PONTUAÇÃO</div></div>", unsafe_allow_html=True)
-    st.markdown("### 📊 Classificação completa")
-    if player_mode:
-        st.dataframe(live_ranking[["Posição", "Jogador", "Guerras", "Liga", "Doações", "Jogos", "Penalidades", "Total"]], use_container_width=True, hide_index=True, height=620)
-    else:
-        st.caption("🥇 1º lugar • 🥈 2º lugar • 🥉 3º lugar")
-        def destacar_podio(row):
-            posicao = int(row.get("Posição", 0))
-            if posicao == 1:
-                cor = "background-color: #5a461d; color: #fff2c2; font-weight: 800;"
-            elif posicao == 2:
-                cor = "background-color: #3d4653; color: #f0f3f7; font-weight: 800;"
-            elif posicao == 3:
-                cor = "background-color: #55392c; color: #ffe0cc; font-weight: 800;"
-            else:
-                cor = ""
-            return [cor] * len(row)
-        st.dataframe(live_ranking.style.apply(destacar_podio, axis=1), use_container_width=True, hide_index=True, height=620)
-
-
-@st.fragment(run_every="60s")
-def live_ranking_fragment(player_mode=False):
-    render_live_ranking(player_mode)
-
 # Jogadores autenticados só recebem a tela de consulta; abas e ações administrativas não são renderizadas.
 if not is_admin:
-    live_ranking_fragment(player_mode=True)
+    st.subheader(f"🏆 Ranking do mês — {month_label(CURRENT_MONTH)}")
+    st.caption(f"Bem-vindo(a), {st.session_state.auth_player}! Este acesso permite somente visualizar a classificação.")
+    c1, c2, c3 = st.columns(3)
+    c1.metric("👥 Jogadores", len(players))
+    c2.metric("🥇 Pontos do líder", int(ranking.iloc[0]["Total"]) if not ranking.empty else 0)
+    c3.metric("📝 Lançamentos no mês", len(current_events))
+    st.markdown("### 🏅 Pódio do mês")
+    if not ranking.empty:
+        top = ranking.head(3).to_dict("records")
+        order = [(1, "🥇", "first"), (2, "🥈", ""), (3, "🥉", "")]
+        cols = st.columns(3)
+        for col, (pos, medal, cls) in zip(cols, order):
+            with col:
+                if len(top) >= pos:
+                    item = top[pos - 1]
+                    st.markdown(f"<div class='podium {cls}'><div class='medal'>{medal}</div><div class='name'>{item['Jogador']}</div><div class='score'>{int(item['Total'])} pts</div><div class='small-note'>{pos}º LUGAR</div></div>", unsafe_allow_html=True)
+                else:
+                    st.markdown("<div class='podium'><div class='medal'>🏆</div><div class='name'>Aguardando</div><div class='small-note'>SEM PONTUAÇÃO</div></div>", unsafe_allow_html=True)
+    st.markdown("### 📊 Classificação completa")
+    st.dataframe(ranking[["Posição", "Jogador", "Guerras", "Liga", "Doações", "Jogos", "Penalidades", "Total"]], use_container_width=True, hide_index=True, height=620)
     with st.sidebar:
         st.success("🟢 Acesso de jogador")
         st.caption(f"Conta: {st.session_state.auth_player}")
@@ -513,7 +436,45 @@ if not is_admin:
 aba = st.tabs(["🏆 Ranking do mês", "➕ Lançar pontos", "✏️ Editar lançamento", "👥 Jogadores", "📜 Histórico mensal", "📤 Exportar"])
 
 with aba[0]:
-    live_ranking_fragment(player_mode=False)
+    st.subheader(f"🏆 Ranking de {month_label(CURRENT_MONTH)}")
+    st.caption("A pontuação é reiniciada automaticamente na virada do mês. Os lançamentos antigos permanecem no histórico.")
+    c1, c2, c3 = st.columns(3)
+    c1.metric("👥 Jogadores", len(players))
+    c2.metric("🥇 Pontos do líder", int(ranking.iloc[0]["Total"]) if not ranking.empty else 0)
+    c3.metric("📝 Lançamentos no mês", len(current_events))
+
+    st.markdown("### 🏅 Pódio do mês")
+    if not ranking.empty:
+        top = ranking.head(3).to_dict("records")
+        order = [(1, "🥇", "first"), (2, "🥈", ""), (3, "🥉", "")]
+        cols = st.columns(3)
+        for col, (pos, medal, cls) in zip(cols, order):
+            with col:
+                if len(top) >= pos:
+                    item = top[pos - 1]
+                    st.markdown(
+                        f"<div class='podium {cls}'><div class='medal'>{medal}</div><div class='name'>{item['Jogador']}</div><div class='score'>{int(item['Total'])} pts</div><div class='small-note'>{pos}º LUGAR</div></div>",
+                        unsafe_allow_html=True
+                    )
+                else:
+                    st.markdown("<div class='podium'><div class='medal'>🏆</div><div class='name'>Aguardando</div><div class='small-note'>SEM PONTUAÇÃO</div></div>", unsafe_allow_html=True)
+
+    st.markdown("### 📊 Classificação completa")
+    st.caption("🥇 1º lugar • 🥈 2º lugar • 🥉 3º lugar")
+
+    def destacar_podio(row):
+        posicao = int(row.get("Posição", 0))
+        if posicao == 1:
+            cor = "background-color: #5a461d; color: #fff2c2; font-weight: 800;"
+        elif posicao == 2:
+            cor = "background-color: #3d4653; color: #f0f3f7; font-weight: 800;"
+        elif posicao == 3:
+            cor = "background-color: #55392c; color: #ffe0cc; font-weight: 800;"
+        else:
+            cor = ""
+        return [cor] * len(row)
+
+    st.dataframe(ranking.style.apply(destacar_podio, axis=1), use_container_width=True, hide_index=True, height=620)
 
 with aba[1]:
     st.subheader("➕ Lançar pontuação")
