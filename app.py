@@ -101,6 +101,43 @@ box-shadow:0 4px 0 #805700,0 7px 16px rgba(0,0,0,.24)!important;
 [data-testid="stTabs"] button[role="tab"][aria-selected="true"] p{color:#1a1408!important;}
 [data-testid="stTabs"] [data-baseweb="tab-highlight"]{display:none!important;}
 [data-testid="stTabs"] [data-baseweb="tab-border"]{display:none!important;}
+
+/* Override final dos componentes BaseWeb usados pelo st.tabs */
+div[data-testid="stTabs"] [data-baseweb="tab-list"]{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:6px!important;
+  border:1px solid #345276!important;
+  border-radius:15px!important;
+  padding:5px!important;
+  background:#091525!important;
+}
+div[data-testid="stTabs"] [data-baseweb="tab"]{
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  width:100%!important;min-width:0!important;min-height:50px!important;
+  padding:9px 7px!important;border:1px solid #294563!important;
+  border-radius:13px!important;background:linear-gradient(145deg,#142b45,#0a1728)!important;
+  color:#e9eff7!important;font-weight:850!important;
+  box-shadow:0 5px 14px rgba(0,0,0,.22)!important;
+}
+div[data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"]{
+  color:#1a1408!important;
+  background:linear-gradient(180deg,#ffe99a,#f2c34e 55%,#c78b25)!important;
+  border:1px solid #ffe08a!important;
+  box-shadow:0 4px 0 #805700,0 7px 16px rgba(0,0,0,.24)!important;
+}
+div[data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] *{
+  color:#1a1408!important;
+}
+div[data-testid="stTabs"] [data-baseweb="tab-highlight"],
+div[data-testid="stTabs"] [data-baseweb="tab-border"]{
+  display:none!important;height:0!important;opacity:0!important;
+}
+div[data-testid="stTabs"] [data-baseweb="tab"]:focus,
+div[data-testid="stTabs"] [data-baseweb="tab"]:focus-visible{
+  outline:none!important;box-shadow:0 0 0 2px rgba(239,198,93,.25)!important;
+}
+
 [data-testid="stTabs"] button[role="tab"][aria-selected="true"]{color:#241805!important;font-weight:900!important;background:linear-gradient(180deg,#ffe88c,#f4bd3d 58%,#d99320)!important;border-color:#ffdf80!important;box-shadow:0 3px 12px #d99d3533!important;}
 [data-testid="stTabs"] [data-testid="stTabPanel"]{padding-top:8px!important;}
 .gh-login-heading{display:flex!important;align-items:center!important;justify-content:center!important;gap:10px!important;text-align:center!important;font-size:clamp(21px,5vw,29px)!important;font-weight:900!important;margin:12px 0 17px!important;color:#f7f8fb!important;}
@@ -108,6 +145,17 @@ box-shadow:0 4px 0 #805700,0 7px 16px rgba(0,0,0,.24)!important;
 div[data-testid="stForm"]:has(input[type="password"]){max-width:760px!important;margin:12px auto 22px!important;padding:17px!important;border:1px solid #345987!important;border-radius:18px!important;background:linear-gradient(145deg,#0d1b2d,#08111e)!important;box-shadow:0 12px 28px rgba(0,0,0,.30)!important;}
 div[data-testid="stForm"] label{font-weight:750!important;color:#e8edf5!important;}
 div[data-testid="stForm"] input{min-height:48px!important;border-radius:11px!important;border:1px solid #344d6c!important;background:#101f32!important;}
+
+div[data-testid="stForm"] input:focus,
+div[data-testid="stForm"] input:focus-visible{
+  border:1px solid #d9aa43!important;
+  box-shadow:0 0 0 2px rgba(217,170,67,.16)!important;
+  outline:none!important;
+}
+div[data-testid="stForm"] input[aria-invalid="true"]{
+  border:1px solid #b94c5b!important;
+}
+
 div[data-testid="stForm"] button[kind="primary"]{min-height:51px!important;font-weight:900!important;color:#211706!important;background:linear-gradient(180deg,#ffe88c,#f4bd3d 58%,#d98e1b)!important;border:1px solid #ffdc75!important;box-shadow:0 4px 14px #d99d3533!important;}
 @media(max-width:700px){
 .block-container{padding-top:.4rem!important;padding-left:12px!important;padding-right:12px!important;}
