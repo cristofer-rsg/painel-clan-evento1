@@ -166,6 +166,53 @@ div[data-testid="stForm"] button[kind="primary"]{min-height:51px!important;font-
 .gh-login-heading{margin:10px 0 13px!important;}.gh-login-note{padding:12px!important;margin-bottom:13px!important;}
 div[data-testid="stForm"]:has(input[type="password"]){padding:13px!important;border-radius:16px!important;}
 }
+
+/* Correção final das abas e dos campos BaseWeb */
+div[data-testid="stTabs"] [data-baseweb="tab-list"]{border-bottom:0!important;}
+div[data-testid="stTabs"] [data-baseweb="tab"],
+div[data-testid="stTabs"] button[role="tab"]{
+  border:1px solid #294563!important;border-bottom:1px solid #294563!important;
+  border-radius:13px!important;background:linear-gradient(145deg,#142b45,#0a1728)!important;
+  color:#e9eff7!important;box-shadow:0 5px 14px rgba(0,0,0,.22)!important;
+}
+div[data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"],
+div[data-testid="stTabs"] button[role="tab"][aria-selected="true"]{
+  border:1px solid #ffe08a!important;border-bottom:1px solid #ffe08a!important;
+  background:linear-gradient(180deg,#ffe99a,#f2c34e 55%,#c78b25)!important;
+  color:#1a1408!important;box-shadow:0 4px 0 #805700,0 7px 16px rgba(0,0,0,.24)!important;
+}
+div[data-testid="stTabs"] [data-baseweb="tab"]::after,
+div[data-testid="stTabs"] button[role="tab"]::after{
+  display:none!important;content:none!important;border:0!important;
+  background:transparent!important;box-shadow:none!important;
+}
+div[data-testid="stTabs"] [data-baseweb="tab-highlight"],
+div[data-testid="stTabs"] [data-baseweb="tab-border"]{
+  display:none!important;visibility:hidden!important;height:0!important;
+  background:transparent!important;border:0!important;box-shadow:none!important;
+}
+div[data-testid="stTabs"] [aria-selected="true"] *,
+div[data-testid="stTabs"] button[aria-selected="true"] *{color:#1a1408!important;}
+div[data-testid="stForm"] [data-baseweb="input"]{
+  border:1px solid #344d6c!important;border-radius:11px!important;
+  background:#101f32!important;box-shadow:none!important;
+}
+div[data-testid="stForm"] [data-baseweb="input"]:focus-within{
+  border:1px solid #d9aa43!important;box-shadow:0 0 0 2px rgba(217,170,67,.16)!important;
+}
+div[data-testid="stForm"] [data-baseweb="input"] input{
+  border:0!important;outline:0!important;box-shadow:none!important;
+  background:transparent!important;color:#f1f5fb!important;
+}
+div[data-testid="stForm"] [data-baseweb="input"] button{border:0!important;box-shadow:none!important;}
+div[data-testid="stForm"] input:-webkit-autofill,
+div[data-testid="stForm"] input:-webkit-autofill:hover,
+div[data-testid="stForm"] input:-webkit-autofill:focus{
+  -webkit-text-fill-color:#f1f5fb!important;
+  -webkit-box-shadow:0 0 0 1000px #101f32 inset!important;border:0!important;
+}
+@media(max-width:700px){div[data-testid="stTabs"] [data-baseweb="tab"]{min-height:48px!important;padding:8px 4px!important;}}
+
 </style>
 """, unsafe_allow_html=True)
 
