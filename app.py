@@ -103,6 +103,7 @@ try:
     SUPABASE_URL = st.secrets["SUPABASE_URL"]
     SUPABASE_SECRET_KEY = st.secrets["SUPABASE_SECRET_KEY"]
     ADMIN_PASSWORD = st.secrets["ADMIN_PASSWORD"]
+    OPERATOR_PASSWORD = st.secrets.get("ghosthunt", "")
 except Exception:
     st.error("Configurações ausentes. Confira SUPABASE_URL, SUPABASE_SECRET_KEY e ADMIN_PASSWORD em Settings → Secrets no Streamlit.")
     st.stop()
@@ -299,7 +300,10 @@ if st.session_state.auth_role is None:
                               .limit(1).execute().data or [])
             if saved_sessions:
                 saved = saved_sessions[0]
-                if saved.get("role") == "admin":
+                if saved.get("role") == "admin" and saved.get("player_name") == "__operator__":
+                    st.session_state.auth_role = "operator"
+                    st.session_state.auth_player = None
+                elif saved.get("role") == "admin":
                     st.session_state.auth_role = "admin"
                     st.session_state.auth_player = None
                 elif saved.get("role") == "player" and saved.get("player_name"):
@@ -322,13 +326,25 @@ if st.session_state.auth_role is None:
     login_tab, register_tab = st.tabs(["🔐 Entrar", "📝 Criar meu acesso"])
     with login_tab:
         st.subheader("🔐 Acesso Ghost Hunt")
+        st.caption("Administrador principal: informe a senha. Operador: usuário operador e senha própria. Jogadores: usuário e senha cadastrados.")
         with st.form("login_admin_player"):
             login_name = st.text_input("Nome de usuário")
             login_password = st.text_input("Senha", type="password")
             remember_device = st.checkbox("Lembrar deste aparelho por 30 dias", value=True)
             login_submit = st.form_submit_button("Entrar", use_container_width=True)
         if login_submit:
-            if login_password == ADMIN_PASSWORD:
+            if login_name.strip().casefold() == "operador" and OPERATOR_PASSWORD and login_password == OPERATOR_PASSWORD:
+                st.session_state.auth_role = "operator"
+                st.session_state.auth_player = None
+                if remember_device:
+                    try:
+                        # Usa role="admin" permitido pela tabela atual, com marcador próprio
+                        # para restaurar o perfil operador sem conceder a sessão principal.
+                        issue_device_session("admin", "__operator__")
+                    except Exception:
+                        st.warning("Login realizado. Não foi possível solicitar o salvamento deste aparelho; talvez seja necessário entrar novamente na próxima visita.")
+                st.rerun()
+            elif login_password == ADMIN_PASSWORD:
                 st.session_state.auth_role = "admin"
                 st.session_state.auth_player = None
                 if remember_device:
@@ -391,7 +407,9 @@ if st.session_state.auth_role is None:
                     st.error("Não foi possível criar o acesso. Confira se a tabela player_accounts foi criada no Supabase.")
     st.stop()
 
-is_admin = st.session_state.auth_role == "admin"
+is_admin = st.session_state.auth_role in ("admin", "operator")
+is_primary_admin = st.session_state.auth_role == "admin"
+is_operator = st.session_state.auth_role == "operator"
 
 # --- Carregamento dos dados: nenhuma tabela é apagada ou recriada ---
 PLAYERS_FALLBACK = [
@@ -887,6 +905,7 @@ if aba == "📤 Exportar":
 
 with st.sidebar:
     st.success("🟢 Conectado ao Supabase")
+    st.caption("Administrador principal" if is_primary_admin else "Operador — acesso administrativo")
     st.caption("Painel administrativo Ghost Hunt")
     st.caption(f"Temporada atual: {month_label(CURRENT_MONTH)}")
     st.markdown("---")
