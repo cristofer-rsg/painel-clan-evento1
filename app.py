@@ -203,6 +203,7 @@ def verify_password(password, stored):
 
 
 def issue_device_session(role, player_name=None):
+    """Cria uma sessão persistente e solicita ao navegador que grave o cookie."""
     if cookie_manager is None:
         raise RuntimeError("O componente de cookies não está disponível neste navegador.")
 
@@ -217,13 +218,7 @@ def issue_device_session(role, player_name=None):
         "expires_at": expires_at.isoformat()
     }).execute()
 
-    # Guarda apenas o estado pendente no servidor. Não autentica ainda.
-    st.session_state.pending_device_token = raw_token
-    st.session_state.pending_device_role = role
-    st.session_state.pending_device_player = player_name
-    st.session_state.pending_device_expires = expires_at.isoformat()
-
-    # A gravação é assíncrona no navegador; não chamar st.rerun() aqui.
+    # A gravação é solicitada ao navegador em segundo plano.
     cookie_manager.set(
         DEVICE_COOKIE,
         raw_token,
@@ -251,31 +246,8 @@ def revoke_current_device():
     st.session_state.auth_role = None
     st.session_state.auth_player = None
 
-# Confirma a gravação do cookie antes de liberar o acesso recém-criado.
-pending_token = st.session_state.get("pending_device_token")
-if pending_token:
-    visible_token = get_device_cookie()
-    if visible_token and hmac.compare_digest(str(visible_token), str(pending_token)):
-        st.session_state.auth_role = st.session_state.get("pending_device_role")
-        st.session_state.auth_player = st.session_state.get("pending_device_player")
-        for key in ("pending_device_token", "pending_device_role", "pending_device_player", "pending_device_expires"):
-            st.session_state.pop(key, None)
-        st.success("Acesso deste aparelho salvo com sucesso.")
-    else:
-        st.info("Estamos salvando o acesso neste aparelho. Quando o navegador confirmar, clique em **Verificar acesso**.")
-        if st.button("Verificar acesso", key="verify_device_cookie"):
-            refreshed_token = get_device_cookie(force_refresh=True)
-            if refreshed_token and hmac.compare_digest(str(refreshed_token), str(pending_token)):
-                st.session_state.auth_role = st.session_state.get("pending_device_role")
-                st.session_state.auth_player = st.session_state.get("pending_device_player")
-                for key in ("pending_device_token", "pending_device_role", "pending_device_player", "pending_device_expires"):
-                    st.session_state.pop(key, None)
-                st.rerun()
-            else:
-                st.warning("O navegador ainda não confirmou o cookie. Tente novamente em alguns segundos.")
-
 # Recupera o acesso salvo neste navegador quando a sessão do Streamlit é reiniciada.
-if st.session_state.auth_role is None and not st.session_state.get("pending_device_token"):
+if st.session_state.auth_role is None:
     saved_token = get_device_cookie()
     if saved_token:
         saved_hash = hashlib.sha256(saved_token.encode("utf-8")).hexdigest()
@@ -307,16 +279,6 @@ if st.session_state.auth_role is None and not st.session_state.get("pending_devi
             st.warning("Não foi possível validar o acesso salvo neste momento. Tente atualizar novamente ou entre manualmente.")
 
 if st.session_state.auth_role is None:
-    with st.expander("🔎 Diagnóstico do acesso neste aparelho", expanded=False):
-        if st.button("Verificar cookie e sessão", key="run_device_diagnostic"):
-            diagnostic = diagnose_device_session()
-            st.write("Cookie encontrado no navegador:", "Sim" if diagnostic["cookie_found"] else "Não")
-            st.write("Registro correspondente no Supabase:", "Sim" if diagnostic["session_record_found"] else "Não")
-            st.write("Sessão válida:", "Sim" if diagnostic["session_valid"] else "Não")
-            st.info(diagnostic["problem"])
-        else:
-            st.caption("A verificação não mostra senha nem token. Ela apenas confere a presença do cookie e a validade da sessão.")
-
     login_tab, register_tab = st.tabs(["🔐 Entrar", "📝 Criar meu acesso"])
     with login_tab:
         st.subheader("🔐 Acesso Ghost Hunt")
@@ -327,39 +289,27 @@ if st.session_state.auth_role is None:
             login_submit = st.form_submit_button("Entrar", use_container_width=True)
         if login_submit:
             if login_password == ADMIN_PASSWORD:
-                try:
-                    if remember_device:
+                st.session_state.auth_role = "admin"
+                st.session_state.auth_player = None
+                if remember_device:
+                    try:
                         issue_device_session("admin")
-                    else:
-                        st.session_state.auth_role = "admin"
-                        st.session_state.auth_player = None
-                    if remember_device:
-                        st.info("Aguardando a confirmação do navegador para salvar seu acesso.")
-                        if st.button("Verificar acesso salvo", key="verify_admin_cookie_now"):
-                            st.rerun()
-                    else:
-                        st.rerun()
-                except Exception:
-                    st.error("Não foi possível salvar o acesso deste aparelho. Confira se a tabela device_sessions foi criada no Supabase.")
+                    except Exception:
+                        st.warning("Login realizado. Não foi possível solicitar o salvamento deste aparelho; talvez seja necessário entrar novamente na próxima visita.")
+                st.rerun()
             else:
                 try:
                     account = (db.table("player_accounts").select("player_name,password_hash,status")
                                .ilike("player_name", login_name.strip()).limit(1).execute().data or [])
                     if account and account[0].get("status") == "approved" and verify_password(login_password, account[0]["password_hash"]):
-                        try:
-                            if remember_device:
+                        st.session_state.auth_role = "player"
+                        st.session_state.auth_player = account[0]["player_name"]
+                        if remember_device:
+                            try:
                                 issue_device_session("player", account[0]["player_name"])
-                            else:
-                                st.session_state.auth_role = "player"
-                                st.session_state.auth_player = account[0]["player_name"]
-                            if remember_device:
-                                st.info("Aguardando a confirmação do navegador para salvar seu acesso.")
-                                if st.button("Verificar acesso salvo", key="verify_player_cookie_now"):
-                                    st.rerun()
-                            else:
-                                st.rerun()
-                        except Exception:
-                            st.error("Não foi possível salvar o acesso deste aparelho. Confira se a tabela device_sessions foi criada no Supabase.")
+                            except Exception:
+                                st.warning("Login realizado. Não foi possível solicitar o salvamento deste aparelho; talvez seja necessário entrar novamente na próxima visita.")
+                        st.rerun()
                     elif account and account[0].get("status") == "pending":
                         st.warning("Seu cadastro está aguardando aprovação da liderança.")
                     else:
@@ -386,13 +336,10 @@ if st.session_state.auth_role is None:
                 st.error("As senhas não são iguais.")
             else:
                 try:
-                    account_rows = (db.table("player_accounts").select("id,player_name")
-                                    .limit(1001).execute().data or [])
-                    existing = any((row.get("player_name") or "").strip().casefold() == clean_name.casefold() for row in account_rows)
-                    if existing:
+                    duplicate = (db.table("player_accounts").select("id")
+                                 .ilike("player_name", clean_name).limit(1).execute().data or [])
+                    if duplicate:
                         st.error("Esse nome de usuário já está em uso. Escolha outro.")
-                    elif len(account_rows) >= 1000:
-                        st.error("Limite de 1.000 contas atingido. Não é possível criar novos acessos.")
                     else:
                         db.table("player_accounts").insert({
                             "player_name": clean_name,
@@ -423,23 +370,40 @@ def month_utc_bounds(month_key):
     end_local = datetime(year + (month == 12), 1 if month == 12 else month + 1, 1, tzinfo=TZ)
     return start_local.astimezone(ZoneInfo("UTC")), end_local.astimezone(ZoneInfo("UTC"))
 
+def fetch_all_pages(query, page_size=1000):
+    """Busca todos os registros em páginas para não truncar resultados no limite do Supabase."""
+    rows = []
+    offset = 0
+    while True:
+        page = query.range(offset, offset + page_size - 1).execute().data or []
+        rows.extend(page)
+        if len(page) < page_size:
+            break
+        offset += page_size
+    return rows
+
 @st.cache_data(ttl=60, max_entries=8, show_spinner=False)
 def load_events(month_key):
     start_utc, end_utc = month_utc_bounds(month_key)
-    return (db.table("events").select("id,player,category,activity,points,created_at")
-            .gte("created_at", start_utc.isoformat()).lt("created_at", end_utc.isoformat())
-            .order("created_at", desc=True).execute().data or [])
+    query = (db.table("events").select("id,player,category,activity,points,created_at")
+             .gte("created_at", start_utc.isoformat()).lt("created_at", end_utc.isoformat())
+             .order("created_at", desc=True))
+    return fetch_all_pages(query)
 
 @st.cache_data(ttl=300, max_entries=2, show_spinner=False)
 def load_all_events_for_export():
-    return (db.table("events").select("id,player,category,activity,points,created_at")
-            .order("created_at", desc=True).execute().data or [])
+    query = (db.table("events").select("id,player,category,activity,points,created_at")
+             .order("created_at", desc=True))
+    return fetch_all_pages(query)
 
 try:
     players = load_players()
     if not players:
-        for name in dict.fromkeys(PLAYERS_FALLBACK):
-            db.table("players").upsert({"name": name, "eligible": "Elegível", "whatsapp": "Sim"}).execute()
+        fallback_rows = [
+            {"name": name, "eligible": "Elegível", "whatsapp": "Sim"}
+            for name in dict.fromkeys(PLAYERS_FALLBACK)
+        ]
+        db.table("players").upsert(fallback_rows, on_conflict="name").execute()
         load_players.clear()
         players = load_players()
     events = load_events(CURRENT_MONTH)
@@ -461,32 +425,54 @@ else:
 
 # --- Ranking: as regras e os limites são aplicados separadamente em cada mês ---
 def build_ranking(players_data, events_data):
+    # Agrega os lançamentos uma única vez, em vez de percorrer os eventos
+    # novamente para cada jogador.
+    totals = {}
+    for event in events_data:
+        name = event.get("player")
+        if not name:
+            continue
+        bucket = totals.setdefault(name, {
+            "Guerras": 0, "Liga dos Clãs": 0, "Doações": 0,
+            "Jogos": 0, "Penalidades": 0
+        })
+        points = int(event.get("points") or 0)
+        category = event.get("category") or ""
+        if points < 0:
+            bucket["Penalidades"] += abs(points)
+        elif category == "Guerras":
+            bucket["Guerras"] += points
+        elif category == "Liga dos Clãs":
+            bucket["Liga dos Clãs"] += points
+        elif category == "Doações":
+            bucket["Doações"] += points
+        elif category == "Jogos do Clã":
+            # Mantém a regra original: vale a maior faixa registrada.
+            bucket["Jogos"] = max(bucket["Jogos"], points)
+
     rows = []
-    for p in players_data:
-        pe = [e for e in events_data if e.get("player") == p["name"]]
-        positive = {}
-        penalties = 0
-        for e in pe:
-            pts = int(e.get("points") or 0)
-            if pts < 0:
-                penalties += abs(pts)
-            else:
-                positive[e.get("category", "")] = positive.get(e.get("category", ""), 0) + pts
-
-        wars = min(200, positive.get("Guerras", 0))
-        league = min(20, positive.get("Liga dos Clãs", 0))
-        donations = min(15, positive.get("Doações", 0))
-        games = min(25, max([
-            int(e.get("points") or 0)
-            for e in pe
-            if e.get("category") == "Jogos do Clã" and int(e.get("points") or 0) > 0
-        ] or [0]))
-
-        total = max(0, wars + league + donations + games - penalties) if p.get("eligible") == "Elegível" and p.get("whatsapp") == "Sim" else 0
+    for player in players_data:
+        bucket = totals.get(player["name"], {})
+        wars = min(200, bucket.get("Guerras", 0))
+        league = min(20, bucket.get("Liga dos Clãs", 0))
+        donations = min(15, bucket.get("Doações", 0))
+        games = min(25, bucket.get("Jogos", 0))
+        penalties = bucket.get("Penalidades", 0)
+        eligible = (
+            player.get("eligible", "Elegível") == "Elegível"
+            and player.get("whatsapp", "Sim") == "Sim"
+        )
+        total = max(0, wars + league + donations + games - penalties) if eligible else 0
         rows.append({
-            "Jogador": p["name"], "Elegibilidade": p.get("eligible", "Elegível"),
-            "WhatsApp": p.get("whatsapp", "Sim"), "Guerras": wars, "Liga": league,
-            "Doações": donations, "Jogos": games, "Penalidades": penalties, "Total": total
+            "Jogador": player["name"],
+            "Elegibilidade": player.get("eligible", "Elegível"),
+            "WhatsApp": player.get("whatsapp", "Sim"),
+            "Guerras": wars,
+            "Liga": league,
+            "Doações": donations,
+            "Jogos": games,
+            "Penalidades": penalties,
+            "Total": total
         })
 
     df = pd.DataFrame(rows)
@@ -499,7 +485,7 @@ def build_ranking(players_data, events_data):
 # Na virada do mês, arquiva somente o mês imediatamente anterior, se necessário.
 @st.cache_data(ttl=300, max_entries=4, show_spinner=False)
 def load_archived_months():
-    rows = db.table("monthly_rankings").select("month_key").execute().data or []
+    rows = fetch_all_pages(db.table("monthly_rankings").select("month_key"))
     return sorted({r["month_key"] for r in rows if r.get("month_key")})
 
 def ensure_previous_month_archive():
@@ -580,18 +566,7 @@ def render_live_ranking(player_mode=False):
         st.dataframe(live_ranking[["Posição", "Jogador", "Guerras", "Liga", "Doações", "Jogos", "Penalidades", "Total"]], use_container_width=True, hide_index=True, height=620)
     else:
         st.caption("🥇 1º lugar • 🥈 2º lugar • 🥉 3º lugar")
-        def destacar_podio(row):
-            posicao = int(row.get("Posição", 0))
-            if posicao == 1:
-                cor = "background-color: #5a461d; color: #fff2c2; font-weight: 800;"
-            elif posicao == 2:
-                cor = "background-color: #3d4653; color: #f0f3f7; font-weight: 800;"
-            elif posicao == 3:
-                cor = "background-color: #55392c; color: #ffe0cc; font-weight: 800;"
-            else:
-                cor = ""
-            return [cor] * len(row)
-        st.dataframe(live_ranking.style.apply(destacar_podio, axis=1), use_container_width=True, hide_index=True, height=620)
+        st.dataframe(live_ranking, use_container_width=True, hide_index=True, height=620)
 
 
 @st.fragment(run_every="60s")
