@@ -133,30 +133,36 @@ def verify_password(password, stored):
 
 
 def issue_device_session(role, player_name=None):
+    if cookie_manager is None:
+        raise RuntimeError("O componente de cookies não está disponível neste navegador.")
+
     raw_token = secrets.token_urlsafe(48)
     token_hash = hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
     expires_at = datetime.now(TZ) + timedelta(days=DEVICE_DAYS)
+
     db.table("device_sessions").insert({
         "token_hash": token_hash,
         "role": role,
         "player_name": player_name,
         "expires_at": expires_at.isoformat()
     }).execute()
-    # Se o componente estiver indisponível, não bloqueia o login atual.
-    # Nesse caso, a sessão funciona até fechar/recarregar o navegador, mas não
-    # promete persistência de 30 dias.
-    if cookie_manager is not None:
-        cookie_manager.set(
-            DEVICE_COOKIE,
-            raw_token,
-            key="set_ghost_hunt_device_cookie",
-            expires_at=expires_at.replace(tzinfo=None),
-            path="/",
-            same_site="lax",
-            secure=True,
-        )
-    st.session_state.auth_role = role
-    st.session_state.auth_player = player_name
+
+    # Guarda apenas o estado pendente no servidor. Não autentica ainda.
+    st.session_state.pending_device_token = raw_token
+    st.session_state.pending_device_role = role
+    st.session_state.pending_device_player = player_name
+    st.session_state.pending_device_expires = expires_at.isoformat()
+
+    # A gravação é assíncrona no navegador; não chamar st.rerun() aqui.
+    cookie_manager.set(
+        DEVICE_COOKIE,
+        raw_token,
+        key="set_ghost_hunt_device_cookie",
+        expires_at=expires_at.replace(tzinfo=None),
+        path="/",
+        same_site="lax",
+        secure=True,
+    )
 
 
 def revoke_current_device():
@@ -175,8 +181,23 @@ def revoke_current_device():
     st.session_state.auth_role = None
     st.session_state.auth_player = None
 
+# Confirma a gravação do cookie antes de liberar o acesso recém-criado.
+pending_token = st.session_state.get("pending_device_token")
+if pending_token:
+    visible_token = get_device_cookie()
+    if visible_token and hmac.compare_digest(str(visible_token), str(pending_token)):
+        st.session_state.auth_role = st.session_state.get("pending_device_role")
+        st.session_state.auth_player = st.session_state.get("pending_device_player")
+        for key in ("pending_device_token", "pending_device_role", "pending_device_player", "pending_device_expires"):
+            st.session_state.pop(key, None)
+        st.success("Acesso deste aparelho salvo com sucesso.")
+    else:
+        st.info("Estamos salvando o acesso neste aparelho. Quando o navegador confirmar, clique em **Verificar acesso**.")
+        if st.button("Verificar acesso", key="verify_device_cookie"):
+            st.rerun()
+
 # Recupera o acesso salvo neste navegador quando a sessão do Streamlit é reiniciada.
-if st.session_state.auth_role is None:
+if st.session_state.auth_role is None and not st.session_state.get("pending_device_token"):
     saved_token = get_device_cookie()
     if saved_token:
         saved_hash = hashlib.sha256(saved_token.encode("utf-8")).hexdigest()
@@ -224,7 +245,12 @@ if st.session_state.auth_role is None:
                     else:
                         st.session_state.auth_role = "admin"
                         st.session_state.auth_player = None
-                    st.rerun()
+                    if remember_device:
+                        st.info("Aguardando a confirmação do navegador para salvar seu acesso.")
+                        if st.button("Verificar acesso salvo", key="verify_admin_cookie_now"):
+                            st.rerun()
+                    else:
+                        st.rerun()
                 except Exception:
                     st.error("Não foi possível salvar o acesso deste aparelho. Confira se a tabela device_sessions foi criada no Supabase.")
             else:
@@ -238,7 +264,12 @@ if st.session_state.auth_role is None:
                             else:
                                 st.session_state.auth_role = "player"
                                 st.session_state.auth_player = account[0]["player_name"]
-                            st.rerun()
+                            if remember_device:
+                                st.info("Aguardando a confirmação do navegador para salvar seu acesso.")
+                                if st.button("Verificar acesso salvo", key="verify_player_cookie_now"):
+                                    st.rerun()
+                            else:
+                                st.rerun()
                         except Exception:
                             st.error("Não foi possível salvar o acesso deste aparelho. Confira se a tabela device_sessions foi criada no Supabase.")
                     elif account and account[0].get("status") == "pending":
