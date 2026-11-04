@@ -87,17 +87,22 @@ if "auth_player" not in st.session_state:
 DEVICE_COOKIE = "ghost_hunt_device"
 DEVICE_DAYS = 30
 
-# O CookieManager precisa ser chamado em TODA execução do script.
-# Guardar o objeto em st.session_state congela seu dicionário .cookies, que pode
-# ter vindo vazio na primeira renderização. get_all() atualiza a leitura do
-# navegador usando sempre a mesma chave de componente.
+# Uma única instância do CookieManager por sessão Streamlit.
+# O componente é criado uma vez e mantido no session_state para evitar
+# múltiplos iframes/chaves concorrentes durante as reexecuções.
 try:
-    # O construtor já executa getAll no componente; não chamar get_all() de novo,
-    # pois isso criaria uma segunda instância/iframe com outra chave.
-    cookie_manager = stx.CookieManager(key="ghost_hunt_cookie_manager") if stx is not None else None
-    browser_cookies = cookie_manager.cookies if cookie_manager is not None else {}
-    if not isinstance(browser_cookies, dict):
+    if stx is None:
+        cookie_manager = None
         browser_cookies = {}
+    else:
+        if "ghost_hunt_cookie_manager_instance" not in st.session_state:
+            st.session_state["ghost_hunt_cookie_manager_instance"] = stx.CookieManager(
+                key="ghost_hunt_cookie_manager"
+            )
+        cookie_manager = st.session_state["ghost_hunt_cookie_manager_instance"]
+        browser_cookies = cookie_manager.cookies
+        if not isinstance(browser_cookies, dict):
+            browser_cookies = {}
 except Exception:
     cookie_manager = None
     browser_cookies = {}
@@ -116,11 +121,11 @@ def get_device_cookie(force_refresh=False):
     if value:
         return value
 
-    # O construtor faz uma leitura inicial. Se ela ainda vier vazia, solicita
-    # uma segunda leitura com uma chave própria, evitando reutilizar a resposta vazia.
-    if cookie_manager is not None:
+    # Só força nova leitura quando o usuário solicita verificação.
+    # A chave é fixa para reutilizar o mesmo componente de leitura.
+    if force_refresh and cookie_manager is not None:
         try:
-            refreshed = cookie_manager.get_all(key="ghost_hunt_cookie_fresh_read")
+            refreshed = cookie_manager.get_all(key="ghost_hunt_cookie_refresh")
             if isinstance(refreshed, dict):
                 value = refreshed.get(DEVICE_COOKIE)
                 if value:
