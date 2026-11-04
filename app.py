@@ -101,8 +101,13 @@ def get_cookie_manager():
     return cookie_manager
 
 
+# Inicializa o componente de cookies em TODA execução do app.
+# Assim, após um refresh, o navegador tem oportunidade de devolver os
+# cookies antes de a tela de login ser exibida.
+cookie_manager = get_cookie_manager()
+
 def get_device_cookie():
-    """Prioriza o cookie recebido pelo próprio Streamlit; usa o componente como reserva."""
+    """Lê primeiro o cookie HTTP e depois o valor já carregado pelo componente."""
     try:
         value = st.context.cookies.get(DEVICE_COOKIE)
         if value:
@@ -112,9 +117,9 @@ def get_device_cookie():
     manager = get_cookie_manager()
     if manager is not None:
         try:
-            all_cookies = manager.get_all()
-            if isinstance(all_cookies, dict):
-                return all_cookies.get(DEVICE_COOKIE)
+            value = manager.get(DEVICE_COOKIE)
+            if value:
+                return value
         except Exception:
             pass
     return None
@@ -149,7 +154,7 @@ def issue_device_session(role, player_name=None):
     manager = get_cookie_manager()
     if manager is not None:
         try:
-            manager.set(DEVICE_COOKIE, raw_token, expires_at=expires_at.replace(tzinfo=None), path="/", same_site="lax", secure=True)
+            manager.set(DEVICE_COOKIE, raw_token, key="set_ghost_hunt_device", expires_at=expires_at.replace(tzinfo=None), path="/", same_site="lax", secure=True)
         except Exception:
             pass
     st.session_state.auth_role = role
