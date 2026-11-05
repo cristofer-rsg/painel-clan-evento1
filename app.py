@@ -675,6 +675,8 @@ for nav_col, (nav_icon, nav_label, nav_value) in zip(nav_cols, nav_items):
         ):
             if st.session_state.main_navigation != nav_value:
                 st.session_state.main_navigation = nav_value
+                # Ao sair da área administrativa, limpa a subpágina selecionada.
+                st.session_state.pop("gh_admin_target", None)
                 st.rerun()
 
 aba = st.session_state.main_navigation
@@ -727,9 +729,10 @@ elif aba == "⚙️ Admin":
     st.markdown(f'<img class="gh-treasure-art" src="{ART_TREASURE}" alt="Baú de tesouro">', unsafe_allow_html=True)
     st.stop()
 
-# Cards de gerenciamento podem encaminhar para as telas existentes sem alterar os dados.
+# Mantém a subpágina administrativa durante todos os reruns dos widgets.
+# Isso evita voltar ao menu quando o usuário marca a confirmação de exclusão.
 if st.session_state.get("gh_admin_target"):
-    aba = st.session_state.pop("gh_admin_target")
+    aba = st.session_state.gh_admin_target
 
 
 if aba == "🏆 Ranking do mês":
@@ -740,48 +743,121 @@ if aba == "➕ Lançar pontos":
     if not player_names:
         st.warning("Cadastre um jogador primeiro.")
     else:
-        with st.form("add_points"):
-            who = st.selectbox("Jogador", player_names)
-            kind = st.selectbox("Tipo de lançamento", ["Guerras", "Liga dos Clãs", "Doações", "Jogos do Clã", "Penalidade"])
+        # O tipo fica fora de st.form para que a tela seja atualizada
+        # imediatamente quando o usuário troca a categoria.
+        who = st.selectbox("Jogador", player_names, key="add_points_player")
+        kind = st.selectbox(
+            "Tipo de lançamento",
+            ["Guerras", "Liga dos Clãs", "Doações", "Jogos do Clã", "Penalidade"],
+            key="add_points_kind"
+        )
 
-            if kind == "Guerras":
-                activity = st.selectbox("Ação", ["Participou da guerra (+5)", "Fez os 2 ataques (+10)", "Atacou corretamente o espelho (+5)"])
-                pts = {"Participou da guerra (+5)": 5, "Fez os 2 ataques (+10)": 10, "Atacou corretamente o espelho (+5)": 5}[activity]
-            elif kind == "Liga dos Clãs":
-                activity = "Participou da Liga (+5)"
-                pts = 5
-            elif kind == "Doações":
-                activity = st.text_input("Descrição", "Doações")
-                pts = st.number_input("Pontos", min_value=0, max_value=15, value=1, step=1)
-            elif kind == "Jogos do Clã":
-                activity = st.selectbox("Faixa alcançada", ["4000 pontos", "6000 pontos", "8000 pontos", "10000 pontos"])
-                pts = {"4000 pontos": 10, "6000 pontos": 15, "8000 pontos": 20, "10000 pontos": 25}[activity]
+        if kind == "Guerras":
+            war_actions = {
+                "Participou da guerra (+5)": 5,
+                "Fez os dois ataques (+10)": 10,
+                "Acertou o espelho (+5)": 5,
+                "Fez 1 estrela (+1)": 1,
+                "Fez 2 estrelas (+2)": 2,
+                "Fez 3 estrelas (+3)": 3,
+            }
+            activity = st.selectbox(
+                "Ação", list(war_actions), key="add_points_action_wars"
+            )
+            pts = war_actions[activity]
+            category_db = "Guerras"
+
+        elif kind == "Liga dos Clãs":
+            league_actions = {
+                "Participou da guerra (+5)": 5,
+                "Acertou o espelho (+5)": 5,
+                "Fez 1 estrela (+1)": 1,
+                "Fez 2 estrelas (+2)": 2,
+                "Fez 3 estrelas (+3)": 3,
+            }
+            activity = st.selectbox(
+                "Ação", list(league_actions), key="add_points_action_league"
+            )
+            pts = league_actions[activity]
+            category_db = "Liga dos Clãs"
+
+        elif kind == "Doações":
+            donation_actions = {
+                "Ficou em 1º lugar em doações (+10)": 10,
+                "Ficou em 2º lugar em doações (+8)": 8,
+                "Ficou em 3º lugar em doações (+6)": 6,
+                "Ficou em 4º lugar em doações (+4)": 4,
+                "Ficou em 5º lugar em doações (+2)": 2,
+                "Não fez doações (-5)": -5,
+            }
+            activity = st.selectbox(
+                "Ação", list(donation_actions), key="add_points_action_donations"
+            )
+            pts = donation_actions[activity]
+            category_db = "Doações"
+
+        elif kind == "Jogos do Clã":
+            games_actions = {
+                "Atingiu 4.000 pontos (+10)": 10,
+                "Atingiu 6.000 pontos (+15)": 15,
+                "Atingiu 8.000 pontos (+20)": 20,
+                "Atingiu 10.000 pontos (+25)": 25,
+            }
+            activity = st.selectbox(
+                "Faixa alcançada", list(games_actions), key="add_points_action_games"
+            )
+            pts = games_actions[activity]
+            category_db = "Jogos do Clã"
+
+        else:
+            activity = st.selectbox(
+                "Ação / motivo",
+                [
+                    "Não fez um ataque (-5)",
+                    "Não fez os dois ataques (-10)",
+                    "Atacou fora do espelho sem autorização (-5)",
+                    "Outra penalidade"
+                ],
+                key="add_points_action_penalty"
+            )
+            if activity == "Outra penalidade":
+                penalty_value = st.number_input(
+                    "Valor da penalidade",
+                    min_value=1,
+                    max_value=200,
+                    value=5,
+                    step=1,
+                    key="add_points_penalty_value"
+                )
+                pts = -int(penalty_value)
+            elif "(-10)" in activity:
+                pts = -10
             else:
-                activity = st.selectbox("Motivo", ["Não fez um ataque (-5)", "Não fez os dois ataques (-10)", "Atacou fora do espelho sem autorização (-5)", "Outra penalidade"])
-                pts = -5 if "(-5)" in activity else (-10 if "(-10)" in activity else -int(st.number_input("Valor da penalidade", min_value=1, max_value=200, value=5)))
+                pts = -5
+            # Mantém a compatibilidade com o formato de categoria já usado
+            # nos registros anteriores de penalidade.
+            category_db = "Guerras"
 
-            if kind == "Penalidade":
-                pts = -abs(int(pts))
-                category_db = "Guerras"
+        st.caption(f"Pontuação deste lançamento: **{int(pts):+d} pontos**")
+        if st.button("💾 Salvar lançamento", use_container_width=True, key="save_add_points"):
+            if kind == "Doações" and not activity:
+                st.warning("Informe uma descrição para o lançamento de doações.")
             else:
-                category_db = kind
-
-            ok = st.form_submit_button("💾 Salvar lançamento", use_container_width=True)
-
-        if ok:
-            try:
-                db.table("events").insert({
-                    "player": who, "category": category_db, "activity": activity,
-                    "points": int(pts)
-                }).execute()
-                load_events.clear()
-                load_all_events_for_export.clear()
-                make_export_workbook.clear()
-                st.success("Lançamento salvo no mês atual!")
-                st.rerun()
-            except Exception as e:
-                st.error("Não foi possível salvar o lançamento.")
-                st.code(str(e))
+                try:
+                    db.table("events").insert({
+                        "player": who,
+                        "category": category_db,
+                        "activity": activity,
+                        "points": int(pts)
+                    }).execute()
+                    load_events.clear()
+                    load_all_events_for_export.clear()
+                    make_export_workbook.clear()
+                    st.success("Lançamento salvo no mês atual!")
+                    st.rerun()
+                except Exception as e:
+                    st.error("Não foi possível salvar o lançamento.")
+                    st.code(str(e))
 
 if aba == "✏️ Editar lançamento":
     st.subheader("✏️ Editar lançamento")
@@ -848,17 +924,31 @@ if aba == "🗑️ Excluir lançamento":
     else:
         selected_delete_label = st.selectbox("Selecione o lançamento", event_options)
         selected_delete = event_lookup[selected_delete_label]
-        confirm_delete = st.checkbox("Confirmo que desejo excluir este lançamento.")
+        confirm_delete = st.checkbox(
+            "Confirmo que desejo excluir este lançamento.",
+            key=f"confirm_delete_{selected_delete['id']}"
+        )
         if st.button("🗑️ Excluir definitivamente", type="primary", disabled=not confirm_delete, use_container_width=True):
             try:
-                db.table("events").delete().eq("id", selected_delete["id"]).execute()
-                load_events.clear()
-                load_all_events_for_export.clear()
-                make_export_workbook.clear()
-                st.success("Lançamento excluído. O ranking foi atualizado.")
-                st.rerun()
-            except Exception:
+                delete_result = (
+                    db.table("events")
+                    .delete()
+                    .eq("id", selected_delete["id"])
+                    .select("id")
+                    .execute()
+                )
+                if not delete_result.data:
+                    st.error("O Supabase não confirmou a exclusão. O lançamento continua salvo; verifique as permissões da tabela events.")
+                else:
+                    load_events.clear()
+                    load_all_events_for_export.clear()
+                    make_export_workbook.clear()
+                    st.session_state.pop(f"confirm_delete_{selected_delete['id']}", None)
+                    st.success("Lançamento excluído. O ranking foi atualizado.")
+                    st.rerun()
+            except Exception as e:
                 st.error("Não foi possível excluir o lançamento.")
+                st.code(str(e))
 
 if aba == "👥 Jogadores":
     st.subheader("👥 Gerenciar jogadores")
