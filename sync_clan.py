@@ -18,7 +18,7 @@ def buscar_membros(token):
     req = urllib.request.Request(
         url,
         headers={
-            "Authorization": f"Bearer {token.strip()}",
+            "Authorization": f"Bearer {token}",
             "Accept": "application/json",
             "User-Agent": "ClanEvento/1.0"
         }
@@ -27,40 +27,61 @@ def buscar_membros(token):
     try:
         with urllib.request.urlopen(req, timeout=30) as response:
             dados = json.loads(response.read().decode("utf-8"))
+
     except urllib.error.HTTPError as erro:
         detalhe = erro.read().decode("utf-8", errors="replace")
-        raise RuntimeError(f"Erro na API ({erro.code}): {detalhe}")
+        raise RuntimeError(
+            f"Erro na API ({erro.code}): {detalhe}"
+        )
 
     membros = dados.get("items")
 
     if not isinstance(membros, list):
-        raise RuntimeError("A API não retornou a lista de membros.")
+        raise RuntimeError(
+            "A API não retornou a lista de membros."
+        )
 
     return membros
 
 
 def main():
-    def main():
-    token = "".join(os.environ["CLASH_API_TOKEN"].split())
+    token = "".join(
+        os.environ["CLASH_API_TOKEN"].split()
+    )
+
     partes = token.split(".")
+
     if len(partes) != 3 or any(not p for p in partes):
-        raise RuntimeError("Token incompleto ou em formato inválido.")
+        raise RuntimeError(
+            "Token incompleto ou em formato inválido."
+        )
 
-    print("Token recebido: formato JWT válido (conteúdo oculto).")
+    print(
+        "Token recebido: formato JWT com 3 partes."
+    )
 
-    url = os.environ["SUPABASE_URL"]
-    chave = os.environ["SUPABASE_SECRET_KEY"]
+    url = os.environ["SUPABASE_URL"].strip().rstrip("/")
+    chave = os.environ["SUPABASE_SECRET_KEY"].strip()
+
+    if not url.startswith("https://"):
+        raise RuntimeError(
+            "SUPABASE_URL inválida."
+        )
 
     membros = buscar_membros(token)
 
     nomes = sorted({
         m["name"].strip()
         for m in membros
-        if isinstance(m, dict) and m.get("name", "").strip()
+        if isinstance(m, dict)
+        and isinstance(m.get("name"), str)
+        and m["name"].strip()
     })
 
     if not nomes:
-        raise RuntimeError("Nenhum membro encontrado. Banco não alterado.")
+        raise RuntimeError(
+            "Nenhum membro encontrado. Banco não alterado."
+        )
 
     db = create_client(url, chave)
 
@@ -71,9 +92,14 @@ def main():
         .data or []
     )
 
-    existentes = {p["name"] for p in cadastrados}
+    existentes = {
+        p["name"] for p in cadastrados
+    }
 
-    novos = [nome for nome in nomes if nome not in existentes]
+    novos = [
+        nome for nome in nomes
+        if nome not in existentes
+    ]
 
     if novos:
         registros = [
@@ -95,6 +121,7 @@ def main():
 if __name__ == "__main__":
     try:
         main()
+
     except Exception as erro:
         print(f"ERRO: {erro}", file=sys.stderr)
         sys.exit(1)
