@@ -18,7 +18,7 @@ def buscar_membros(token):
     req = urllib.request.Request(
         url,
         headers={
-            "auth": token,
+            "Authorization": f"Bearer {token.strip()}",
             "Accept": "application/json",
             "User-Agent": "ClanEvento/1.0"
         }
