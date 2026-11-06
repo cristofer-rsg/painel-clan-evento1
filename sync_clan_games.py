@@ -9,7 +9,6 @@ from zoneinfo import ZoneInfo
 
 from supabase import create_client
 
-CLAN_TAG = "#2GCGP0RQ9"
 API_URL = "https://cocproxy.royaleapi.dev/v1"
 TZ = ZoneInfo("America/Sao_Paulo")
 ACHIEVEMENT_NAME = "Games Champion"
@@ -21,7 +20,7 @@ def api_get(path, token):
         headers={
             "Authorization": f"Bearer {token}",
             "Accept": "application/json",
-            "User-Agent": "ClanEvento-ClanGames/1.0",
+            "User-Agent": "ClanEvento-ClanGames/2.0",
         },
     )
     try:
@@ -44,10 +43,6 @@ def main():
     if not supabase_url.startswith("https://") or not supabase_key:
         raise RuntimeError("Configuração do Supabase inválida.")
 
-    mode = os.environ.get("GAMES_MODE", "poll").strip().lower()
-    if mode not in ("baseline", "poll"):
-        raise RuntimeError("GAMES_MODE deve ser baseline ou poll.")
-
     db = create_client(supabase_url, supabase_key)
     roster = (
         db.table("players")
@@ -56,33 +51,21 @@ def main():
         .execute()
         .data or []
     )
-    players = [
-        row for row in roster
-        if row.get("player_tag") and row.get("name")
-    ]
+
+    # Evita consultar duas vezes a mesma tag caso haja duplicidade no cadastro.
+    players_by_tag = {}
+    for row in roster:
+        tag = row.get("player_tag")
+        name = row.get("name")
+        if tag and name:
+            players_by_tag[tag] = row
+
+    players = list(players_by_tag.values())
     if not players:
-        raise RuntimeError("Nenhum jogador ativo com tag cadastrado.")
+        print("Nenhum jogador ativo com tag cadastrado; nada a sincronizar.")
+        return
 
     month_key = datetime.now(TZ).strftime("%Y-%m")
-
-    # Antes do início oficial dos Jogos, o agendamento periódico não deve
-    # gerar falhas nem criar uma linha de base acidental.
-    if mode == "poll":
-        baseline_check = (
-            db.table("clash_games_tracking")
-            .select("player_tag")
-            .eq("month_key", month_key)
-            .limit(1)
-            .execute()
-            .data or []
-        )
-        if not baseline_check:
-            print(
-                "Jogos do Clã ainda não foram iniciados no Ghost Hunt. "
-                "No primeiro dia do evento, execute manualmente com mode=baseline."
-            )
-            return
-
     snapshot = []
     failures = []
 
@@ -101,9 +84,11 @@ def main():
             )
             if achievement is None:
                 raise RuntimeError("Conquista Games Champion não encontrada.")
+
             value = achievement.get("value")
             if not isinstance(value, int) or value < 0:
                 raise RuntimeError("Valor da conquista inválido.")
+
             snapshot.append({
                 "player_tag": tag,
                 "player": player["name"],
@@ -112,26 +97,23 @@ def main():
         except Exception as error:
             failures.append(f"{player['name']} ({tag}): {error}")
 
+    # Não atualiza observador nem ranking com uma amostra incompleta.
     if failures:
         for failure in failures:
             print(f"ATENÇÃO: {failure}")
         raise RuntimeError(
             f"{len(failures)} jogador(es) não puderam ser consultados. "
-            "Banco não alterado para evitar um ranking incompleto."
+            "Banco não alterado para evitar detectar início ou pontuação "
+            "com uma lista incompleta."
         )
+
     if not snapshot:
         raise RuntimeError("Nenhum perfil consultado.")
 
-    if mode == "baseline":
-        result = db.rpc(
-            "start_clash_games_tracking",
-            {"p_month_key": month_key, "p_snapshot": snapshot},
-        ).execute()
-    else:
-        result = db.rpc(
-            "sync_clash_games",
-            {"p_month_key": month_key, "p_snapshot": snapshot},
-        ).execute()
+    result = db.rpc(
+        "auto_sync_clash_games",
+        {"p_month_key": month_key, "p_snapshot": snapshot},
+    ).execute()
 
     data = result.data or {}
     if isinstance(data, list) and data:
@@ -140,10 +122,9 @@ def main():
         data = {}
 
     print(f"Mês: {month_key}")
-    print(f"Modo: {mode}")
     print(f"Jogadores consultados: {len(snapshot)}")
     print(f"Resultado: {json.dumps(data, ensure_ascii=False)}")
-    print("Sincronização dos Jogos do Clã concluída.")
+    print("Verificação automática dos Jogos do Clã concluída.")
 
 
 if __name__ == "__main__":
