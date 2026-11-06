@@ -1,0 +1,37 @@
+name: Sincronizar Doações do Clã
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sincronizar-doacoes-clan
+  cancel-in-progress: false
+
+jobs:
+  sync-donations:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v4
+
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar dependência
+        run: python -m pip install "supabase>=2.5"
+
+      - name: Sincronizar doações
+        env:
+          CLASH_API_TOKEN: ${{ secrets.CLASH_API_TOKEN }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        run: python sync_donations.py
