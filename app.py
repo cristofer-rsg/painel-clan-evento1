@@ -400,7 +400,7 @@ PLAYERS_FALLBACK = [
 
 @st.cache_data(ttl=300, max_entries=4, show_spinner=False)
 def load_players():
-    return db.table("players").select("name,eligible,whatsapp").order("name").execute().data or []
+    return db.table("players").select("name,eligible,whatsapp,active").order("name").execute().data or []
 
 def month_utc_bounds(month_key):
     year, month = map(int, month_key.split("-"))
@@ -467,15 +467,19 @@ def make_export_workbook(ranking_records, event_records):
     return output.getvalue()
 
 try:
-    players = load_players()
-    if not players:
+    players_all = load_players()
+    if not players_all:
         fallback_rows = [
-            {"name": name, "eligible": "Elegível", "whatsapp": "Sim"}
+            {"name": name, "eligible": "Elegível", "whatsapp": "Sim", "active": True}
             for name in dict.fromkeys(PLAYERS_FALLBACK)
         ]
         db.table("players").upsert(fallback_rows, on_conflict="name").execute()
         load_players.clear()
-        players = load_players()
+        players_all = load_players()
+
+    # A lista operacional contém somente quem está atualmente no clã.
+    # O cadastro completo permanece disponível para preservar o histórico.
+    players = [p for p in players_all if p.get("active", True) is not False]
 except Exception as e:
     st.error("Erro ao carregar os dados do Supabase.")
     st.code(str(e))
@@ -555,7 +559,7 @@ def ensure_previous_month_archive():
     previous_events = load_events(previous_month)
     if not previous_events:
         return
-    previous_ranking = build_ranking(players, previous_events)
+    previous_ranking = build_ranking(players_all, previous_events)
     snapshot = [{
         "month_key": previous_month, "player": row["Jogador"],
         "position": int(row["Posição"]), "eligible": row["Elegibilidade"],
@@ -585,7 +589,7 @@ def month_label(month_key):
 
 def render_live_ranking(player_mode=False):
     """Atualiza somente a área do ranking a cada 60 segundos."""
-    fresh_players = load_players()
+    fresh_players = [p for p in load_players() if p.get("active", True) is not False]
     now_local = datetime.now(TZ)
     month_now = now_local.strftime("%Y-%m")
     # load_events já aplica os limites UTC correspondentes ao mês local;
@@ -957,9 +961,12 @@ if aba == "👥 Jogadores":
         add = st.form_submit_button("➕ Adicionar jogador")
     if add and new_name.strip():
         try:
-            db.table("players").upsert({"name": new_name.strip(), "eligible": "Elegível", "whatsapp": "Sim"}).execute()
+            db.table("players").upsert({
+                "name": new_name.strip(), "eligible": "Elegível",
+                "whatsapp": "Sim", "active": False
+            }).execute()
             load_players.clear()
-            st.success("Jogador adicionado.")
+            st.success("Cadastro criado como inativo. Ele será ativado quando aparecer na sincronização do clã.")
             st.rerun()
         except Exception as e:
             st.error("Não foi possível adicionar o jogador.")
@@ -1017,7 +1024,7 @@ if aba == "📜 Histórico mensal":
             "Total": int(r.get("total") or 0),
         } for r in saved_snapshot])
     else:
-        historical_ranking = build_ranking(players, month_events)
+        historical_ranking = build_ranking(players_all, month_events)
 
     st.markdown(f"### 🏆 Classificação de {month_label(selected_month)}")
     st.dataframe(historical_ranking, use_container_width=True, hide_index=True, height=520)
