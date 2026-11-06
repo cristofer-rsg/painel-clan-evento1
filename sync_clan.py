@@ -11,6 +11,10 @@ CLAN_TAG = "#2GCGP0RQ9"
 API_URL = "https://cocproxy.royaleapi.dev/v1"
 
 
+def normalizar(nome):
+    return nome.strip().casefold()
+
+
 def buscar_membros(token):
     tag = quote(CLAN_TAG, safe="")
     url = f"{API_URL}/clans/{tag}/members?limit=50"
@@ -37,48 +41,39 @@ def buscar_membros(token):
     membros = dados.get("items")
 
     if not isinstance(membros, list):
-        raise RuntimeError(
-            "A API não retornou a lista de membros."
-        )
+        raise RuntimeError("A API não retornou a lista de membros.")
 
     return membros
 
 
 def main():
-    token = "".join(
-        os.environ["CLASH_API_TOKEN"].split()
-    )
+    token = "".join(os.environ["CLASH_API_TOKEN"].split())
 
     partes = token.split(".")
-
     if len(partes) != 3 or any(not p for p in partes):
-        raise RuntimeError(
-            "Token incompleto ou em formato inválido."
-        )
-
-    print(
-        "Token recebido: formato JWT com 3 partes."
-    )
+        raise RuntimeError("Token incompleto ou em formato inválido.")
 
     url = os.environ["SUPABASE_URL"].strip().rstrip("/")
     chave = os.environ["SUPABASE_SECRET_KEY"].strip()
 
     if not url.startswith("https://"):
-        raise RuntimeError(
-            "SUPABASE_URL inválida."
-        )
+        raise RuntimeError("SUPABASE_URL inválida.")
 
     membros = buscar_membros(token)
 
-    nomes = sorted({
-        m["name"].strip()
-        for m in membros
-        if isinstance(m, dict)
-        and isinstance(m.get("name"), str)
-        and m["name"].strip()
-    })
+    nomes_api = {}
 
-    if not nomes:
+    for membro in membros:
+        if not isinstance(membro, dict):
+            continue
+
+        nome = membro.get("name")
+
+        if isinstance(nome, str) and nome.strip():
+            nome = nome.strip()
+            nomes_api.setdefault(normalizar(nome), nome)
+
+    if not nomes_api:
         raise RuntimeError(
             "Nenhum membro encontrado. Banco não alterado."
         )
@@ -92,13 +87,16 @@ def main():
         .data or []
     )
 
-    existentes = {
-        p["name"] for p in cadastrados
+    nomes_existentes = {
+        normalizar(p["name"])
+        for p in cadastrados
+        if p.get("name")
     }
 
     novos = [
-        nome for nome in nomes
-        if nome not in existentes
+        nome
+        for chave_nome, nome in nomes_api.items()
+        if chave_nome not in nomes_existentes
     ]
 
     if novos:
@@ -113,7 +111,7 @@ def main():
 
         db.table("players").insert(registros).execute()
 
-    print(f"Membros encontrados: {len(nomes)}")
+    print(f"Membros encontrados: {len(nomes_api)}")
     print(f"Novos cadastrados: {len(novos)}")
     print("Sincronização concluída!")
 
@@ -121,7 +119,6 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-
     except Exception as erro:
         print(f"ERRO: {erro}", file=sys.stderr)
         sys.exit(1)
