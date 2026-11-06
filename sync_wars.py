@@ -176,9 +176,9 @@ def main():
     clan_tag = quote(CLAN_TAG, safe="")
     war = api_get(f"/clans/{clan_tag}/currentwar", token)
 
-        if war.get("state") == "notInWar":
-        print("O clã não está em guerra. Nenhum lançamento realizado.")
-        return
+    if war.get("state") == "notInWar":
+            print("O clã não está em guerra. Nenhum lançamento será feito.")
+            return
 
     start_time = war.get("startTime")
 
