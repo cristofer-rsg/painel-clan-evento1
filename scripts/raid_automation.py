@@ -74,15 +74,25 @@ def supabase_request(method, table, *, params=None, payload=None):
 
 
 def fetch_players():
+    """Load active players indexed by tag, not by mutable in-game name."""
     _, rows = supabase_request(
         "GET", "players",
-        params={"select": "name,active", "order": "name.asc"},
+        params={"select": "name,player_tag,active", "order": "name.asc"},
     )
-    return {
-        str(row.get("name", "")).strip().casefold(): row
-        for row in rows
-        if row.get("name") and row.get("active", True) is not False
-    }
+    players_by_tag = {}
+    for row in rows:
+        if row.get("active", True) is False:
+            continue
+        player_tag = str(row.get("player_tag") or "").strip().upper()
+        if not player_tag:
+            continue
+        if player_tag in players_by_tag:
+            raise RuntimeError(
+                f"Tag duplicada no cadastro do ClanEvento: {player_tag}. "
+                "Nenhum ponto foi lançado."
+            )
+        players_by_tag[player_tag] = row
+    return players_by_tag
 
 
 def fetch_month_raid_events(now_local):
@@ -126,14 +136,16 @@ def run():
     for member in members:
         attacks = int(member.get("attacks") or 0)
         api_name = str(member.get("name") or "").strip()
-        player = players.get(api_name.casefold())
+        api_tag = str(member.get("tag") or "").strip().upper()
+        player = players.get(api_tag) if api_tag else None
         if not player:
-            unmatched.append(api_name)
+            unmatched.append(f"{api_name} ({api_tag or 'sem tag na API'})")
             continue
         if attacks < 5:
-            under.append(api_name)
+            under.append(api_name or api_tag)
             continue
 
+        # Keep the existing database name so historical event links remain intact.
         registered_name = str(player["name"]).strip()
         player_events = [
             event for event in events
@@ -192,6 +204,8 @@ def run():
     print(f"Já registrados neste fim de semana: {len(already)}")
     print(f"Limite mensal atingido: {len(capped)}")
     print(f"Sem correspondência no cadastro: {len(unmatched)}")
+    if unmatched:
+        print("Não encontrados: " + ", ".join(unmatched))
     print(f"Com menos de 5 ataques: {len(under)}")
 
 
