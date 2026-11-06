@@ -294,14 +294,33 @@ CLASH_API_BASE = "https://cocproxy.royaleapi.dev/v1"
 def fetch_clan_raid_season(api_token, clan_tag):
     tag_path = "%23" + str(clan_tag).strip().lstrip("#")
     url = f"{CLASH_API_BASE}/clans/{tag_path}/capitalraidseasons"
+    # O proxy RoyaleAPI aceita autenticação Bearer e também o cabeçalho
+    # legado "auth". Enviamos ambos para compatibilidade com o proxy.
+    token = str(api_token or "").strip()
     response = requests.get(
         url,
-        headers={"Authorization": f"Bearer {api_token}"},
+        headers={
+            "Authorization": f"Bearer {token}",
+            "auth": token,
+            "Accept": "application/json",
+        },
         params={"limit": 1},
         timeout=20,
     )
     if response.status_code == 403:
-        raise RuntimeError("A API recusou o acesso (403). Confira o token e o IP autorizado na Supercell.")
+        # Não exibe token nem cabeçalhos; apenas a mensagem devolvida pelo servidor.
+        try:
+            detail = (response.json() or {}).get("message") or (response.json() or {}).get("reason")
+        except Exception:
+            detail = None
+        suffix = f" Detalhe do servidor: {detail}" if detail else ""
+        raise RuntimeError(
+            "A API/proxy recusou a autenticação (403). O IP autorizado já foi conferido; "
+            "verifique se o Secret CLASH_API_TOKEN contém o token completo, sem aspas extras ou espaços."
+            + suffix
+        )
+    if response.status_code == 401:
+        raise RuntimeError("A API retornou 401: não reconheceu a autenticação enviada.")
     if response.status_code == 429:
         raise RuntimeError("A API limitou temporariamente as consultas (429).")
     response.raise_for_status()
