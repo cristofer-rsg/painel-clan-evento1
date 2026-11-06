@@ -23,6 +23,18 @@ TZ = ZoneInfo("America/Sao_Paulo")
 NOW = datetime.now(TZ)
 CURRENT_MONTH = NOW.strftime("%Y-%m")
 
+
+def raid_weekend_start(value):
+    """Retorna o sábado local que identifica o fim de semana do registro."""
+    if isinstance(value, str):
+        value = pd.to_datetime(value, utc=True, errors="coerce")
+    if pd.isna(value):
+        return None
+    if getattr(value, "tzinfo", None) is not None:
+        value = value.tz_convert(TZ)
+    day = value.date() if hasattr(value, "date") else value
+    return day - timedelta(days=(day.weekday() + 2) % 7)
+
 st.set_page_config(page_title="Ghost Hunt", page_icon="👻", layout="wide")
 if "auth_role" not in st.session_state:
     st.session_state.auth_role = None
@@ -498,7 +510,7 @@ def build_ranking(players_data, events_data):
             continue
         bucket = totals.setdefault(name, {
             "Guerras": 0, "Liga dos Clãs": 0, "Doações": 0,
-            "Jogos": 0, "Penalidades": 0
+            "Jogos": 0, "Raide": 0, "Penalidades": 0
         })
         points = int(event.get("points") or 0)
         category = event.get("category") or ""
@@ -513,6 +525,8 @@ def build_ranking(players_data, events_data):
         elif category == "Jogos do Clã":
             # Mantém a regra original: vale a maior faixa registrada.
             bucket["Jogos"] = max(bucket["Jogos"], points)
+        elif category == "Raide de Fim de Semana":
+            bucket["Raide"] += points
 
     rows = []
     for player in players_data:
@@ -521,12 +535,13 @@ def build_ranking(players_data, events_data):
         league = min(20, bucket.get("Liga dos Clãs", 0))
         donations = min(15, bucket.get("Doações", 0))
         games = min(25, bucket.get("Jogos", 0))
+        raid = min(20, bucket.get("Raide", 0))
         penalties = bucket.get("Penalidades", 0)
         eligible = (
             player.get("eligible", "Elegível") == "Elegível"
             and player.get("whatsapp", "Sim") == "Sim"
         )
-        total = max(0, wars + league + donations + games - penalties) if eligible else 0
+        total = max(0, wars + league + donations + games + raid - penalties) if eligible else 0
         rows.append({
             "Jogador": player["name"],
             "Elegibilidade": player.get("eligible", "Elegível"),
@@ -535,6 +550,7 @@ def build_ranking(players_data, events_data):
             "Liga": league,
             "Doações": donations,
             "Jogos": games,
+            "Raide": raid,
             "Penalidades": penalties,
             "Total": total
         })
@@ -565,7 +581,8 @@ def ensure_previous_month_archive():
         "position": int(row["Posição"]), "eligible": row["Elegibilidade"],
         "whatsapp": row["WhatsApp"], "wars": int(row["Guerras"]),
         "league": int(row["Liga"]), "donations": int(row["Doações"]),
-        "games": int(row["Jogos"]), "penalties": int(row["Penalidades"]),
+        "games": int(row["Jogos"]), "raid": int(row["Raide"]),
+        "penalties": int(row["Penalidades"]),
         "total": int(row["Total"]),
     } for row in previous_ranking.to_dict("records")]
     if snapshot:
@@ -633,7 +650,7 @@ def render_live_ranking(player_mode=False):
     st.markdown("".join(podium_html), unsafe_allow_html=True)
     st.markdown("### 📊 Classificação completa")
     if player_mode:
-        st.dataframe(live_ranking[["Posição", "Jogador", "Guerras", "Liga", "Doações", "Jogos", "Penalidades", "Total"]], use_container_width=True, hide_index=True, height=620)
+        st.dataframe(live_ranking[["Posição", "Jogador", "Guerras", "Liga", "Doações", "Jogos", "Raide", "Penalidades", "Total"]], use_container_width=True, hide_index=True, height=620)
     else:
         st.caption("🥇 1º lugar • 🥈 2º lugar • 🥉 3º lugar")
         st.dataframe(live_ranking, use_container_width=True, hide_index=True, height=620)
@@ -752,7 +769,7 @@ if aba == "➕ Lançar pontos":
         who = st.selectbox("Jogador", player_names, key="add_points_player")
         kind = st.selectbox(
             "Tipo de lançamento",
-            ["Guerras", "Liga dos Clãs", "Doações", "Jogos do Clã", "Penalidade"],
+            ["Guerras", "Liga dos Clãs", "Doações", "Jogos do Clã", "Raide de Fim de Semana", "Penalidade"],
             key="add_points_kind"
         )
 
@@ -813,6 +830,11 @@ if aba == "➕ Lançar pontos":
             pts = games_actions[activity]
             category_db = "Jogos do Clã"
 
+        elif kind == "Raide de Fim de Semana":
+            activity = "Utilizou os 5 ataques (+5)"
+            pts = 5
+            category_db = "Raide de Fim de Semana"
+            st.info("Regra: utilizar os 5 ataques no fim de semana = +5 pontos. De 1 a 4 ataques = 0 ponto. Limite mensal: 20 pontos.")
         else:
             activity = st.selectbox(
                 "Ação / motivo",
@@ -846,6 +868,13 @@ if aba == "➕ Lançar pontos":
         if st.button("💾 Salvar lançamento", use_container_width=True, key="save_add_points"):
             if kind == "Doações" and not activity:
                 st.warning("Informe uma descrição para o lançamento de doações.")
+            elif kind == "Raide de Fim de Semana" and any(
+                e.get("player") == who
+                and e.get("category") == "Raide de Fim de Semana"
+                and raid_weekend_start(e.get("created_at")) == raid_weekend_start(datetime.now(TZ))
+                for e in load_events(CURRENT_MONTH)
+            ):
+                st.warning("Este jogador já recebeu os pontos do Raide neste fim de semana.")
             else:
                 try:
                     db.table("events").insert({
@@ -885,7 +914,7 @@ if aba == "✏️ Editar lançamento":
         selected_event = current_event_lookup[selected_event_label]
         with st.form("edit_event_form"):
             edit_player = st.selectbox("Jogador", player_names, index=player_names.index(selected_event["player"]) if selected_event.get("player") in player_names else 0)
-            category_options = ["Guerras", "Liga dos Clãs", "Doações", "Jogos do Clã"]
+            category_options = ["Guerras", "Liga dos Clãs", "Doações", "Jogos do Clã", "Raide de Fim de Semana"]
             current_category = selected_event.get("category", "Guerras")
             edit_category = st.selectbox("Categoria", category_options, index=category_options.index(current_category) if current_category in category_options else 0)
             edit_activity = st.text_input("Descrição do lançamento", value=str(selected_event.get("activity") or ""))
@@ -1020,6 +1049,7 @@ if aba == "📜 Histórico mensal":
             "Liga": int(r.get("league") or 0),
             "Doações": int(r.get("donations") or 0),
             "Jogos": int(r.get("games") or 0),
+            "Raide": int(r.get("raid") or 0),
             "Penalidades": int(r.get("penalties") or 0),
             "Total": int(r.get("total") or 0),
         } for r in saved_snapshot])
