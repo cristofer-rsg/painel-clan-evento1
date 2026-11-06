@@ -1,3 +1,4 @@
+
 import json
 import os
 import sys
@@ -31,12 +32,9 @@ def buscar_membros(token):
     try:
         with urllib.request.urlopen(req, timeout=30) as response:
             dados = json.loads(response.read().decode("utf-8"))
-
     except urllib.error.HTTPError as erro:
         detalhe = erro.read().decode("utf-8", errors="replace")
-        raise RuntimeError(
-            f"Erro na API ({erro.code}): {detalhe}"
-        )
+        raise RuntimeError(f"Erro na API ({erro.code}): {detalhe}")
 
     membros = dados.get("items")
 
@@ -61,22 +59,31 @@ def main():
 
     membros = buscar_membros(token)
 
-    nomes_api = {}
+    membros_api = {}
 
     for membro in membros:
         if not isinstance(membro, dict):
             continue
 
         nome = membro.get("name")
+        tag = membro.get("tag")
 
-        if isinstance(nome, str) and nome.strip():
-            nome = nome.strip()
-            nomes_api.setdefault(normalizar(nome), nome)
+        if not isinstance(nome, str) or not nome.strip():
+            continue
 
-    if not nomes_api:
-        raise RuntimeError(
-            "Nenhum membro encontrado. Banco não alterado."
+        if not isinstance(tag, str) or not tag.strip():
+            raise RuntimeError(
+                f"A API não retornou a tag de um jogador: {nome}"
+            )
+
+        nome = nome.strip()
+        membros_api.setdefault(
+            normalizar(nome),
+            {"name": nome, "player_tag": tag.strip()}
         )
+
+    if not membros_api:
+        raise RuntimeError("Nenhum membro encontrado. Banco não alterado.")
 
     db = create_client(url, chave)
 
@@ -87,32 +94,52 @@ def main():
         .data or []
     )
 
-    nomes_existentes = {
-        normalizar(p["name"])
-        for p in cadastrados
-        if p.get("name")
-    }
+    existentes = {}
 
-    novos = [
-        nome
-        for chave_nome, nome in nomes_api.items()
-        if chave_nome not in nomes_existentes
-    ]
+    for jogador in cadastrados:
+        nome = jogador.get("name")
 
-    if novos:
-        registros = [
-            {
-                "name": nome,
+        if not nome:
+            continue
+
+        chave_nome = normalizar(nome)
+
+        if chave_nome in existentes:
+            raise RuntimeError(
+                f"Existem nomes duplicados no banco: {nome}"
+            )
+
+        existentes[chave_nome] = nome
+
+    novos = 0
+    tags_atualizadas = 0
+
+    for chave_nome, membro in membros_api.items():
+        nome_api = membro["name"]
+        player_tag = membro["player_tag"]
+
+        if chave_nome in existentes:
+            nome_banco = existentes[chave_nome]
+
+            db.table("players").update({
+                "player_tag": player_tag
+            }).eq("name", nome_banco).execute()
+
+            tags_atualizadas += 1
+
+        else:
+            db.table("players").insert({
+                "name": nome_api,
+                "player_tag": player_tag,
                 "eligible": "Elegível",
                 "whatsapp": "Sim"
-            }
-            for nome in novos
-        ]
+            }).execute()
 
-        db.table("players").insert(registros).execute()
+            novos += 1
 
-    print(f"Membros encontrados: {len(nomes_api)}")
-    print(f"Novos cadastrados: {len(novos)}")
+    print(f"Membros encontrados: {len(membros_api)}")
+    print(f"Novos jogadores cadastrados: {novos}")
+    print(f"Tags atualizadas: {tags_atualizadas}")
     print("Sincronização concluída!")
 
 
