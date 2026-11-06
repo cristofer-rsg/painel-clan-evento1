@@ -41,6 +41,11 @@ def buscar_membros(token):
 
 def main():
     token = "".join(os.environ["CLASH_API_TOKEN"].split())
+    partes = token.split(".")
+if len(partes) != 3 or any(not p for p in partes):
+    raise RuntimeError("Token incompleto ou em formato inválido.")
+
+print("Token recebido: formato JWT válido (conteúdo oculto).")
     url = os.environ["SUPABASE_URL"]
     chave = os.environ["SUPABASE_SECRET_KEY"]
 
