@@ -57,8 +57,8 @@ def main():
     if not url.startswith("https://"):
         raise RuntimeError("SUPABASE_URL inválida.")
 
+    # Primeiro consulta e valida a API. Se falhar, não altera o banco.
     membros = buscar_membros(token)
-
     membros_api = {}
 
     for membro in membros:
@@ -111,8 +111,13 @@ def main():
 
         existentes[chave_nome] = nome
 
+    # Marca os cadastros como inativos sem excluir nenhum registro.
+    db.table("players").update(
+        {"active": False}
+    ).neq("name", "").execute()
+
     novos = 0
-    tags_atualizadas = 0
+    atualizados = 0
 
     for chave_nome, membro in membros_api.items():
         nome_api = membro["name"]
@@ -122,15 +127,17 @@ def main():
             nome_banco = existentes[chave_nome]
 
             db.table("players").update({
-                "player_tag": player_tag
+                "player_tag": player_tag,
+                "active": True
             }).eq("name", nome_banco).execute()
 
-            tags_atualizadas += 1
+            atualizados += 1
 
         else:
             db.table("players").insert({
                 "name": nome_api,
                 "player_tag": player_tag,
+                "active": True,
                 "eligible": "Elegível",
                 "whatsapp": "Sim"
             }).execute()
@@ -138,9 +145,10 @@ def main():
             novos += 1
 
     print(f"Membros encontrados: {len(membros_api)}")
+    print(f"Jogadores reativados/atualizados: {atualizados}")
     print(f"Novos jogadores cadastrados: {novos}")
-    print(f"Tags atualizadas: {tags_atualizadas}")
-    print("Sincronização concluída!")
+    print("Jogadores fora do clã marcados como inativos.")
+    print("Histórico preservado. Sincronização concluída!")
 
 
 if __name__ == "__main__":
