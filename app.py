@@ -747,7 +747,7 @@ def build_ranking(players_data, events_data):
         bucket = totals.get(player["name"], {})
         wars = min(200, bucket.get("Guerras", 0))
         league = min(20, bucket.get("Liga dos Clãs", 0))
-        donations = min(15, bucket.get("Doações", 0))
+        donations = min(20, bucket.get("Doações", 0))
         games = min(25, bucket.get("Jogos", 0))
         raid = min(20, bucket.get("Raide", 0))
         penalties = bucket.get("Penalidades", 0)
