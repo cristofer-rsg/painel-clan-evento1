@@ -4,6 +4,7 @@ import html
 import hashlib
 import hmac
 import secrets
+import requests
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
@@ -283,6 +284,31 @@ except Exception as e:
     st.code(str(e))
     st.stop()
 
+# Integração automática do Raide da Capital via proxy RoyaleAPI.
+CLASH_API_TOKEN = st.secrets.get("CLASH_API_TOKEN", "")
+CLASH_CLAN_TAG = st.secrets.get("CLASH_CLAN_TAG", "#2GCGP0RQ9")
+CLASH_API_BASE = "https://cocproxy.royaleapi.dev/v1"
+
+
+@st.cache_data(ttl=180, max_entries=2, show_spinner=False)
+def fetch_clan_raid_season(api_token, clan_tag):
+    tag_path = "%23" + str(clan_tag).strip().lstrip("#")
+    url = f"{CLASH_API_BASE}/clans/{tag_path}/capitalraidseasons"
+    response = requests.get(
+        url,
+        headers={"Authorization": f"Bearer {api_token}"},
+        params={"limit": 1},
+        timeout=20,
+    )
+    if response.status_code == 403:
+        raise RuntimeError("A API recusou o acesso (403). Confira o token e o IP autorizado na Supercell.")
+    if response.status_code == 429:
+        raise RuntimeError("A API limitou temporariamente as consultas (429).")
+    response.raise_for_status()
+    items = (response.json() or {}).get("items") or []
+    return items[0] if items else None
+
+
 # --- Autenticação persistente por aparelho/navegador ---
 if "auth_role" not in st.session_state:
     st.session_state.auth_role = None
@@ -498,6 +524,58 @@ except Exception as e:
     st.stop()
 
 player_names = [p["name"] for p in players]
+
+
+def build_raid_api_preview(players_data):
+    """Consulta o Raide e compara os nomes da API com o cadastro, sem gravar pontos."""
+    if not CLASH_API_TOKEN:
+        return {"status": "disabled", "message": "Token da API não configurado."}
+
+    try:
+        season = fetch_clan_raid_season(CLASH_API_TOKEN, CLASH_CLAN_TAG)
+        if not season:
+            return {"status": "empty", "message": "A API não retornou temporadas de Raide."}
+
+        start_dt = pd.to_datetime(season.get("startTime"), utc=True, errors="coerce")
+        if pd.isna(start_dt):
+            return {"status": "error", "message": "Data de início inválida retornada pela API."}
+        weekend_key = start_dt.tz_convert(TZ).strftime("%d/%m/%Y")
+
+        players_by_name = {
+            str(p.get("name", "")).strip().casefold(): p
+            for p in players_data if p.get("name")
+        }
+        rows = []
+        for member in season.get("members") or []:
+            api_name = str(member.get("name") or "").strip()
+            matched_player = players_by_name.get(api_name.casefold())
+            attacks = int(member.get("attacks") or 0)
+            rows.append({
+                "Jogador na API": api_name,
+                "Tag": member.get("tag", ""),
+                "Ataques": attacks,
+                "Cadastro no Ghost Hunt": matched_player.get("name") if matched_player else "NÃO ENCONTRADO",
+                "Elegível ao +5": "SIM" if matched_player and attacks >= 5 else "NÃO",
+                "Situação": "Pronto para +5" if matched_player and attacks >= 5 else (
+                    "Nome não corresponde" if not matched_player else "Menos de 5 ataques"
+                ),
+            })
+
+        rows.sort(key=lambda row: (-row["Ataques"], row["Jogador na API"].casefold()))
+        return {
+            "status": "ok",
+            "season": weekend_key,
+            "state": season.get("state", "desconhecido"),
+            "rows": rows,
+            "eligible_count": sum(1 for row in rows if row["Elegível ao +5"] == "SIM"),
+        }
+    except Exception as exc:
+        return {"status": "error", "message": str(exc)}
+
+
+# Consulta automaticamente ao abrir/atualizar o aplicativo.
+# Nesta etapa é apenas uma prévia: nenhum ponto é lançado no Supabase.
+raid_api_preview = build_raid_api_preview(players)
 
 # Os lançamentos do mês permanecem em registros simples até a tela que precisar deles.\n\n# --- Ranking: as regras e os limites são aplicados separadamente em cada mês ---
 def build_ranking(players_data, events_data):
@@ -757,6 +835,22 @@ if st.session_state.get("gh_admin_target"):
 
 
 if aba == "🏆 Ranking do mês":
+    if raid_api_preview.get("status") == "ok":
+        with st.expander("🔎 Conferência automática do Raide da Capital", expanded=False):
+            st.caption(
+                f"Temporada iniciada em {raid_api_preview.get('season')} • "
+                f"Jogadores prontos para receber +5: {raid_api_preview.get('eligible_count', 0)}. "
+                "Esta etapa é somente consulta; ainda não grava pontos."
+            )
+            preview_df = pd.DataFrame(raid_api_preview.get("rows", []))
+            if not preview_df.empty:
+                st.dataframe(preview_df, use_container_width=True, hide_index=True)
+            else:
+                st.info("A API não retornou participantes nesta temporada.")
+    elif raid_api_preview.get("status") == "disabled":
+        st.caption("Raide automático: configure CLASH_API_TOKEN nos Secrets do Streamlit para consultar os ataques.")
+    elif raid_api_preview.get("status") == "error":
+        st.warning("Não foi possível consultar o Raide automaticamente: " + raid_api_preview.get("message", "Erro desconhecido"))
     live_ranking_fragment(player_mode=False)
 
 if aba == "➕ Lançar pontos":
