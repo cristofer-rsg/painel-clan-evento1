@@ -40,7 +40,7 @@ def buscar_membros(token):
 
 
 def main():
-    token = os.environ["CLASH_API_TOKEN"]
+    token = "".join(os.environ["CLASH_API_TOKEN"].split())
     url = os.environ["SUPABASE_URL"]
     chave = os.environ["SUPABASE_SECRET_KEY"]
 
