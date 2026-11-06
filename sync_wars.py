@@ -1,4 +1,4 @@
-
+from datetime import datetime, timezone
 import json
 import os
 import sys
@@ -176,8 +176,24 @@ def main():
     clan_tag = quote(CLAN_TAG, safe="")
     war = api_get(f"/clans/{clan_tag}/currentwar", token)
 
-    if war.get("state") == "notInWar":
+        if war.get("state") == "notInWar":
         print("O clã não está em guerra. Nenhum lançamento realizado.")
+        return
+
+    start_time = war.get("startTime")
+
+    if not start_time:
+        raise RuntimeError("A API não informou o início da guerra.")
+
+    war_started = datetime.strptime(
+        start_time[:15],
+        "%Y%m%dT%H%M%S"
+    ).replace(tzinfo=timezone.utc)
+
+    cutoff = datetime(2026, 11, 6, 13, 50, tzinfo=timezone.utc)
+
+    if war_started <= cutoff:
+        print("Guerra anterior à data de corte. Nenhum ponto lançado.")
         return
 
     db = create_client(supabase_url, supabase_key)
