@@ -1,3 +1,4 @@
+
 import json
 import os
 import sys
@@ -32,6 +33,7 @@ def api_get(path, token):
 
 def build_war_events(war, players_by_tag):
     state = war.get("state")
+
     if state not in ("inWar", "warEnded"):
         print(f"Nenhuma pontuação para processar. Estado: {state}")
         return [], set()
@@ -41,9 +43,7 @@ def build_war_events(war, players_by_tag):
     war_start = war.get("startTime") or war.get("endTime")
 
     if not war_start:
-        raise RuntimeError(
-            "A API não informou startTime/endTime."
-        )
+        raise RuntimeError("A API não informou startTime/endTime.")
 
     war_key = f"{CLAN_TAG}:{war_start}"
     own_members = clan.get("members") or []
@@ -75,6 +75,7 @@ def build_war_events(war, players_by_tag):
             continue
 
         player = players_by_tag.get(player_tag)
+
         if not player:
             missing_players.add(player_tag)
             continue
@@ -106,23 +107,27 @@ def build_war_events(war, players_by_tag):
                 10,
             )
 
-        first_attack = attacks[0]
-        defender_tag = first_attack.get("defenderTag")
-        own_position = member.get("mapPosition")
-        defender_position = enemy_position_by_tag.get(defender_tag)
+        # Verifica o espelho individualmente em cada ataque.
+        for attack_number, attack in enumerate(attacks, start=1):
+            defender_tag = attack.get("defenderTag")
+            own_position = member.get("mapPosition")
+            defender_position = enemy_position_by_tag.get(defender_tag)
 
-        if (
-            own_position is not None
-            and defender_position == own_position
-        ):
-            add(
-                f"{war_key}:{player_tag}:mirror-first-attack",
-                player_name,
-                player_tag,
-                "Acertou o espelho (+5)",
-                5,
-            )
+            if (
+                own_position is not None
+                and defender_position == own_position
+            ):
+                order = attack.get("order", attack_number)
 
+                add(
+                    f"{war_key}:{player_tag}:mirror:{order}",
+                    player_name,
+                    player_tag,
+                    "Acertou o espelho (+5)",
+                    5,
+                )
+
+        # Soma as estrelas de cada ataque separadamente.
         for attack_number, attack in enumerate(attacks, start=1):
             stars = int(attack.get("stars") or 0)
 
