@@ -20,7 +20,7 @@ HTTP = requests.Session()
 
 
 def weekend_start(value):
-    """Return Friday local date identifying the raid weekend."""
+    """Return the Saturday anchor used by existing raid source keys."""
     if isinstance(value, str):
         value = datetime.fromisoformat(value.replace("Z", "+00:00"))
     if isinstance(value, datetime):
@@ -29,13 +29,13 @@ def weekend_start(value):
         day = value.date()
     else:
         day = value
-    # Capital Raid weekend is treated as Friday through Monday.
-    return day - timedelta(days=(day.weekday() - 4) % 7)
+    # Keep the historical Saturday key so existing sources remain idempotent.
+    return day - timedelta(days=(day.weekday() + 2) % 7)
 
 
 def weekend_end(value):
-    """Return Monday, the closing date of the Friday-to-Monday raid."""
-    return weekend_start(value) + timedelta(days=3)
+    """Return Monday, the closing date of the raid weekend."""
+    return weekend_start(value) + timedelta(days=2)
 
 
 def raid_month_key(value):
