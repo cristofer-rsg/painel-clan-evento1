@@ -607,7 +607,7 @@ def load_recent_clan_members():
 
 
 def build_raid_api_preview(players_data):
-    """Consulta o Raide e compara os nomes da API com o cadastro, sem gravar pontos."""
+    """Consulta o Raide e associa os jogadores pela TAG; usa nome apenas como fallback sem TAG cadastrada."""
     if not CLASH_API_TOKEN:
         return {"status": "disabled", "message": "Token da API não configurado."}
 
@@ -621,23 +621,47 @@ def build_raid_api_preview(players_data):
             return {"status": "error", "message": "Data de início inválida retornada pela API."}
         weekend_key = start_dt.tz_convert(TZ).strftime("%d/%m/%Y")
 
-        players_by_name = {
-            str(p.get("name", "")).strip().casefold(): p
-            for p in players_data if p.get("name")
-        }
+        def normalize_tag(value):
+            return str(value or "").strip().upper().replace(" ", "")
+
+        players_by_tag = {}
+        players_without_tag_by_name = {}
+        for player in players_data:
+            if not player.get("name") or player.get("active", True) is False:
+                continue
+            player_tag = normalize_tag(player.get("player_tag"))
+            if player_tag:
+                players_by_tag[player_tag] = player
+            else:
+                players_without_tag_by_name[str(player.get("name")).strip().casefold()] = player
+
         rows = []
         for member in season.get("members") or []:
             api_name = str(member.get("name") or "").strip()
-            matched_player = players_by_name.get(api_name.casefold())
+            api_tag = normalize_tag(member.get("tag"))
+
+            # A TAG é a chave principal. Nome só é usado para cadastros antigos
+            # que ainda não possuem player_tag salvo no Ghost Hunt.
+            matched_player = players_by_tag.get(api_tag) if api_tag else None
+            match_method = "TAG" if matched_player else ""
+            if not matched_player:
+                fallback = players_without_tag_by_name.get(api_name.casefold())
+                if fallback:
+                    matched_player = fallback
+                    match_method = "nome (cadastro sem TAG)"
+
             attacks = int(member.get("attacks") or 0)
             rows.append({
                 "Jogador na API": api_name,
-                "Tag": member.get("tag", ""),
+                "Tag": api_tag,
                 "Ataques": attacks,
                 "Cadastro no Ghost Hunt": matched_player.get("name") if matched_player else "NÃO ENCONTRADO",
+                "Vínculo": match_method or ("Sem correspondência" if not matched_player else ""),
                 "Pontos previstos": (attacks + (2 if attacks >= 5 else 0)) if matched_player and attacks > 0 else 0,
                 "Situação": "Pronto para lançamento" if matched_player and attacks > 0 else (
-                    "Nome não corresponde" if not matched_player else "Nenhum ataque"
+                    "TAG não cadastrada" if not matched_player and api_tag else (
+                        "Nome não corresponde" if not matched_player else "Nenhum ataque"
+                    )
                 ),
             })
 
@@ -840,7 +864,7 @@ def apply_automatic_raid_points(preview, players_data, month_events):
     return result
 
 # Consulta e processa o Raide ao abrir/atualizar o aplicativo.
-# A chave por jogador/fim de semana impede duplicações nos reruns.
+# A associação dos participantes do Raide é feita pela TAG do Clash;\n# o nome cadastrado no Ghost Hunt continua sendo usado no ranking.\n# A chave por jogador/fim de semana impede duplicações nos reruns.
 raid_api_preview = build_raid_api_preview(players)
 raid_auto_result = {"awarded": [], "already_awarded": [], "unmatched": [], "errors": []}
 if is_admin and raid_api_preview.get("status") == "ok":
