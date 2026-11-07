@@ -20,7 +20,7 @@ def api_get(path, token):
         headers={
             "Authorization": f"Bearer {token}",
             "Accept": "application/json",
-            "User-Agent": "ClanEvento-ClanGames/2.0",
+            "User-Agent": "ClanEvento-ClanGames/2.1",
         },
     )
     try:
@@ -33,6 +33,29 @@ def api_get(path, token):
         ) from error
 
 
+def rpc_data(result):
+    data = result.data or {}
+    if isinstance(data, list) and data:
+        data = data[0]
+    return data if isinstance(data, dict) else {}
+
+
+def sync_monthly_performance(db, month_key):
+    result = db.rpc(
+        "sync_player_monthly_clan_games",
+        {"p_month_key": month_key},
+    ).execute()
+    data = rpc_data(result)
+    if data.get("success") is not True:
+        raise RuntimeError(
+            f"Falha ao atualizar desempenho mensal dos Jogos do Clã: {data}"
+        )
+    print(
+        "Desempenho mensal atualizado: "
+        f"{data.get('players_updated', 0)} jogador(es)."
+    )
+
+
 def main():
     token = "".join(os.environ["CLASH_API_TOKEN"].split())
     if len(token.split(".")) != 3:
@@ -43,6 +66,10 @@ def main():
     if not supabase_url.startswith("https://") or not supabase_key:
         raise RuntimeError("Configuração do Supabase inválida.")
 
+    mode = os.environ.get("GAMES_MODE", "poll").strip().lower()
+    if mode not in ("baseline", "poll"):
+        raise RuntimeError("GAMES_MODE deve ser baseline ou poll.")
+
     db = create_client(supabase_url, supabase_key)
     roster = (
         db.table("players")
@@ -51,21 +78,37 @@ def main():
         .execute()
         .data or []
     )
-
-    # Evita consultar duas vezes a mesma tag caso haja duplicidade no cadastro.
     players_by_tag = {}
     for row in roster:
         tag = row.get("player_tag")
         name = row.get("name")
         if tag and name:
+            if tag in players_by_tag:
+                raise RuntimeError(f"Tag duplicada no cadastro: {tag}")
             players_by_tag[tag] = row
 
     players = list(players_by_tag.values())
     if not players:
-        print("Nenhum jogador ativo com tag cadastrado; nada a sincronizar.")
-        return
+        raise RuntimeError("Nenhum jogador ativo com tag cadastrado.")
 
     month_key = datetime.now(TZ).strftime("%Y-%m")
+
+    if mode == "poll":
+        baseline_check = (
+            db.table("clash_games_tracking")
+            .select("player_tag")
+            .eq("month_key", month_key)
+            .limit(1)
+            .execute()
+            .data or []
+        )
+        if not baseline_check:
+            print(
+                "Jogos do Clã ainda não foram iniciados no Ghost Hunt. "
+                "No primeiro dia do evento, execute manualmente com mode=baseline."
+            )
+            return
+
     snapshot = []
     failures = []
 
@@ -97,34 +140,36 @@ def main():
         except Exception as error:
             failures.append(f"{player['name']} ({tag}): {error}")
 
-    # Não atualiza observador nem ranking com uma amostra incompleta.
     if failures:
         for failure in failures:
             print(f"ATENÇÃO: {failure}")
         raise RuntimeError(
             f"{len(failures)} jogador(es) não puderam ser consultados. "
-            "Banco não alterado para evitar detectar início ou pontuação "
-            "com uma lista incompleta."
+            "Banco não alterado para evitar um ranking incompleto."
         )
 
     if not snapshot:
         raise RuntimeError("Nenhum perfil consultado.")
 
-    result = db.rpc(
-        "auto_sync_clash_games",
-        {"p_month_key": month_key, "p_snapshot": snapshot},
-    ).execute()
+    if mode == "baseline":
+        result = db.rpc(
+            "start_clash_games_tracking",
+            {"p_month_key": month_key, "p_snapshot": snapshot},
+        ).execute()
+    else:
+        result = db.rpc(
+            "sync_clash_games",
+            {"p_month_key": month_key, "p_snapshot": snapshot},
+        ).execute()
 
-    data = result.data or {}
-    if isinstance(data, list) and data:
-        data = data[0]
-    if not isinstance(data, dict):
-        data = {}
+    data = rpc_data(result)
+    sync_monthly_performance(db, month_key)
 
     print(f"Mês: {month_key}")
+    print(f"Modo: {mode}")
     print(f"Jogadores consultados: {len(snapshot)}")
     print(f"Resultado: {json.dumps(data, ensure_ascii=False)}")
-    print("Verificação automática dos Jogos do Clã concluída.")
+    print("Sincronização dos Jogos do Clã concluída.")
 
 
 if __name__ == "__main__":
