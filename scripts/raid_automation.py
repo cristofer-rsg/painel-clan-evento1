@@ -29,6 +29,20 @@ def weekend_start(value):
     return day - timedelta(days=(day.weekday() + 2) % 7)
 
 
+def raid_competence_month(season, anchor):
+    """Use the raid season end date to determine its monthly competence."""
+    end_raw = season.get("endTime")
+    if end_raw:
+        end_time = datetime.fromisoformat(end_raw.replace("Z", "+00:00"))
+        if end_time.tzinfo is not None:
+            end_time = end_time.astimezone(TZ)
+        return end_time.strftime("%Y-%m")
+
+    # Fallback for API responses without endTime: the raid weekend ends
+    # on Monday, two days after its Saturday anchor.
+    return (anchor + timedelta(days=2)).strftime("%Y-%m")
+
+
 def api_get_raid_season():
     tag_path = "%23" + CLAN_TAG.lstrip("#")
     url = f"{API_BASE}/clans/{tag_path}/capitalraidseasons"
@@ -116,9 +130,8 @@ def fetch_month_raid_events(now_local):
     return rows
 
 
-def sync_raid_attack_stats(members, players, anchor):
+def sync_raid_attack_stats(members, players, anchor, month_key):
     """Upsert one monthly source per player/raid weekend (idempotent)."""
-    month_key = anchor.strftime("%Y-%m")
     sources = []
     seen_tags = set()
 
@@ -173,6 +186,7 @@ def run():
         raise RuntimeError("A temporada retornada não possui startTime.")
     season_start = datetime.fromisoformat(start_raw.replace("Z", "+00:00")).astimezone(TZ)
     anchor = weekend_start(season_start)
+    month_key = raid_competence_month(season, anchor)
     weekend_key = anchor.strftime("%Y-%m-%d")
     weekend_label = season_start.strftime("%d/%m/%Y")
     marker_prefix = f"RAIDE_AUTO:{weekend_key}:5_ATAQUES"
@@ -183,7 +197,7 @@ def run():
 
     # Atualiza a métrica real de ataques, mesmo para quem fez menos de cinco.
     # A mesma origem é sobrescrita nas próximas execuções, sem duplicar.
-    sync_raid_attack_stats(members, players, anchor)
+    sync_raid_attack_stats(members, players, anchor, month_key)
 
     awarded, already, capped, unmatched, under = [], [], [], [], []
     for member in members:
@@ -249,7 +263,10 @@ def run():
                 **payload, "created_at": now_local.isoformat()
             }])
 
-    print(f"Temporada: {weekend_label} | estado: {season.get('state', 'desconhecido')}")
+    print(
+        f"Temporada: {weekend_label} | competência: {month_key} | "
+        f"estado: {season.get('state', 'desconhecido')}"
+    )
     print(f"Jogadores analisados: {len(members)}")
     print(f"Novos lançamentos (+5): {len(awarded)}")
     if awarded:
