@@ -964,36 +964,58 @@ if not is_admin:
                         if name_key:
                             capital_by_name[name_key] = capital_by_name.get(name_key, 0) + int(event.get("points") or 0)
 
-                # A pontuação total segue exatamente as regras oficiais do ranking mensal.
-                official_ranking = build_ranking(players_all, month_events)
-                total_by_name = {
-                    str(row["Jogador"]).strip().casefold(): int(row["Total"])
-                    for row in official_ranking.to_dict("records")
-                }
+                # Quantidade bruta de tropas doadas por jogador, a partir dos registros manuais.
+                donated_troops_by_name = {}
+                for event in month_events:
+                    if str(event.get("category") or "").strip() == "Doações" and str(event.get("activity") or "").startswith("TROPAS_DOADAS:"):
+                        player_key = str(event.get("player") or "").strip().casefold()
+                        if player_key:
+                            donated_troops_by_name[player_key] = donated_troops_by_name.get(player_key, 0) + max(0, int(event.get("points") or 0))
 
                 detail_rows = []
                 for player in players_all:
                     name = str(player.get("name") or "")
+                    name_key = name.strip().casefold()
                     tag = str(player.get("player_tag") or "").strip().upper()
                     stats = by_tag.get(tag) if tag else None
                     if stats is None:
-                        stats = by_name.get(name.strip().casefold(), {})
+                        stats = by_name.get(name_key, {})
+                    donations_value = int(stats.get("donations") or 0)
+                    if donations_value <= 0:
+                        donations_value = int(donated_troops_by_name.get(name_key, 0))
+                    wars_value = int(stats.get("war_attacks") or 0)
+                    league_value = int(stats.get("league_attacks") or 0)
+                    raid_value = int(stats.get("raid_attacks") or 0)
+                    games_value = int(stats.get("clan_games_points") or 0)
+                    capital_value = int(capital_by_name.get(name_key, 0))
+
+                    # Índice de Atividade Ghost Hunt: seis categorias com o mesmo peso.
+                    activity_percentages = [
+                        min(wars_value / 20, 1.0),
+                        min(league_value / 7, 1.0),
+                        min(raid_value / 24, 1.0),
+                        min(donations_value / 5000, 1.0),
+                        min(games_value / 10000, 1.0),
+                        min(capital_value / 250000, 1.0),
+                    ]
+                    activity_index = round(sum(activity_percentages) / 6 * 100, 1)
+
                     detail_rows.append({
                         "Jogador": name,
                         "Tag": str(player.get("player_tag") or ""),
-                        "Total": int(total_by_name.get(name.strip().casefold(), 0)),
-                        "Guerras": int(stats.get("war_attacks") or 0),
-                        "Liga": int(stats.get("league_attacks") or 0),
-                        "Raide": int(stats.get("raid_attacks") or 0),
-                        "Doações": int(stats.get("donations") or 0),
-                        "Jogos": int(stats.get("clan_games_points") or 0),
-                        "Capital": int(capital_by_name.get(name.strip().casefold(), 0)),
+                        "Índice": activity_index,
+                        "Guerras": wars_value,
+                        "Liga": league_value,
+                        "Raide": raid_value,
+                        "Doações": donations_value,
+                        "Jogos": games_value,
+                        "Capital": capital_value,
                     })
 
                 performance_df = pd.DataFrame(detail_rows)
                 if not performance_df.empty:
                     performance_df = performance_df.sort_values(
-                        ["Total", "Jogador"], ascending=[False, True]
+                        ["Índice", "Jogador"], ascending=[False, True]
                     ).reset_index(drop=True)
                     performance_df.insert(0, "Posição", range(1, len(performance_df) + 1))
 
@@ -1027,21 +1049,23 @@ if not is_admin:
                     )
                     st.markdown("### 🏰 Desempenho geral do clã")
                     total_items = [
-                        ("⚔️ Guerras", totals["Guerras"]),
-                        ("🛡️ Liga", totals["Liga"]),
-                        ("🏴 Raide", totals["Raide"]),
-                        ("💧 Doações", totals["Doações"]),
-                        ("🎮 Jogos", totals["Jogos"]),
-                        ("🏰 Capital", totals["Capital"]),
+                        ("⚔️ Guerras", totals["Guerras"], "Ataques"),
+                        ("🛡️ Liga", totals["Liga"], "Ataques"),
+                        ("🏴 Raide", totals["Raide"], "Ataques"),
+                        ("💧 Doações", totals["Doações"], "Tropas"),
+                        ("🎮 Jogos", totals["Jogos"], "Pontos"),
+                        ("🏰 Capital", totals["Capital"], "Moedas Doadas"),
                     ]
                     total_html = "".join(
                         f"<div class='gh-clan-total'><div class='gh-clan-total-label'>{label}</div>"
-                        f"<div class='gh-clan-total-value'>{value:,}".replace(",", ".") + "</div></div>"
-                        for label, value in total_items
+                        f"<div class='gh-clan-total-value'>{value:,}".replace(",", ".")
+                        + f" <span style='font-size:11px;font-weight:750;color:#d6e0ee'>{unit}</span></div></div>"
+                        for label, value, unit in total_items
                     )
                     st.markdown(f"<div class='gh-clan-total-grid'>{total_html}</div>", unsafe_allow_html=True)
 
                     st.markdown("### 🏆 Ranking de desempenho do mês")
+                    st.caption("Ordenado pelo Índice de Atividade Ghost Hunt — independente dos pontos do ranking oficial.")
                     search_name = st.text_input(
                         "🔎 Buscar jogador", placeholder="Digite o nome do jogador ou tag",
                         key="guest_search_player"
@@ -1068,7 +1092,7 @@ if not is_admin:
                         st.markdown(
                             f"<div class='gh-performance-rank'><div class='gh-rank-position'>{medal}</div>"
                             f"<div class='gh-rank-player'>👤 {safe_name}<div class='gh-rank-stats'>{safe_tag}<br>{compact_stats}</div></div>"
-                            f"<div class='gh-rank-total'>{int(row['Total'])} pts</div></div>",
+                            f"<div class='gh-rank-total'>{float(row['Índice']):.1f}".replace(".", ",") + "%</div></div>",
                             unsafe_allow_html=True
                         )
                 else:
