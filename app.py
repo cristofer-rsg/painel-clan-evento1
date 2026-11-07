@@ -740,7 +740,10 @@ def apply_automatic_raid_points(preview, players_data, month_events):
             result["awarded"].append(f"{player_name} (+{points})")
         except Exception as exc:
             try:
-                refreshed = load_events(CURRENT_MONTH)
+                # Reconsulta o histórico completo para reconhecer um lançamento
+                # que tenha sido gravado no mês anterior.
+                load_all_events_for_export.clear()
+                refreshed = load_all_events_for_export()
                 duplicate_now = any(
                     str(event.get("player", "")).strip().casefold() == str(player_name).casefold()
                     and event.get("category") == "Raide de Fim de Semana"
@@ -769,8 +772,11 @@ raid_api_preview = build_raid_api_preview(players)
 raid_auto_result = {"awarded": [], "already_awarded": [], "unmatched": [], "errors": []}
 if is_admin and raid_api_preview.get("status") == "ok":
     try:
-        raid_month_events = load_events(CURRENT_MONTH)
-        raid_auto_result = apply_automatic_raid_points(raid_api_preview, players, raid_month_events)
+        # O Raide pode atravessar a virada do mês. A conferência precisa
+        # considerar o histórico completo, não apenas os eventos do mês atual.
+        load_all_events_for_export.clear()
+        raid_history_events = load_all_events_for_export()
+        raid_auto_result = apply_automatic_raid_points(raid_api_preview, players, raid_history_events)
     except Exception as raid_auto_exc:
         raid_auto_result["errors"].append(str(raid_auto_exc))
 
