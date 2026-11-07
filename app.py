@@ -956,12 +956,21 @@ if not is_admin:
                 )
                 by_tag = {str(r.get("player_tag") or "").strip().upper(): r for r in stat_rows if r.get("player_tag")}
                 by_name = {str(r.get("player") or "").strip().casefold(): r for r in stat_rows if r.get("player")}
+                month_events = load_events(selected_month)
                 capital_by_name = {}
-                for event in load_events(selected_month):
+                for event in month_events:
                     if str(event.get("category") or "").strip() == "Capital do Clã":
                         name_key = str(event.get("player") or "").strip().casefold()
                         if name_key:
                             capital_by_name[name_key] = capital_by_name.get(name_key, 0) + int(event.get("points") or 0)
+
+                # A pontuação total segue exatamente as regras oficiais do ranking mensal.
+                official_ranking = build_ranking(players_all, month_events)
+                total_by_name = {
+                    str(row["Jogador"]).strip().casefold(): int(row["Total"])
+                    for row in official_ranking.to_dict("records")
+                }
+
                 detail_rows = []
                 for player in players_all:
                     name = str(player.get("name") or "")
@@ -971,6 +980,8 @@ if not is_admin:
                         stats = by_name.get(name.strip().casefold(), {})
                     detail_rows.append({
                         "Jogador": name,
+                        "Tag": str(player.get("player_tag") or ""),
+                        "Total": int(total_by_name.get(name.strip().casefold(), 0)),
                         "Guerras": int(stats.get("war_attacks") or 0),
                         "Liga": int(stats.get("league_attacks") or 0),
                         "Raide": int(stats.get("raid_attacks") or 0),
@@ -978,28 +989,86 @@ if not is_admin:
                         "Jogos": int(stats.get("clan_games_points") or 0),
                         "Capital": int(capital_by_name.get(name.strip().casefold(), 0)),
                     })
+
                 performance_df = pd.DataFrame(detail_rows)
                 if not performance_df.empty:
-                    search_name = st.text_input("🔎 Buscar jogador", placeholder="Digite o nome do jogador", key="guest_search_player")
+                    performance_df = performance_df.sort_values(
+                        ["Total", "Jogador"], ascending=[False, True]
+                    ).reset_index(drop=True)
+                    performance_df.insert(0, "Posição", range(1, len(performance_df) + 1))
+
+                    # Totais gerais do clã: calculados antes da busca individual.
+                    totals = {
+                        "Guerras": int(performance_df["Guerras"].sum()),
+                        "Liga": int(performance_df["Liga"].sum()),
+                        "Raide": int(performance_df["Raide"].sum()),
+                        "Doações": int(performance_df["Doações"].sum()),
+                        "Jogos": int(performance_df["Jogos"].sum()),
+                        "Capital": int(performance_df["Capital"].sum()),
+                    }
+                    st.markdown(
+                        """
+                        <style>
+                        .gh-clan-total-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:10px 0 20px;}
+                        .gh-clan-total{border:1px solid #d6ad4e;border-radius:13px;padding:10px 5px;text-align:center;
+                          background:linear-gradient(145deg,#102b45,#071522);box-shadow:0 5px 13px rgba(0,0,0,.2);}
+                        .gh-clan-total-label{font-size:11px;color:#d6e0ee;min-height:25px;line-height:1.2;}
+                        .gh-clan-total-value{font-size:clamp(17px,4vw,24px);font-weight:950;color:#ffd36c;overflow-wrap:anywhere;}
+                        .gh-performance-rank{display:flex;align-items:center;gap:9px;border:1px solid #294866;border-radius:13px;
+                          padding:10px;margin:7px 0;background:linear-gradient(145deg,#10243a,#091625);}
+                        .gh-rank-position{flex:0 0 34px;height:34px;border-radius:50%;display:grid;place-items:center;
+                          background:#18324d;color:#fff;font-weight:950;}
+                        .gh-rank-player{flex:1;min-width:0;color:#f5f7fc;font-size:14px;font-weight:900;overflow-wrap:anywhere;}
+                        .gh-rank-total{color:#ffd36c;font-size:18px;font-weight:950;white-space:nowrap;}
+                        .gh-rank-stats{font-size:11px;color:#aebfd3;line-height:1.5;margin-top:3px;}
+                        </style>
+                        """,
+                        unsafe_allow_html=True
+                    )
+                    st.markdown("### 🏰 Desempenho geral do clã")
+                    total_items = [
+                        ("⚔️ Guerras", totals["Guerras"]),
+                        ("🛡️ Liga", totals["Liga"]),
+                        ("🏴 Raide", totals["Raide"]),
+                        ("💧 Doações", totals["Doações"]),
+                        ("🎮 Jogos", totals["Jogos"]),
+                        ("🏰 Capital", totals["Capital"]),
+                    ]
+                    total_html = "".join(
+                        f"<div class='gh-clan-total'><div class='gh-clan-total-label'>{label}</div>"
+                        f"<div class='gh-clan-total-value'>{value:,}".replace(",", ".") + "</div></div>"
+                        for label, value in total_items
+                    )
+                    st.markdown(f"<div class='gh-clan-total-grid'>{total_html}</div>", unsafe_allow_html=True)
+
+                    st.markdown("### 🏆 Ranking de desempenho do mês")
+                    search_name = st.text_input(
+                        "🔎 Buscar jogador", placeholder="Digite o nome do jogador ou tag",
+                        key="guest_search_player"
+                    )
+                    ranked_view = performance_df.copy()
                     if search_name.strip():
-                        performance_df = performance_df[
-                            performance_df["Jogador"].str.contains(search_name.strip(), case=False, na=False)
-                        ]
-                    st.caption(f"{len(performance_df)} jogador(es) encontrado(s)")
-                    for _, row in performance_df.iterrows():
+                        mask = (
+                            ranked_view["Jogador"].str.contains(search_name.strip(), case=False, na=False)
+                            | ranked_view["Tag"].str.contains(search_name.strip(), case=False, na=False)
+                        )
+                        ranked_view = ranked_view[mask]
+                    st.caption(f"{len(ranked_view)} de {len(performance_df)} jogador(es)")
+                    for _, row in ranked_view.iterrows():
+                        position = int(row["Posição"])
+                        medal = "🥇" if position == 1 else "🥈" if position == 2 else "🥉" if position == 3 else str(position)
                         safe_name = html.escape(str(row["Jogador"]))
-                        stats_html = []
-                        for label, column in [
-                            ("Guerras", "Guerras"), ("Liga", "Liga"), ("Raide", "Raide"),
-                            ("Doações", "Doações"), ("Jogos do Clã", "Jogos"), ("Capital do Clã", "Capital")
-                        ]:
-                            stats_html.append(
-                                f"<div class='gh-stat-cell'><div class='gh-stat-label'>{label}</div>"
-                                f"<div class='gh-stat-value'>{int(row[column])}</div></div>"
-                            )
+                        safe_tag = html.escape(str(row.get("Tag") or ""))
+                        compact_stats = (
+                            f"Guerras: {int(row['Guerras'])}  •  Liga: {int(row['Liga'])}  •  Raide: {int(row['Raide'])}<br>"
+                            f"Doações: {int(row['Doações']):,}".replace(",", ".")
+                            + f"  •  Jogos: {int(row['Jogos']):,}".replace(",", ".")
+                            + f"  •  Capital: {int(row['Capital']):,}".replace(",", ".")
+                        )
                         st.markdown(
-                            f"<div class='gh-performance-card'><div class='gh-performance-name'>👤 {safe_name}</div>"
-                            f"<div class='gh-stat-grid'>{''.join(stats_html)}</div></div>",
+                            f"<div class='gh-performance-rank'><div class='gh-rank-position'>{medal}</div>"
+                            f"<div class='gh-rank-player'>👤 {safe_name}<div class='gh-rank-stats'>{safe_tag}<br>{compact_stats}</div></div>"
+                            f"<div class='gh-rank-total'>{int(row['Total'])} pts</div></div>",
                             unsafe_allow_html=True
                         )
                 else:
