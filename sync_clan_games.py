@@ -20,7 +20,7 @@ def api_get(path, token):
         headers={
             "Authorization": f"Bearer {token}",
             "Accept": "application/json",
-            "User-Agent": "ClanEvento-ClanGames/2.1",
+            "User-Agent": "ClanEvento-ClanGames/2.2",
         },
     )
     try:
@@ -66,10 +66,6 @@ def main():
     if not supabase_url.startswith("https://") or not supabase_key:
         raise RuntimeError("Configuração do Supabase inválida.")
 
-    mode = os.environ.get("GAMES_MODE", "poll").strip().lower()
-    if mode not in ("baseline", "poll"):
-        raise RuntimeError("GAMES_MODE deve ser baseline ou poll.")
-
     db = create_client(supabase_url, supabase_key)
     roster = (
         db.table("players")
@@ -78,6 +74,8 @@ def main():
         .execute()
         .data or []
     )
+
+    # Evita consultar duas vezes a mesma tag caso haja duplicidade no cadastro.
     players_by_tag = {}
     for row in roster:
         tag = row.get("player_tag")
@@ -89,26 +87,10 @@ def main():
 
     players = list(players_by_tag.values())
     if not players:
-        raise RuntimeError("Nenhum jogador ativo com tag cadastrado.")
+        print("Nenhum jogador ativo com tag cadastrado; nada a sincronizar.")
+        return
 
     month_key = datetime.now(TZ).strftime("%Y-%m")
-
-    if mode == "poll":
-        baseline_check = (
-            db.table("clash_games_tracking")
-            .select("player_tag")
-            .eq("month_key", month_key)
-            .limit(1)
-            .execute()
-            .data or []
-        )
-        if not baseline_check:
-            print(
-                "Jogos do Clã ainda não foram iniciados no Ghost Hunt. "
-                "No primeiro dia do evento, execute manualmente com mode=baseline."
-            )
-            return
-
     snapshot = []
     failures = []
 
@@ -140,36 +122,35 @@ def main():
         except Exception as error:
             failures.append(f"{player['name']} ({tag}): {error}")
 
+    # Não atualiza observador nem ranking com uma amostra incompleta.
     if failures:
         for failure in failures:
             print(f"ATENÇÃO: {failure}")
         raise RuntimeError(
             f"{len(failures)} jogador(es) não puderam ser consultados. "
-            "Banco não alterado para evitar um ranking incompleto."
+            "Banco não alterado para evitar detectar início ou pontuação "
+            "com uma lista incompleta."
         )
 
     if not snapshot:
         raise RuntimeError("Nenhum perfil consultado.")
 
-    if mode == "baseline":
-        result = db.rpc(
-            "start_clash_games_tracking",
-            {"p_month_key": month_key, "p_snapshot": snapshot},
-        ).execute()
-    else:
-        result = db.rpc(
-            "sync_clash_games",
-            {"p_month_key": month_key, "p_snapshot": snapshot},
-        ).execute()
-
+    # Preserva o mecanismo automático original: ele detecta o início
+    # dos Jogos do Clã e mantém o baseline individual da conquista.
+    result = db.rpc(
+        "auto_sync_clash_games",
+        {"p_month_key": month_key, "p_snapshot": snapshot},
+    ).execute()
     data = rpc_data(result)
+
+    # Espelha points_earned somente depois da sincronização original.
+    # A função SQL atualiza exclusivamente clan_games_points.
     sync_monthly_performance(db, month_key)
 
     print(f"Mês: {month_key}")
-    print(f"Modo: {mode}")
     print(f"Jogadores consultados: {len(snapshot)}")
     print(f"Resultado: {json.dumps(data, ensure_ascii=False)}")
-    print("Sincronização dos Jogos do Clã concluída.")
+    print("Verificação automática dos Jogos do Clã concluída.")
 
 
 if __name__ == "__main__":
