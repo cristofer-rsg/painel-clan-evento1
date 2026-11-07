@@ -290,6 +290,74 @@ CLASH_CLAN_TAG = st.secrets.get("CLASH_CLAN_TAG", "#2GCGP0RQ9")
 CLASH_API_BASE = "https://cocproxy.royaleapi.dev/v1"
 
 
+@st.cache_data(ttl=21600, max_entries=2, show_spinner=False)
+def fetch_clan_members(api_token, clan_tag):
+    """Consulta os membros atuais do clã pela API oficial via proxy RoyaleAPI."""
+    tag_path = "%23" + str(clan_tag).strip().lstrip("#")
+    url = f"{CLASH_API_BASE}/clans/{tag_path}"
+    token = str(api_token or "").strip()
+    response = requests.get(
+        url,
+        headers={
+            "Authorization": f"Bearer {token}",
+            "auth": token,
+            "Accept": "application/json",
+        },
+        timeout=20,
+    )
+    if response.status_code == 403:
+        raise RuntimeError("A API/proxy recusou a autenticação (403). Confira o Secret CLASH_API_TOKEN.")
+    if response.status_code == 401:
+        raise RuntimeError("A API retornou 401: não reconheceu a autenticação enviada.")
+    if response.status_code == 429:
+        raise RuntimeError("A API limitou temporariamente as consultas (429).")
+    response.raise_for_status()
+    return (response.json() or {}).get("memberList") or []
+
+
+@st.cache_data(ttl=21600, max_entries=2, show_spinner=False)
+def sync_clan_member_entries(api_token, clan_tag):
+    """
+    Registra a primeira aparição de cada tag no histórico.
+    A primeira consulta cria uma linha de base (não anunciada como entrada nova);
+    membros que aparecerem nas consultas seguintes são registrados como novos.
+    """
+    if not api_token:
+        return {"status": "disabled", "message": "Token da API não configurado."}
+    try:
+        members = fetch_clan_members(api_token, clan_tag)
+        existing_rows = fetch_all_pages(
+            db.table("clan_member_entries").select("player_tag,is_baseline")
+        )
+        existing_tags = {
+            str(row.get("player_tag", "")).strip().upper()
+            for row in existing_rows if row.get("player_tag")
+        }
+        is_initial_baseline = len(existing_rows) == 0
+        inserted_count = 0
+        for member in members:
+            tag = str(member.get("tag") or "").strip().upper()
+            name = str(member.get("name") or "").strip()
+            if not tag or not name or tag in existing_tags:
+                continue
+            db.table("clan_member_entries").insert({
+                "player_tag": tag,
+                "player_name": name,
+                "first_seen_at": datetime.now(TZ).isoformat(),
+                "is_baseline": is_initial_baseline,
+            }).execute()
+            existing_tags.add(tag)
+            inserted_count += 1
+        return {
+            "status": "ok",
+            "inserted": inserted_count,
+            "baseline": is_initial_baseline,
+            "member_count": len(members),
+        }
+    except Exception as exc:
+        return {"status": "error", "message": str(exc)}
+
+
 @st.cache_data(ttl=180, max_entries=2, show_spinner=False)
 def fetch_clan_raid_season(api_token, clan_tag):
     tag_path = "%23" + str(clan_tag).strip().lstrip("#")
@@ -531,6 +599,24 @@ except Exception as e:
     st.stop()
 
 player_names = [p["name"] for p in players]
+
+
+@st.cache_data(ttl=300, max_entries=2, show_spinner=False)
+def load_recent_clan_members():
+    """Retorna os três membros mais recentes, excluindo a carga inicial de referência."""
+    return (
+        db.table("clan_member_entries")
+        .select("player_name,player_tag,first_seen_at")
+        .eq("is_baseline", False)
+        .order("first_seen_at", desc=True)
+        .limit(3)
+        .execute()
+        .data or []
+    )
+
+
+# A consulta à lista atual do clã é limitada a uma vez a cada seis horas.
+clan_member_sync_result = sync_clan_member_entries(CLASH_API_TOKEN, CLASH_CLAN_TAG)
 
 
 def build_raid_api_preview(players_data):
@@ -849,6 +935,91 @@ def render_live_ranking(player_mode=False):
     wars_count = sum(1 for event in month_events if str(event.get("category", "")).casefold() == "guerras")
     c3.metric("⚔️ Registros de guerra", wars_count)
     c4.metric("📝 Lançamentos", len(month_events))
+
+    # Novos membros: painel compacto entre os indicadores e o pódio.
+    st.markdown(
+        """
+        <style>
+        .gh-new-members{
+            border:1.5px solid #27a9f5;border-radius:18px;
+            background:linear-gradient(145deg,rgba(12,35,59,.98),rgba(5,17,32,.98));
+            box-shadow:0 0 20px rgba(39,169,245,.12),0 10px 24px rgba(0,0,0,.28);
+            padding:15px;margin:22px 0 26px;
+        }
+        .gh-new-members-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:3px;}
+        .gh-new-members-title{font-size:clamp(18px,3.5vw,25px);font-weight:900;color:#f3f7ff;}
+        .gh-new-members-sub{font-size:13px;color:#aebed2;margin:2px 0 12px 42px;}
+        .gh-new-member-row{
+            display:flex;align-items:center;gap:10px;padding:10px 9px;margin-top:6px;
+            border:1px solid #1e3a56;border-radius:14px;background:rgba(7,22,39,.72);
+        }
+        .gh-new-member-icon{font-size:27px;flex:0 0 34px;text-align:center;}
+        .gh-new-member-info{min-width:0;flex:1;}
+        .gh-new-member-name{font-size:14px;font-weight:850;color:#f4f7fc;overflow-wrap:anywhere;}
+        .gh-new-member-tag{font-size:12px;color:#b4c4d8;margin-top:2px;}
+        .gh-new-member-date{font-size:12px;color:#c1d0e2;white-space:nowrap;}
+        .gh-new-member-badge{
+            border:1px solid #22c55e;border-radius:20px;background:#075326;
+            color:#c8ffd7;font-size:12px;font-weight:900;padding:5px 10px;white-space:nowrap;
+        }
+        .gh-new-members-count{
+            border:1px solid #22c55e;border-radius:20px;background:#07391f;
+            color:#8cf49e;font-weight:900;font-size:12px;padding:6px 12px;white-space:nowrap;
+        }
+        @media(max-width:700px){
+            .gh-new-members{padding:12px;margin:18px 0 23px;}
+            .gh-new-member-row{gap:7px;padding:9px 7px;}
+            .gh-new-member-icon{font-size:23px;flex-basis:28px;}
+            .gh-new-member-date{font-size:10px;white-space:normal;text-align:right;}
+            .gh-new-member-badge{font-size:10px;padding:4px 7px;}
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+    st.markdown(
+        "<div class='gh-new-members'>"
+        "<div class='gh-new-members-head'><div class='gh-new-members-title'>👥 Novos membros do clã</div>"
+        "<div class='gh-new-members-count'>3 recentes</div></div>"
+        "<div class='gh-new-members-sub'>3 jogadores que entraram recentemente</div>",
+        unsafe_allow_html=True
+    )
+    try:
+        recent_members = load_recent_clan_members()
+        if recent_members:
+            member_rows_html = []
+            for member in recent_members:
+                member_name = html.escape(str(member.get("player_name") or "Jogador"))
+                member_tag = html.escape(str(member.get("player_tag") or ""))
+                try:
+                    joined_date = pd.to_datetime(member.get("first_seen_at"), utc=True).tz_convert(TZ).strftime("%d/%m/%Y")
+                except Exception:
+                    joined_date = "Data indisponível"
+                member_rows_html.append(
+                    "<div class='gh-new-member-row'><div class='gh-new-member-icon'>🛡️</div>"
+                    f"<div class='gh-new-member-info'><div class='gh-new-member-name'>{member_name}</div>"
+                    f"<div class='gh-new-member-tag'>{member_tag}</div></div>"
+                    f"<div class='gh-new-member-date'>📅 Entrou em {joined_date}</div>"
+                    "<div class='gh-new-member-badge'>Novo</div></div>"
+                )
+            st.markdown("".join(member_rows_html) + "</div>", unsafe_allow_html=True)
+        else:
+            st.markdown(
+                "<div class='gh-new-member-row'><div class='gh-new-member-info'>"
+                "<div class='gh-new-member-name'>Aguardando novos integrantes</div>"
+                "<div class='gh-new-member-tag'>Os próximos jogadores identificados pela sincronização aparecerão aqui.</div>"
+                "</div></div></div>",
+                unsafe_allow_html=True
+            )
+    except Exception:
+        st.markdown(
+            "<div class='gh-new-member-row'><div class='gh-new-member-info'>"
+            "<div class='gh-new-member-name'>Painel aguardando configuração</div>"
+            "<div class='gh-new-member-tag'>Crie a tabela de histórico de entrada no Supabase para ativar este painel.</div>"
+            "</div></div></div>",
+            unsafe_allow_html=True
+        )
+
     st.markdown("### 🏅 Pódio do mês")
     top = live_ranking.head(3).to_dict("records") if not live_ranking.empty else []
     podium_order = [(2, "🥈", "silver"), (1, "🥇", "gold"), (3, "🥉", "bronze")]
