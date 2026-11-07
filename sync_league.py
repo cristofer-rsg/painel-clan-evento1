@@ -18,7 +18,7 @@ def api_get(path, token):
     request = urllib.request.Request(
         f"{API_URL}{path}",
         headers={"Authorization": f"Bearer {token}", "Accept": "application/json",
-                 "User-Agent": "ClanEvento-LeagueSync/1.0"},
+                 "User-Agent": "GhostHunt-Sync/1.0"},
     )
     try:
         with urllib.request.urlopen(request, timeout=30) as response:
@@ -26,6 +26,65 @@ def api_get(path, token):
     except urllib.error.HTTPError as error:
         detail = error.read().decode("utf-8", errors="replace")
         raise RuntimeError(f"Erro na API Clash of Clans ({error.code}): {detail}") from error
+
+
+def sync_capital_gold(db, token, players_by_tag):
+    """
+    Sincroniza o total vitalício de contribuições à Capital.
+    A primeira consulta de cada jogador apenas cria a linha de referência
+    (baseline), sem lançar pontos retroativos. Consultas seguintes lançam
+    somente a diferença positiva desde a última leitura.
+    """
+    synced = 0
+    baseline = 0
+    skipped = 0
+    failures = []
+
+    for tag, player in players_by_tag.items():
+        try:
+            profile = api_get(f"/players/{quote(tag, safe='')}", token)
+
+            # Evita registrar dados caso o jogador já não esteja no clã correto.
+            clan = profile.get("clan") or {}
+            if clan.get("tag") != CLAN_TAG:
+                print(f"Capital: {player['name']} ignorado (não está no clã).")
+                skipped += 1
+                continue
+
+            total = profile.get("clanCapitalContributions")
+            if total is None:
+                raise RuntimeError("API não retornou clanCapitalContributions.")
+
+            result = db.rpc(
+                "sync_capital_gold_contribution",
+                {
+                    "p_player_tag": tag,
+                    "p_player": player["name"],
+                    "p_total": int(total),
+                },
+            ).execute()
+
+            response = result.data or {}
+            status = response.get("status") if isinstance(response, dict) else None
+            points = int(response.get("points", 0)) if isinstance(response, dict) else 0
+
+            if status == "baseline":
+                baseline += 1
+                print(f"Capital: referência inicial criada para {player['name']} ({total}).")
+            else:
+                synced += 1
+                if points:
+                    print(f"Capital: {player['name']} +{points} pontos.")
+        except Exception as error:
+            failures.append(f"{player['name']} ({tag}): {error}")
+            print(f"ATENÇÃO: falha ao sincronizar Capital de {player['name']}: {error}")
+
+    print(
+        "Capital do Clã — "
+        f"atualizados: {synced}; referências iniciais: {baseline}; "
+        f"ignorados: {skipped}; falhas: {len(failures)}"
+    )
+    return failures
 
 
 def make_war_events(war, players_by_tag):
@@ -99,6 +158,11 @@ def main():
               .eq("active", True).execute().data or [])
     players_by_tag = {r["player_tag"]: r for r in roster
                       if r.get("player_tag") and r.get("name")}
+
+    # A sincronização da Capital é independente da Liga. Falhas individuais
+    # são registradas e serão tentadas novamente na próxima execução.
+    sync_capital_gold(db, token, players_by_tag)
+
     clan_tag = quote(CLAN_TAG, safe="")
     group = api_get(f"/clans/{clan_tag}/currentwar/leaguegroup", token)
     if group.get("state") == "notInWar":
