@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Background Capital Raid scorer for Ghost Hunt. Runs from GitHub Actions."""
+"""Background Capital Raid scorer and monthly attack tracker for Ghost Hunt."""
 import os
 import sys
 from datetime import datetime, timedelta, timezone
@@ -116,6 +116,55 @@ def fetch_month_raid_events(now_local):
     return rows
 
 
+def sync_raid_attack_stats(members, players, anchor):
+    """Upsert one monthly source per player/raid weekend (idempotent)."""
+    month_key = anchor.strftime("%Y-%m")
+    sources = []
+    seen_tags = set()
+
+    for member in members:
+        tag = str(member.get("tag") or "").strip().upper()
+        player = players.get(tag) if tag else None
+        if not player:
+            continue
+        if tag in seen_tags:
+            raise RuntimeError(
+                f"A API retornou tag duplicada no Raide: {tag}. "
+                "Estatísticas não atualizadas."
+            )
+        seen_tags.add(tag)
+
+        attacks = member.get("attacks")
+        if not isinstance(attacks, int) or attacks < 0:
+            raise RuntimeError(
+                f"Quantidade de ataques inválida para {player['name']}."
+            )
+
+        sources.append({
+            "month_key": month_key,
+            "source_key": f"raid:{anchor.isoformat()}:{tag}",
+            "player_tag": tag,
+            "player": player["name"],
+            "war_attacks": 0,
+            "league_attacks": 0,
+            "raid_attacks": attacks,
+        })
+
+    if not sources:
+        raise RuntimeError(
+            "Nenhum membro do Raide corresponde aos jogadores cadastrados. "
+            "Estatísticas não atualizadas."
+        )
+
+    _, result = supabase_request(
+        "POST",
+        "rpc/sync_player_monthly_stat_sources",
+        payload={"p_sources": sources},
+    )
+    print(f"Estatísticas de ataques do Raide sincronizadas: {len(sources)}")
+    print(f"Resposta da sincronização mensal: {result}")
+
+
 def run():
     now_local = datetime.now(TZ)
     season = api_get_raid_season()
@@ -131,6 +180,10 @@ def run():
     players = fetch_players()
     events = fetch_month_raid_events(now_local)
     members = season.get("members") or []
+
+    # Atualiza a métrica real de ataques, mesmo para quem fez menos de cinco.
+    # A mesma origem é sobrescrita nas próximas execuções, sem duplicar.
+    sync_raid_attack_stats(members, players, anchor)
 
     awarded, already, capped, unmatched, under = [], [], [], [], []
     for member in members:
