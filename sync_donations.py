@@ -112,11 +112,25 @@ def main():
     if not isinstance(data, dict):
         data = {}
 
+    # Atualiza somente a coluna donations em player_monthly_stats.
+    # As colunas de guerras, liga, raide e jogos permanecem intactas.
+    stats_result = db.rpc(
+        "sync_player_monthly_donations",
+        {"p_month_key": month_key, "p_snapshot": snapshot},
+    ).execute()
+
+    stats_data = stats_result.data or {}
+    if isinstance(stats_data, list) and stats_data:
+        stats_data = stats_data[0]
+    if not isinstance(stats_data, dict):
+        stats_data = {}
+
     print(f"Mês do ranking: {month_key}")
     print(f"Membros do clã consultados: {len(members)}")
     print(f"Jogadores sincronizados: {len(snapshot)}")
     print(f"Doações acumuladas no mês: {data.get('players_tracked', 'OK')}")
     print(f"Lançamentos de pontuação atualizados: {data.get('events_created', 'OK')}")
+    print(f"Estatísticas mensais atualizadas: {stats_data.get('players_updated', 'OK')}")
     print("Sincronização automática de doações concluída.")
 
 

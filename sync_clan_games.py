@@ -20,7 +20,7 @@ def api_get(path, token):
         headers={
             "Authorization": f"Bearer {token}",
             "Accept": "application/json",
-            "User-Agent": "ClanEvento-ClanGames/2.0",
+            "User-Agent": "ClanEvento-ClanGames/2.2",
         },
     )
     try:
@@ -31,6 +31,29 @@ def api_get(path, token):
         raise RuntimeError(
             f"Erro na API Clash of Clans ({error.code}): {detail}"
         ) from error
+
+
+def rpc_data(result):
+    data = result.data or {}
+    if isinstance(data, list) and data:
+        data = data[0]
+    return data if isinstance(data, dict) else {}
+
+
+def sync_monthly_performance(db, month_key):
+    result = db.rpc(
+        "sync_player_monthly_clan_games",
+        {"p_month_key": month_key},
+    ).execute()
+    data = rpc_data(result)
+    if data.get("success") is not True:
+        raise RuntimeError(
+            f"Falha ao atualizar desempenho mensal dos Jogos do Clã: {data}"
+        )
+    print(
+        "Desempenho mensal atualizado: "
+        f"{data.get('players_updated', 0)} jogador(es)."
+    )
 
 
 def main():
@@ -58,6 +81,8 @@ def main():
         tag = row.get("player_tag")
         name = row.get("name")
         if tag and name:
+            if tag in players_by_tag:
+                raise RuntimeError(f"Tag duplicada no cadastro: {tag}")
             players_by_tag[tag] = row
 
     players = list(players_by_tag.values())
@@ -110,16 +135,17 @@ def main():
     if not snapshot:
         raise RuntimeError("Nenhum perfil consultado.")
 
+    # Preserva o mecanismo automático original: ele detecta o início
+    # dos Jogos do Clã e mantém o baseline individual da conquista.
     result = db.rpc(
         "auto_sync_clash_games",
         {"p_month_key": month_key, "p_snapshot": snapshot},
     ).execute()
+    data = rpc_data(result)
 
-    data = result.data or {}
-    if isinstance(data, list) and data:
-        data = data[0]
-    if not isinstance(data, dict):
-        data = {}
+    # Espelha points_earned somente depois da sincronização original.
+    # A função SQL atualiza exclusivamente clan_games_points.
+    sync_monthly_performance(db, month_key)
 
     print(f"Mês: {month_key}")
     print(f"Jogadores consultados: {len(snapshot)}")
