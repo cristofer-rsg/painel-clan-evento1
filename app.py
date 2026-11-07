@@ -248,261 +248,46 @@ div[data-testid="stForm"] input:-webkit-autofill:focus{
 """, unsafe_allow_html=True)
 
 if st.session_state.auth_role is None:
+    st.markdown("<div class='gh-login-heading'>🔒 Acesso ao Aplicativo</div>", unsafe_allow_html=True)
     st.markdown(
-        """<div class="gh-login-banner">
-          <div class="gh-login-emblem"><span>👻</span><i>⚔</i></div>
-          <div class="gh-login-brand">GHOST <b>HUNT</b></div>
-          <div class="gh-login-subtitle">CENTRAL DE GUERRA • CLÃ GHOST HUNT</div>
-          <div class="gh-login-rule"></div>
-        </div>""",
+        "<div class='gh-login-note'>👑 <b>Administrador:</b> acesso completo com senha.<br>"
+        "👥 <b>Acesso do jogador:</b> consulta livre, sem cadastro e sem senha.</div>",
         unsafe_allow_html=True
     )
-else:
-    st.markdown(
-        """<div class="gh-app-topbar"><span class="gh-app-ghost">👻</span><span>GHOST HUNT</span><span class="gh-app-goldline"></span></div>""",
-        unsafe_allow_html=True
-    )
-
-# --- Configuração e autenticação ---
-try:
-    SUPABASE_URL = st.secrets["SUPABASE_URL"]
-    SUPABASE_SECRET_KEY = st.secrets["SUPABASE_SECRET_KEY"]
-    ADMIN_PASSWORD = st.secrets["ADMIN_PASSWORD"]
-    OPERATOR_PASSWORD = "ghosthunt"  # Login do Operador já configurado no código
-except Exception:
-    st.error("Configurações ausentes. Confira SUPABASE_URL, SUPABASE_SECRET_KEY e ADMIN_PASSWORD em Settings → Secrets no Streamlit.")
-    st.stop()
-
-@st.cache_resource
-def get_db(url, key):
-    return create_client(url, key)
-
-try:
-    db = get_db(SUPABASE_URL, SUPABASE_SECRET_KEY)
-except Exception as e:
-    st.error("Não foi possível conectar ao Supabase. Confira a URL, a chave secreta e se as tabelas players e events foram criadas.")
-    st.code(str(e))
-    st.stop()
-
-# Integração automática do Raide da Capital via proxy RoyaleAPI.
-CLASH_API_TOKEN = st.secrets.get("CLASH_API_TOKEN", "")
-CLASH_CLAN_TAG = st.secrets.get("CLASH_CLAN_TAG", "#2GCGP0RQ9")
-CLASH_API_BASE = "https://cocproxy.royaleapi.dev/v1"
-
-
-@st.cache_data(ttl=21600, max_entries=2, show_spinner=False)
-def fetch_clan_members(api_token, clan_tag):
-    """Consulta os membros atuais do clã pela API oficial via proxy RoyaleAPI."""
-    tag_path = "%23" + str(clan_tag).strip().lstrip("#")
-    url = f"{CLASH_API_BASE}/clans/{tag_path}"
-    token = str(api_token or "").strip()
-    response = requests.get(
-        url,
-        headers={
-            "Authorization": f"Bearer {token}",
-            "auth": token,
-            "Accept": "application/json",
-        },
-        timeout=20,
-    )
-    if response.status_code == 403:
-        raise RuntimeError("A API/proxy recusou a autenticação (403). Confira o Secret CLASH_API_TOKEN.")
-    if response.status_code == 401:
-        raise RuntimeError("A API retornou 401: não reconheceu a autenticação enviada.")
-    if response.status_code == 429:
-        raise RuntimeError("A API limitou temporariamente as consultas (429).")
-    response.raise_for_status()
-    return (response.json() or {}).get("memberList") or []
-
-
-@st.cache_data(ttl=21600, max_entries=2, show_spinner=False)
-def sync_clan_member_entries(api_token, clan_tag):
-    """
-    Registra a primeira aparição de cada tag no histórico.
-    A primeira consulta cria uma linha de base (não anunciada como entrada nova);
-    membros que aparecerem nas consultas seguintes são registrados como novos.
-    """
-    if not api_token:
-        return {"status": "disabled", "message": "Token da API não configurado."}
-    try:
-        members = fetch_clan_members(api_token, clan_tag)
-        existing_rows = fetch_all_pages(
-            db.table("clan_member_entries").select("player_tag,is_baseline")
-        )
-        existing_tags = {
-            str(row.get("player_tag", "")).strip().upper()
-            for row in existing_rows if row.get("player_tag")
-        }
-        is_initial_baseline = len(existing_rows) == 0
-        inserted_count = 0
-        for member in members:
-            tag = str(member.get("tag") or "").strip().upper()
-            name = str(member.get("name") or "").strip()
-            if not tag or not name or tag in existing_tags:
-                continue
-            db.table("clan_member_entries").insert({
-                "player_tag": tag,
-                "player_name": name,
-                "first_seen_at": datetime.now(TZ).isoformat(),
-                "is_baseline": is_initial_baseline,
-            }).execute()
-            existing_tags.add(tag)
-            inserted_count += 1
-        return {
-            "status": "ok",
-            "inserted": inserted_count,
-            "baseline": is_initial_baseline,
-            "member_count": len(members),
-        }
-    except Exception as exc:
-        return {"status": "error", "message": str(exc)}
-
-
-@st.cache_data(ttl=180, max_entries=2, show_spinner=False)
-def fetch_clan_raid_season(api_token, clan_tag):
-    tag_path = "%23" + str(clan_tag).strip().lstrip("#")
-    url = f"{CLASH_API_BASE}/clans/{tag_path}/capitalraidseasons"
-    token = str(api_token or "").strip()
-    response = requests.get(
-        url,
-        headers={
-            "Authorization": f"Bearer {token}",
-            "auth": token,
-            "Accept": "application/json",
-        },
-        params={"limit": 1},
-        timeout=20,
-    )
-    if response.status_code == 403:
-        raise RuntimeError("A API/proxy recusou a autenticação (403). Confira o Secret CLASH_API_TOKEN.")
-    if response.status_code == 401:
-        raise RuntimeError("A API retornou 401: não reconheceu a autenticação enviada.")
-    if response.status_code == 429:
-        raise RuntimeError("A API limitou temporariamente as consultas (429).")
-    response.raise_for_status()
-    items = (response.json() or {}).get("items") or []
-    return items[0] if items else None
-
-
-# --- Autenticação persistente por aparelho/navegador ---
-if "auth_role" not in st.session_state:
-    st.session_state.auth_role = None
-if "auth_player" not in st.session_state:
-    st.session_state.auth_player = None
-
-# Autenticação sem componente externo de cookies; a sessão é mantida pelo Streamlit.
-
-
-def hash_password(password, salt=None):
-    salt = salt or secrets.token_hex(16)
-    digest = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt.encode("utf-8"), 260000).hex()
-    return f"{salt}${digest}"
-
-
-def verify_password(password, stored):
-    try:
-        salt, expected = stored.split("$", 1)
-        actual = hash_password(password, salt).split("$", 1)[1]
-        return hmac.compare_digest(actual, expected)
-    except Exception:
-        return False
-
-
-def revoke_current_device():
-    """Encerra apenas a sessão atual do aplicativo."""
-    st.session_state.auth_role = None
-    st.session_state.auth_player = None
-
-if st.session_state.auth_role is None:
-    if "login_screen_tab" not in st.session_state:
-        st.session_state.login_screen_tab = "login"
-
-    access_col1, access_col2 = st.columns(2, gap="small")
-    with access_col1:
-        if st.button(
-            "🔐 Entrar",
-            key="access_tab_login",
-            use_container_width=True,
-            type="primary" if st.session_state.login_screen_tab == "login" else "secondary"
-        ):
-            st.session_state.login_screen_tab = "login"
-            st.rerun()
-    with access_col2:
-        if st.button(
-            "📝 Criar meu acesso",
-            key="access_tab_register",
-            use_container_width=True,
-            type="primary" if st.session_state.login_screen_tab == "register" else "secondary"
-        ):
-            st.session_state.login_screen_tab = "register"
-            st.rerun()
-
-    if st.session_state.login_screen_tab == "login":
-        st.markdown("<div class='gh-login-heading'>🔒 Acesso ao Aplicativo</div>", unsafe_allow_html=True)
-        st.markdown("<div class='gh-login-note'>🔐 <b>Administrador principal:</b> deixe o usuário em branco e informe sua senha.<br>🛡️ <b>Operador e jogadores:</b> informe seu usuário e sua senha.</div>", unsafe_allow_html=True)
-        with st.form("login_admin_player"):
-            login_name = st.text_input("Usuário (operador ou jogador)", placeholder="Deixe em branco se for administrador")
+    admin_col, guest_col = st.columns(2, gap="small")
+    with admin_col:
+        with st.form("login_admin_only"):
+            login_name = st.text_input("Usuário", placeholder="Em branco para administrador")
             login_password = st.text_input("Senha", type="password")
-            login_submit = st.form_submit_button("Entrar", use_container_width=True)
+            login_submit = st.form_submit_button("🔐 Entrar como administrador", use_container_width=True)
         if login_submit:
             if login_name.strip().casefold() == "operador" and OPERATOR_PASSWORD and login_password == OPERATOR_PASSWORD:
                 st.session_state.auth_role = "operator"
                 st.session_state.auth_player = None
                 st.rerun()
-            elif login_password == ADMIN_PASSWORD:
+            elif not login_name.strip() and login_password == ADMIN_PASSWORD:
                 st.session_state.auth_role = "admin"
                 st.session_state.auth_player = None
                 st.rerun()
             else:
-                try:
-                    account = (db.table("player_accounts").select("player_name,password_hash,status")
-                               .ilike("player_name", login_name.strip()).limit(1).execute().data or [])
-                    if account and verify_password(login_password, account[0]["password_hash"]):
-                        st.session_state.auth_role = "player"
-                        st.session_state.auth_player = account[0]["player_name"]
-                        st.rerun()
-                    else:
-                        st.error("Nome de usuário ou senha incorretos.")
-                except Exception:
-                    st.error("Não foi possível consultar os acessos. Confira se as tabelas do Supabase foram criadas.")
-    else:
-        st.subheader("📝 Criar acesso de jogador")
-        st.caption("Escolha qualquer nome de usuário e senha. O acesso é liberado automaticamente após o cadastro.")
-        with st.form("register_player_account"):
-            register_name = st.text_input("Escolha seu nome de usuário", max_chars=30)
-            register_password = st.text_input("Crie uma senha", type="password")
-            register_confirm = st.text_input("Repita a senha", type="password")
-            register_submit = st.form_submit_button("Criar meu login", use_container_width=True)
-        if register_submit:
-            clean_name = register_name.strip()
-            if len(clean_name) < 3:
-                st.error("O nome de usuário precisa ter pelo menos 3 caracteres.")
-            elif "%" in clean_name or "_" in clean_name:
-                st.error("Não use os caracteres % ou _ no nome de usuário.")
-            elif len(register_password) < 8:
-                st.error("A senha precisa ter pelo menos 8 caracteres.")
-            elif register_password != register_confirm:
-                st.error("As senhas não são iguais.")
-            else:
-                try:
-                    duplicate = (db.table("player_accounts").select("id")
-                                 .ilike("player_name", clean_name).limit(1).execute().data or [])
-                    if duplicate:
-                        st.error("Esse nome de usuário já está em uso. Escolha outro.")
-                    else:
-                        db.table("player_accounts").insert({
-                            "player_name": clean_name,
-                            "password_hash": hash_password(register_password),
-                            "status": "approved"
-                        }).execute()
-                        st.success("Cadastro criado! Você já pode entrar no aplicativo.")
-                except Exception:
-                    st.error("Não foi possível criar o acesso. Confira se a tabela player_accounts foi criada no Supabase.")
+                st.error("Credenciais administrativas incorretas.")
+    with guest_col:
+        st.markdown(
+            "<div class='gh-role-card' style='margin-top:0;min-height:115px;text-align:center'>"
+            "<div class='gh-role-title'>👥 Acesso do jogador</div>"
+            "<div class='gh-role-desc'>Acesso livre • Consulte ranking, histórico e desempenho do clã.</div></div>",
+            unsafe_allow_html=True
+        )
+        if st.button("Entrar sem senha", key="enter_guest_access", use_container_width=True, type="primary"):
+            st.session_state.auth_role = "guest"
+            st.session_state.auth_player = None
+            st.rerun()
     st.stop()
 
 is_admin = st.session_state.auth_role in ("admin", "operator")
 is_primary_admin = st.session_state.auth_role == "admin"
 is_operator = st.session_state.auth_role == "operator"
+is_guest = st.session_state.auth_role == "guest"
 
 # --- Carregamento dos dados: nenhuma tabela é apagada ou recriada ---
 PLAYERS_FALLBACK = [
@@ -616,7 +401,10 @@ def load_recent_clan_members():
 
 
 # A consulta à lista atual do clã é limitada a uma vez a cada seis horas.
-clan_member_sync_result = sync_clan_member_entries(CLASH_API_TOKEN, CLASH_CLAN_TAG)
+clan_member_sync_result = (
+    sync_clan_member_entries(CLASH_API_TOKEN, CLASH_CLAN_TAG)
+    if is_admin else {"status": "read_only"}
+)
 
 
 def build_raid_api_preview(players_data):
@@ -780,7 +568,7 @@ def apply_automatic_raid_points(preview, players_data, month_events):
 # A chave por jogador/fim de semana impede duplicações nos reruns.
 raid_api_preview = build_raid_api_preview(players)
 raid_auto_result = {"awarded": [], "already_awarded": [], "unmatched": [], "errors": []}
-if raid_api_preview.get("status") == "ok":
+if is_admin and raid_api_preview.get("status") == "ok":
     try:
         raid_month_events = load_events(CURRENT_MONTH)
         raid_auto_result = apply_automatic_raid_points(raid_api_preview, players, raid_month_events)
@@ -1054,12 +842,88 @@ def render_live_ranking(player_mode=False):
 def live_ranking_fragment(player_mode=False):
     render_live_ranking(player_mode)
 
-# Jogadores autenticados só recebem a tela de consulta; abas e ações administrativas não são renderizadas.
+# Visitantes e jogadores autenticados recebem apenas telas de consulta.
 if not is_admin:
-    live_ranking_fragment(player_mode=True)
+    if is_guest:
+        st.markdown("## 👥 Acesso do jogador")
+        st.caption("Modo somente leitura • Todas as informações abaixo podem ser consultadas, mas não alteradas.")
+        guest_section = st.radio(
+            "Navegação",
+            ["🏠 Início", "🏆 Ranking", "📊 Desempenho"],
+            horizontal=True,
+            key="guest_readonly_navigation"
+        )
+        if guest_section in ("🏠 Início", "🏆 Ranking"):
+            live_ranking_fragment(player_mode=True)
+        else:
+            st.subheader("📊 Desempenho dos jogadores")
+            try:
+                month_rows = fetch_all_pages(
+                    db.table("player_monthly_stats").select("month_key").order("month_key", desc=True)
+                )
+                months = sorted({str(r.get("month_key")) for r in month_rows if r.get("month_key")}, reverse=True)
+            except Exception:
+                months = []
+            if CURRENT_MONTH not in months:
+                months.insert(0, CURRENT_MONTH)
+            selected_month = st.selectbox(
+                "Mês de referência", months, index=0,
+                format_func=month_label, key="guest_stats_month"
+            )
+            try:
+                stat_rows = fetch_all_pages(
+                    db.table("player_monthly_stats").select(
+                        "month_key,player_tag,player,war_attacks,league_attacks,raid_attacks,donations,clan_games_points"
+                    ).eq("month_key", selected_month)
+                )
+                by_tag = {str(r.get("player_tag") or "").strip().upper(): r for r in stat_rows if r.get("player_tag")}
+                by_name = {str(r.get("player") or "").strip().casefold(): r for r in stat_rows if r.get("player")}
+                capital_by_name = {}
+                for event in load_events(selected_month):
+                    if str(event.get("category") or "").strip() == "Capital do Clã":
+                        name_key = str(event.get("player") or "").strip().casefold()
+                        if name_key:
+                            capital_by_name[name_key] = capital_by_name.get(name_key, 0) + int(event.get("points") or 0)
+                detail_rows = []
+                for player in players_all:
+                    name = str(player.get("name") or "")
+                    tag = str(player.get("player_tag") or "").strip().upper()
+                    stats = by_tag.get(tag) if tag else None
+                    if stats is None:
+                        stats = by_name.get(name.strip().casefold(), {})
+                    detail_rows.append({
+                        "Jogador": name,
+                        "Guerras": int(stats.get("war_attacks") or 0),
+                        "Liga dos Clãs": int(stats.get("league_attacks") or 0),
+                        "Raide": int(stats.get("raid_attacks") or 0),
+                        "Doações": int(stats.get("donations") or 0),
+                        "Jogos do Clã": int(stats.get("clan_games_points") or 0),
+                        "Capital do Clã": int(capital_by_name.get(name.strip().casefold(), 0)),
+                    })
+                performance_df = pd.DataFrame(detail_rows)
+                if not performance_df.empty:
+                    st.dataframe(performance_df, use_container_width=True, hide_index=True)
+                    chosen_name = st.selectbox(
+                        "Consultar desempenho individual",
+                        sorted(performance_df["Jogador"].dropna().astype(str).unique()),
+                        key="guest_individual_player"
+                    )
+                    chosen_row = performance_df[performance_df["Jogador"] == chosen_name].iloc[0]
+                    st.markdown(f"### 👤 {chosen_name}")
+                    metric_columns = st.columns(3)
+                    for index, metric_name in enumerate([c for c in performance_df.columns if c != "Jogador"]):
+                        metric_columns[index % 3].metric(metric_name, int(chosen_row[metric_name]))
+                else:
+                    st.info("Não há jogadores cadastrados para exibir.")
+            except Exception as guest_stats_error:
+                st.warning("Não foi possível carregar o desempenho agora.")
+                st.caption(str(guest_stats_error))
+    else:
+        live_ranking_fragment(player_mode=True)
     with st.sidebar:
-        st.success("🟢 Acesso de jogador")
-        st.caption(f"Conta: {st.session_state.auth_player}")
+        st.success("🟢 Acesso somente leitura" if is_guest else "🟢 Acesso de jogador")
+        if not is_guest:
+            st.caption(f"Conta: {st.session_state.auth_player}")
         if st.button("🚪 Sair", use_container_width=True):
             revoke_current_device()
             st.rerun()
