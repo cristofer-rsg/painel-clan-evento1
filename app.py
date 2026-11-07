@@ -753,12 +753,14 @@ def build_ranking(players_data, events_data):
         donations = min(20, bucket.get("Doações", 0))
         games = min(25, bucket.get("Jogos", 0))
         raid = min(20, bucket.get("Raide", 0))
+        capital_coins = bucket.get("Capital do Clã", 0)
+        capital_points = capital_coins // 2500  # 1 ponto a cada 2.500 moedas doadas
         penalties = bucket.get("Penalidades", 0)
         eligible = (
             player.get("eligible", "Elegível") == "Elegível"
             and player.get("whatsapp", "Sim") == "Sim"
         )
-        total = max(0, wars + league + donations + games + raid - penalties) if eligible else 0
+        total = max(0, wars + league + donations + games + raid + capital_points - penalties) if eligible else 0
         rows.append({
             "Jogador": player["name"],
             "Elegibilidade": player.get("eligible", "Elegível"),
@@ -768,7 +770,7 @@ def build_ranking(players_data, events_data):
             "Doações": donations,
             "Jogos": games,
             "Raide": raid,
-            "Capital do Clã": bucket.get("Capital do Clã", 0),
+            "Capital do Clã": capital_coins,
             "Penalidades": penalties,
             "Total": total
         })
