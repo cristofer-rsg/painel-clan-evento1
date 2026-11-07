@@ -263,7 +263,6 @@ try:
     SUPABASE_URL = st.secrets["SUPABASE_URL"]
     SUPABASE_SECRET_KEY = st.secrets["SUPABASE_SECRET_KEY"]
     ADMIN_PASSWORD = st.secrets["ADMIN_PASSWORD"]
-    OPERATOR_PASSWORD = "ghosthunt"  # Login do Operador já configurado no código
 except Exception:
     st.error("Configurações ausentes. Confira SUPABASE_URL, SUPABASE_SECRET_KEY e ADMIN_PASSWORD em Settings → Secrets no Streamlit.")
     st.stop()
@@ -379,6 +378,11 @@ def fetch_clan_raid_season(api_token, clan_tag):
     return items[0] if items else None
 
 
+# Revoga sessões antigas do perfil Operador após a remoção dessa credencial.
+if st.session_state.auth_role == "operator":
+    revoke_current_device()
+    st.rerun()
+
 if st.session_state.auth_role is None:
     st.markdown("<div class='gh-login-heading'>🔒 Acesso ao Aplicativo</div>", unsafe_allow_html=True)
     st.markdown(
@@ -393,11 +397,7 @@ if st.session_state.auth_role is None:
             login_password = st.text_input("Senha", type="password")
             login_submit = st.form_submit_button("🔐 Entrar como administrador", use_container_width=True)
         if login_submit:
-            if login_name.strip().casefold() == "operador" and OPERATOR_PASSWORD and login_password == OPERATOR_PASSWORD:
-                st.session_state.auth_role = "operator"
-                st.session_state.auth_player = None
-                st.rerun()
-            elif not login_name.strip() and login_password == ADMIN_PASSWORD:
+            if not login_name.strip() and login_password == ADMIN_PASSWORD:
                 st.session_state.auth_role = "admin"
                 st.session_state.auth_player = None
                 st.rerun()
@@ -416,9 +416,9 @@ if st.session_state.auth_role is None:
             st.rerun()
     st.stop()
 
-is_admin = st.session_state.auth_role in ("admin", "operator")
+is_admin = st.session_state.auth_role == "admin"
 is_primary_admin = st.session_state.auth_role == "admin"
-is_operator = st.session_state.auth_role == "operator"
+is_operator = False
 is_guest = st.session_state.auth_role == "guest"
 
 # --- Carregamento dos dados: nenhuma tabela é apagada ou recriada ---
@@ -1342,11 +1342,6 @@ elif aba == "⚙️ Admin":
                     )
                     st.session_state.gh_admin_target = target
                     st.rerun()
-    st.markdown(
-        "<div class='gh-role-card'><div class='gh-role-title'>👤 Operador　<span style='color:#30d9f4;font-size:12px'>ADMINISTRADOR</span></div>"
-        "<div class='gh-role-desc'>Inclusão, edição e exclusão de lançamentos, alteração de pontuações e gerenciamento de participantes.</div></div>",
-        unsafe_allow_html=True
-    )
     st.markdown(f'<img class="gh-treasure-art" src="{ART_TREASURE}" alt="Baú de tesouro">', unsafe_allow_html=True)
     st.stop()
 
