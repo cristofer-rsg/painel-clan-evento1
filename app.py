@@ -247,6 +247,33 @@ div[data-testid="stForm"] input:-webkit-autofill:focus{
 </style>
 """, unsafe_allow_html=True)
 
+# --- Configuração e autenticação ---
+try:
+    SUPABASE_URL = st.secrets["SUPABASE_URL"]
+    SUPABASE_SECRET_KEY = st.secrets["SUPABASE_SECRET_KEY"]
+    ADMIN_PASSWORD = st.secrets["ADMIN_PASSWORD"]
+    OPERATOR_PASSWORD = "ghosthunt"  # Login do Operador já configurado no código
+except Exception:
+    st.error("Configurações ausentes. Confira SUPABASE_URL, SUPABASE_SECRET_KEY e ADMIN_PASSWORD em Settings → Secrets no Streamlit.")
+    st.stop()
+
+@st.cache_resource
+def get_db(url, key):
+    return create_client(url, key)
+
+try:
+    db = get_db(SUPABASE_URL, SUPABASE_SECRET_KEY)
+except Exception as e:
+    st.error("Não foi possível conectar ao Supabase. Confira a URL, a chave secreta e se as tabelas players e events foram criadas.")
+    st.code(str(e))
+    st.stop()
+
+# Integração automática do Raide da Capital via proxy RoyaleAPI.
+CLASH_API_TOKEN = st.secrets.get("CLASH_API_TOKEN", "")
+CLASH_CLAN_TAG = st.secrets.get("CLASH_CLAN_TAG", "#2GCGP0RQ9")
+CLASH_API_BASE = "https://cocproxy.royaleapi.dev/v1"
+
+
 if st.session_state.auth_role is None:
     st.markdown("<div class='gh-login-heading'>🔒 Acesso ao Aplicativo</div>", unsafe_allow_html=True)
     st.markdown(
