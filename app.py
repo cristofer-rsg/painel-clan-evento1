@@ -445,7 +445,7 @@ PLAYERS_FALLBACK = [
 
 @st.cache_data(ttl=300, max_entries=4, show_spinner=False)
 def load_players():
-    return db.table("players").select("name,eligible,whatsapp,active").order("name").execute().data or []
+    return db.table("players").select("name,player_tag,eligible,whatsapp,active").order("name").execute().data or []
 
 def month_utc_bounds(month_key):
     year, month = map(int, month_key.split("-"))
@@ -889,6 +889,7 @@ if not is_admin:
 nav_items = [
     ("🏠", "Início", "🏠 Início"),
     ("🏆", "Ranking", "🏆 Ranking"),
+    ("📊", "Desempenho", "📊 Desempenho"),
     ("⚔️", "Pontos", "⚔️ Pontos"),
     ("👥", "Clã", "👥 Clã"),
     ("⚙️", "Admin", "⚙️ Admin"),
@@ -898,7 +899,7 @@ if "main_navigation" not in st.session_state or st.session_state.main_navigation
     st.session_state.main_navigation = "🏠 Início"
 
 st.markdown("<div class='gh-section-kicker'>CENTRAL DO CLÃ</div>", unsafe_allow_html=True)
-nav_cols = st.columns(5, gap="small")
+nav_cols = st.columns(6, gap="small")
 for nav_col, (nav_icon, nav_label, nav_value) in zip(nav_cols, nav_items):
     with nav_col:
         active = st.session_state.main_navigation == nav_value
@@ -969,6 +970,139 @@ elif aba == "⚙️ Admin":
 if st.session_state.get("gh_admin_target"):
     aba = st.session_state.gh_admin_target
 
+
+if aba == "📊 Desempenho":
+    st.subheader("📊 Desempenho dos jogadores")
+    st.caption("Indicadores mensais de atividade. Os dados começam a ser contabilizados a partir da ativação das sincronizações.")
+
+    # Carrega o mês selecionado sem alterar os dados do ranking ou os eventos.
+    try:
+        available_stat_months = fetch_all_pages(
+            db.table("player_monthly_stats").select("month_key").order("month_key", desc=True)
+        )
+        stat_months = sorted(
+            {str(row.get("month_key")) for row in available_stat_months if row.get("month_key")},
+            reverse=True
+        )
+    except Exception as stats_error:
+        stat_months = []
+        st.warning("Não foi possível consultar player_monthly_stats. Confira se a tabela e as permissões do Supabase estão configuradas.")
+        st.caption(str(stats_error))
+
+    if CURRENT_MONTH not in stat_months:
+        stat_months.insert(0, CURRENT_MONTH)
+
+    selected_stat_month = st.selectbox(
+        "Mês de referência",
+        stat_months,
+        index=0,
+        format_func=month_label,
+        key="performance_month"
+    )
+
+    try:
+        stat_rows = fetch_all_pages(
+            db.table("player_monthly_stats").select(
+                "month_key,player_tag,player,war_attacks,league_attacks,raid_attacks,donations,clan_games_points"
+            ).eq("month_key", selected_stat_month)
+        )
+    except Exception as stats_error:
+        stat_rows = []
+        st.error("Falha ao carregar os indicadores mensais.")
+        st.code(str(stats_error))
+
+    # Inclui todos os jogadores cadastrados; quem ainda não possui estatísticas aparece zerado.
+    stats_by_tag = {
+        str(row.get("player_tag") or "").strip().upper(): row
+        for row in stat_rows
+        if row.get("player_tag")
+    }
+    stats_by_name = {
+        str(row.get("player") or "").strip().casefold(): row
+        for row in stat_rows
+        if row.get("player")
+    }
+    performance_rows = []
+    for player in players_all:
+        tag = str(player.get("player_tag") or "").strip().upper()
+        name = str(player.get("name") or "")
+        row = stats_by_tag.get(tag) if tag else None
+        if row is None:
+            row = stats_by_name.get(name.strip().casefold(), {})
+        performance_rows.append({
+            "Jogador": name,
+            "Guerras": int(row.get("war_attacks") or 0),
+            "Liga dos Clãs": int(row.get("league_attacks") or 0),
+            "Raide": int(row.get("raid_attacks") or 0),
+            "Doações": int(row.get("donations") or 0),
+            "Jogos do Clã": int(row.get("clan_games_points") or 0),
+            "Situação": "Ativo" if player.get("active", True) is not False else "Inativo",
+        })
+
+    performance_df = pd.DataFrame(performance_rows)
+    if performance_df.empty:
+        st.info("Nenhum jogador cadastrado.")
+    else:
+        metric_columns = ["Guerras", "Liga dos Clãs", "Raide", "Doações", "Jogos do Clã"]
+        show_inactive = st.toggle("Incluir jogadores inativos", value=True, key="performance_inactive")
+        visible_df = performance_df.copy()
+        if not show_inactive:
+            visible_df = visible_df[visible_df["Situação"] == "Ativo"].copy()
+
+        # Índice equilibrado: cada categoria contribui com até 100 pontos.
+        # A pontuação de cada categoria é proporcional ao maior valor daquela
+        # categoria no mês selecionado, evitando comparar unidades diferentes.
+        maxima = {metric: int(visible_df[metric].max()) if not visible_df.empty else 0
+                  for metric in metric_columns}
+        for metric in metric_columns:
+            max_value = maxima[metric]
+            visible_df[f"_{metric}_peso"] = (
+                visible_df[metric].astype(float).div(max_value).mul(100)
+                if max_value > 0 else 0.0
+            )
+
+        weight_columns = [f"_{metric}_peso" for metric in metric_columns]
+        visible_df["Índice de atividade"] = visible_df[weight_columns].sum(axis=1).round(1)
+        visible_df["Índice de atividade"] = visible_df["Índice de atividade"].clip(0, 500)
+        sort_direction = st.radio(
+            "Ordem do ranking geral",
+            ["Mais ativos primeiro", "Menos ativos primeiro"],
+            horizontal=True,
+            key="performance_direction",
+        )
+        visible_df = visible_df.sort_values(
+            by=["Índice de atividade", *weight_columns, "Jogador"],
+            ascending=[sort_direction == "Menos ativos primeiro"] * (1 + len(weight_columns)) + [True],
+            kind="stable",
+        ).reset_index(drop=True)
+        visible_df.insert(0, "Pos.", range(1, len(visible_df) + 1))
+
+        metric_cols = st.columns(5)
+        for col, metric in zip(metric_cols, metric_columns):
+            with col:
+                col.metric(metric, f"{int(performance_df[metric].sum()):,}".replace(",", "."))
+
+        display_columns = [
+            "Pos.", "Jogador", "Índice de atividade", "Guerras",
+            "Liga dos Clãs", "Raide", "Doações", "Jogos do Clã", "Situação"
+        ]
+        st.dataframe(
+            visible_df[display_columns],
+            use_container_width=True,
+            hide_index=True,
+            height=min(680, max(220, 38 * (len(visible_df) + 1))),
+            column_config={
+                "Índice de atividade": st.column_config.NumberColumn(
+                    "Índice (0–500)", format="%.1f"
+                )
+            },
+        )
+        st.caption(
+            "Ranking geral equilibrado: cada uma das cinco categorias vale até 100 pontos. "
+            "A pontuação de cada categoria é proporcional ao maior resultado daquela categoria no mês selecionado. "
+            "Guerras, Liga e Raide são contagens de ataques; Doações e Jogos do Clã são totais mensais. "
+            "Jogadores sem registros aparecem com zero; dados anteriores à implantação não são reconstruídos automaticamente."
+        )
 
 if aba == "🏆 Ranking do mês":
     if raid_api_preview.get("status") == "ok":
