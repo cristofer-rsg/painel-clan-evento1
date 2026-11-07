@@ -562,9 +562,9 @@ def build_raid_api_preview(players_data):
                 "Tag": member.get("tag", ""),
                 "Ataques": attacks,
                 "Cadastro no Ghost Hunt": matched_player.get("name") if matched_player else "NÃO ENCONTRADO",
-                "Elegível ao +5": "SIM" if matched_player and attacks >= 5 else "NÃO",
-                "Situação": "Pronto para +5" if matched_player and attacks >= 5 else (
-                    "Nome não corresponde" if not matched_player else "Menos de 5 ataques"
+                "Pontos previstos": (attacks + (2 if attacks >= 5 else 0)) if matched_player and attacks > 0 else 0,
+                "Situação": "Pronto para lançamento" if matched_player and attacks > 0 else (
+                    "Nome não corresponde" if not matched_player else "Nenhum ataque"
                 ),
             })
 
@@ -574,28 +574,15 @@ def build_raid_api_preview(players_data):
             "season": weekend_key,
             "state": season.get("state", "desconhecido"),
             "rows": rows,
-            "eligible_count": sum(1 for row in rows if row["Elegível ao +5"] == "SIM"),
+            "eligible_count": sum(1 for row in rows if row["Pontos previstos"] > 0),
         }
     except Exception as exc:
         return {"status": "error", "message": str(exc)}
 
 
 def apply_automatic_raid_points(preview, players_data, month_events):
-    """
-    Lança +5 automaticamente para cada jogador cadastrado que concluiu
-    pelo menos 5 ataques no fim de semana consultado.
-
-    A atividade guarda uma chave determinística por jogador/fim de semana.
-    Também respeita lançamentos manuais do mesmo fim de semana e o teto
-    mensal de 20 pontos. Só grava quando a API confirmou uma temporada.
-    """
-    result = {
-        "awarded": [],
-        "already_awarded": [],
-        "monthly_limit": [],
-        "unmatched": [],
-        "errors": [],
-    }
+    """Lança a pontuação de cada jogador no Raide, uma única vez por fim de semana."""
+    result = {"awarded": [], "already_awarded": [], "unmatched": [], "errors": []}
     if preview.get("status") != "ok":
         return result
 
@@ -603,17 +590,12 @@ def apply_automatic_raid_points(preview, players_data, month_events):
     if pd.isna(weekend_date):
         result["errors"].append("Não foi possível identificar a data do fim de semana.")
         return result
-    # Usa o mesmo identificador de fim de semana adotado pelos lançamentos
-    # manuais, inclusive quando a temporada começa na sexta-feira.
     weekend_anchor = raid_weekend_start(weekend_date.date())
     if weekend_anchor is None:
         result["errors"].append("Não foi possível calcular o identificador do fim de semana.")
         return result
     weekend_key = weekend_anchor.strftime("%Y-%m-%d")
     weekend_label = weekend_date.strftime("%d/%m/%Y")
-
-    # Eventos carregados antes do processamento. A lista local é atualizada
-    # após cada insert para impedir repetição dentro do mesmo ciclo.
     known_events = list(month_events or [])
     active_players = {
         str(p.get("name", "")).strip().casefold(): p
@@ -622,70 +604,77 @@ def apply_automatic_raid_points(preview, players_data, month_events):
     }
 
     for row in preview.get("rows", []):
-        if int(row.get("Ataques") or 0) < 5:
+        attacks = max(0, min(6, int(row.get("Ataques") or 0)))
+        if attacks <= 0:
             continue
-
         registered_name = str(row.get("Cadastro no Ghost Hunt") or "").strip()
         if not registered_name or registered_name.casefold() not in active_players:
             result["unmatched"].append(row.get("Jogador na API", ""))
             continue
-
-        player = active_players[registered_name.casefold()]
-        player_name = player.get("name")
-        # A chave de atividade torna o lançamento idempotente entre reruns.
-        marker = f"RAIDE_AUTO:{weekend_key}:5_ATAQUES"
-
-        same_weekend = any(
-            str(event.get("player", "")).strip().casefold() == str(player_name).casefold()
-            and event.get("category") == "Raide de Fim de Semana"
-            and (
-                marker in str(event.get("activity") or "")
-                or raid_weekend_start(event.get("created_at")) == weekend_anchor
-            )
-            for event in known_events
-        )
-        if same_weekend:
-            result["already_awarded"].append(player_name)
-            continue
-
-        month_raid_points = sum(
-            int(event.get("points") or 0)
-            for event in known_events
+        player_name = active_players[registered_name.casefold()].get("name")
+        marker = f"RAIDE_AUTO:{weekend_key}:ATAQUES_{attacks}"
+        weekend_events = [
+            event for event in known_events
             if str(event.get("player", "")).strip().casefold() == str(player_name).casefold()
             and event.get("category") == "Raide de Fim de Semana"
-            and int(event.get("points") or 0) > 0
+            and (
+                str(event.get("activity") or "").startswith(f"RAIDE_AUTO:{weekend_key}:")
+                or raid_weekend_start(event.get("created_at")) == weekend_anchor
+            )
+        ]
+        points = attacks + (2 if attacks >= 5 else 0)
+        activity = (
+            f"{marker} | {attacks} ataque(s) utilizados"
+            f" | bônus de 5 ataques: {2 if attacks >= 5 else 0} ponto(s)"
+            f" | total: {points} pontos | {weekend_label}"
         )
-        remaining = max(0, 20 - month_raid_points)
-        if remaining < 5:
-            result["monthly_limit"].append(player_name)
+        # Se a API atualizar de 5 para 6 ataques durante o fim de semana,
+        # atualiza o lançamento automático existente em vez de duplicá-lo.
+        automatic_event = next((
+            event for event in weekend_events
+            if str(event.get("activity") or "").startswith(f"RAIDE_AUTO:{weekend_key}:")
+        ), None)
+        if automatic_event:
+            previous_points = int(automatic_event.get("points") or 0)
+            if points > previous_points and automatic_event.get("id") is not None:
+                try:
+                    db.table("events").update({"activity": activity, "points": points}).eq("id", automatic_event["id"]).execute()
+                    automatic_event.update({"activity": activity, "points": points})
+                    result["awarded"].append(f"{player_name} (atualizado para +{points})")
+                except Exception as exc:
+                    result["errors"].append(f"{player_name}: não foi possível atualizar o Raide: {exc}")
+            else:
+                result["already_awarded"].append(player_name)
             continue
-
-        activity = f"{marker} | Utilizou 5 ou mais ataques ({int(row.get('Ataques') or 0)} ataques) | {weekend_label}"
+        if weekend_events:
+            # Um lançamento manual no mesmo fim de semana prevalece; não duplica.
+            result["already_awarded"].append(player_name)
+            continue
         payload = {
             "player": player_name,
             "category": "Raide de Fim de Semana",
             "activity": activity,
-            "points": 5,
+            "points": points,
         }
         try:
             inserted = db.table("events").insert(payload).execute()
             inserted_rows = getattr(inserted, "data", None) or []
-            # Atualiza a lista local mesmo que a biblioteca não retorne a linha.
             local_event = dict(payload)
             local_event["created_at"] = datetime.now(TZ).isoformat()
             if inserted_rows:
                 local_event.update(inserted_rows[0])
             known_events.append(local_event)
-            result["awarded"].append(player_name)
+            result["awarded"].append(f"{player_name} (+{points})")
         except Exception as exc:
-            # Em caso de corrida entre dois reruns, consulta novamente antes
-            # de reportar falha: a chave determinística pode já ter sido gravada.
             try:
                 refreshed = load_events(CURRENT_MONTH)
                 duplicate_now = any(
                     str(event.get("player", "")).strip().casefold() == str(player_name).casefold()
                     and event.get("category") == "Raide de Fim de Semana"
-                    and marker in str(event.get("activity") or "")
+                    and (
+                        str(event.get("activity") or "").startswith(f"RAIDE_AUTO:{weekend_key}:")
+                        or raid_weekend_start(event.get("created_at")) == weekend_anchor
+                    )
                     for event in refreshed
                 )
             except Exception:
@@ -701,11 +690,10 @@ def apply_automatic_raid_points(preview, players_data, month_events):
         make_export_workbook.clear()
     return result
 
-
 # Consulta e processa o Raide ao abrir/atualizar o aplicativo.
 # A chave por jogador/fim de semana impede duplicações nos reruns.
 raid_api_preview = build_raid_api_preview(players)
-raid_auto_result = {"awarded": [], "already_awarded": [], "monthly_limit": [], "unmatched": [], "errors": []}
+raid_auto_result = {"awarded": [], "already_awarded": [], "unmatched": [], "errors": []}
 if raid_api_preview.get("status") == "ok":
     try:
         raid_month_events = load_events(CURRENT_MONTH)
@@ -713,7 +701,9 @@ if raid_api_preview.get("status") == "ok":
     except Exception as raid_auto_exc:
         raid_auto_result["errors"].append(str(raid_auto_exc))
 
-# Os lançamentos do mês permanecem em registros simples até a tela que precisar deles.\n\n# --- Ranking: as regras e os limites são aplicados separadamente em cada mês ---
+# Os lançamentos do mês permanecem em registros simples até a tela que precisar deles.
+
+# --- Ranking: as regras e os limites são aplicados separadamente em cada mês ---
 def build_ranking(players_data, events_data):
     # Agrega os lançamentos uma única vez, em vez de percorrer os eventos
     # novamente para cada jogador.
@@ -750,9 +740,9 @@ def build_ranking(players_data, events_data):
         bucket = totals.get(player["name"], {})
         wars = bucket.get("Guerras", 0)
         league = bucket.get("Liga dos Clãs", 0)  # Sem teto mensal: pontos por ataque, estrelas e espelho
-        donations = min(20, bucket.get("Doações", 0))
+        donations = bucket.get("Doações", 0)
         games = min(25, bucket.get("Jogos", 0))
-        raid = min(20, bucket.get("Raide", 0))
+        raid = bucket.get("Raide", 0)
         capital_coins = bucket.get("Capital do Clã", 0)
         capital_points = capital_coins // 2500  # 1 ponto a cada 2.500 moedas doadas
         penalties = bucket.get("Penalidades", 0)
@@ -1240,22 +1230,17 @@ if aba == "🏆 Ranking do mês":
         with st.expander("🔎 Conferência automática do Raide da Capital", expanded=False):
             st.caption(
                 f"Temporada iniciada em {raid_api_preview.get('season')} • "
-                f"Jogadores com 5 ou mais ataques: {raid_api_preview.get('eligible_count', 0)}."
+                f"Jogadores com ataques registrados: {raid_api_preview.get('eligible_count', 0)}."
             )
             if raid_auto_result.get("awarded"):
                 st.success(
-                    "Pontos lançados automaticamente (+5): "
+                    "Pontuação do Raide lançada automaticamente: "
                     + ", ".join(raid_auto_result["awarded"])
                 )
             if raid_auto_result.get("already_awarded"):
                 st.info(
                     "Já tinham recebido os pontos neste fim de semana: "
                     + ", ".join(raid_auto_result["already_awarded"])
-                )
-            if raid_auto_result.get("monthly_limit"):
-                st.warning(
-                    "Limite mensal de 20 pontos já atingido: "
-                    + ", ".join(raid_auto_result["monthly_limit"])
                 )
             if raid_auto_result.get("unmatched"):
                 st.warning(
@@ -1291,9 +1276,9 @@ if aba == "➕ Lançar pontos":
 
         if kind == "Guerras":
             war_actions = {
-                "Participou da guerra (+5)": 5,
-                "Fez os dois ataques (+10)": 10,
-                "Acertou o espelho (+5)": 5,
+                "Participou da guerra (+2)": 2,
+                "Fez os dois ataques (+2)": 2,
+                "Acertou o espelho (+2)": 2,
                 "Fez 1 estrela (+1)": 1,
                 "Fez 2 estrelas (+2)": 2,
                 "Fez 3 estrelas (+3)": 3,
@@ -1305,10 +1290,10 @@ if aba == "➕ Lançar pontos":
             category_db = "Guerras"
 
         elif kind == "Liga dos Clãs":
-            st.caption("Liga: +5 por ataque realizado, +1 por estrela conquistada e +5 por espelho acertado. Sem limite mensal.")
+            st.caption("Liga: +2 por ataque realizado, +2 por espelho acertado e +1, +2 ou +3 pelas estrelas conquistadas. Sem limite mensal.")
             league_actions = {
-                "Realizou um ataque (+5)": 5,
-                "Acertou o espelho (+5)": 5,
+                "Realizou um ataque (+2)": 2,
+                "Acertou o espelho (+2)": 2,
                 "Fez 1 estrela (+1)": 1,
                 "Fez 2 estrelas (+2)": 2,
                 "Fez 3 estrelas (+3)": 3,
@@ -1348,10 +1333,12 @@ if aba == "➕ Lançar pontos":
             category_db = "Jogos do Clã"
 
         elif kind == "Raide de Fim de Semana":
-            activity = "Utilizou os 5 ataques (+5)"
-            pts = 5
+            raid_attacks = st.selectbox("Quantidade de ataques utilizados", [1, 2, 3, 4, 5, 6], key="add_points_raid_attacks")
+            raid_bonus = 2 if raid_attacks >= 5 else 0
+            pts = raid_attacks + raid_bonus
+            activity = f"{raid_attacks} ataque(s) utilizados + bônus de {raid_bonus} ponto(s) por completar 5 ataques (total {pts})"
             category_db = "Raide de Fim de Semana"
-            st.info("Regra: utilizar os 5 ataques no fim de semana = +5 pontos. De 1 a 4 ataques = 0 ponto. Limite mensal: 20 pontos.")
+            st.info("Regra: +1 por ataque utilizado; ao completar 5 ataques, recebe +2 de bônus uma única vez no fim de semana. O 6º ataque também vale +1. Sem limite mensal.")
         else:
             activity = st.selectbox(
                 "Ação / motivo",
@@ -1391,7 +1378,7 @@ if aba == "➕ Lançar pontos":
                 and raid_weekend_start(e.get("created_at")) == raid_weekend_start(datetime.now(TZ))
                 for e in load_events(CURRENT_MONTH)
             ):
-                st.warning("Este jogador já recebeu os pontos do Raide neste fim de semana.")
+                st.warning("Este jogador já possui um lançamento de Raide neste fim de semana (automático ou manual).")
             else:
                 try:
                     db.table("events").insert({
