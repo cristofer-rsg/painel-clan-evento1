@@ -873,17 +873,68 @@ def live_ranking_fragment(player_mode=False):
 if not is_admin:
     if is_guest:
         st.markdown("## 👥 Acesso do jogador")
-        st.caption("Modo somente leitura • Todas as informações abaixo podem ser consultadas, mas não alteradas.")
-        guest_section = st.radio(
-            "Navegação",
-            ["🏠 Início", "🏆 Ranking", "📊 Desempenho"],
-            horizontal=True,
-            key="guest_readonly_navigation"
-        )
-        if guest_section in ("🏠 Início", "🏆 Ranking"):
+        st.caption("Modo somente leitura • Consulte o ranking e o desempenho do clã.")
+
+        if "guest_section" not in st.session_state:
+            st.session_state.guest_section = "Início"
+
+        st.markdown("""
+        <style>
+        .gh-guest-nav-caption{font-size:11px;font-weight:900;letter-spacing:1.5px;color:#9fb6d1;margin:8px 0 7px;}
+        div[data-testid="stHorizontalBlock"] div.stButton>button[kind="primary"]{
+            min-height:58px!important;border:1px solid #f0c45b!important;border-radius:15px!important;
+            background:linear-gradient(145deg,#ffe28a 0%,#e2ad3d 58%,#bd8120 100%)!important;
+            color:#211706!important;font-size:15px!important;font-weight:900!important;
+            box-shadow:0 4px 0 #805700,0 8px 18px rgba(0,0,0,.25)!important;
+        }
+        div[data-testid="stHorizontalBlock"] div.stButton>button[kind="secondary"]{
+            min-height:58px!important;border:1px solid #355474!important;border-radius:15px!important;
+            background:linear-gradient(145deg,#142b45,#09182a)!important;
+            color:#eaf2fc!important;font-size:15px!important;font-weight:850!important;
+        }
+        .gh-performance-card{
+            border:1px solid #294866;border-radius:15px;padding:12px 13px;margin:9px 0;
+            background:linear-gradient(145deg,#10243a,#091625);
+            box-shadow:0 7px 16px rgba(0,0,0,.18);
+        }
+        .gh-performance-name{font-size:15px;font-weight:900;color:#f4f7fc;overflow-wrap:anywhere;margin-bottom:9px;}
+        .gh-stat-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;}
+        .gh-stat-cell{background:rgba(4,13,25,.62);border:1px solid #203b57;border-radius:10px;padding:7px 5px;text-align:center;min-width:0;}
+        .gh-stat-label{font-size:10px;color:#aebfd3;line-height:1.2;min-height:24px;}
+        .gh-stat-value{font-size:17px;font-weight:900;color:#ffdc83;margin-top:3px;}
+        @media(max-width:520px){
+            .gh-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;}
+            .gh-stat-cell{padding:7px 4px;}
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
+        st.markdown("<div class='gh-guest-nav-caption'>NAVEGAÇÃO</div>", unsafe_allow_html=True)
+        nav_home_col, nav_performance_col = st.columns(2, gap="small")
+        with nav_home_col:
+            if st.button(
+                "🏠  Início e ranking",
+                key="guest_nav_home",
+                type="primary" if st.session_state.guest_section == "Início" else "secondary",
+                use_container_width=True
+            ):
+                st.session_state.guest_section = "Início"
+                st.rerun()
+        with nav_performance_col:
+            if st.button(
+                "📊  Desempenho",
+                key="guest_nav_performance",
+                type="primary" if st.session_state.guest_section == "Desempenho" else "secondary",
+                use_container_width=True
+            ):
+                st.session_state.guest_section = "Desempenho"
+                st.rerun()
+
+        if st.session_state.guest_section == "Início":
             live_ranking_fragment(player_mode=True)
         else:
             st.subheader("📊 Desempenho dos jogadores")
+            st.caption("Acompanhe os indicadores de cada integrante do clã.")
             try:
                 month_rows = fetch_all_pages(
                     db.table("player_monthly_stats").select("month_key").order("month_key", desc=True)
@@ -921,27 +972,38 @@ if not is_admin:
                     detail_rows.append({
                         "Jogador": name,
                         "Guerras": int(stats.get("war_attacks") or 0),
-                        "Liga dos Clãs": int(stats.get("league_attacks") or 0),
+                        "Liga": int(stats.get("league_attacks") or 0),
                         "Raide": int(stats.get("raid_attacks") or 0),
                         "Doações": int(stats.get("donations") or 0),
-                        "Jogos do Clã": int(stats.get("clan_games_points") or 0),
-                        "Capital do Clã": int(capital_by_name.get(name.strip().casefold(), 0)),
+                        "Jogos": int(stats.get("clan_games_points") or 0),
+                        "Capital": int(capital_by_name.get(name.strip().casefold(), 0)),
                     })
                 performance_df = pd.DataFrame(detail_rows)
                 if not performance_df.empty:
-                    st.dataframe(performance_df, use_container_width=True, hide_index=True)
-                    chosen_name = st.selectbox(
-                        "Consultar desempenho individual",
-                        sorted(performance_df["Jogador"].dropna().astype(str).unique()),
-                        key="guest_individual_player"
-                    )
-                    chosen_row = performance_df[performance_df["Jogador"] == chosen_name].iloc[0]
-                    st.markdown(f"### 👤 {chosen_name}")
-                    metric_columns = st.columns(3)
-                    for index, metric_name in enumerate([c for c in performance_df.columns if c != "Jogador"]):
-                        metric_columns[index % 3].metric(metric_name, int(chosen_row[metric_name]))
+                    search_name = st.text_input("🔎 Buscar jogador", placeholder="Digite o nome do jogador", key="guest_search_player")
+                    if search_name.strip():
+                        performance_df = performance_df[
+                            performance_df["Jogador"].str.contains(search_name.strip(), case=False, na=False)
+                        ]
+                    st.caption(f"{len(performance_df)} jogador(es) encontrado(s)")
+                    for _, row in performance_df.iterrows():
+                        safe_name = html.escape(str(row["Jogador"]))
+                        stats_html = []
+                        for label, column in [
+                            ("Guerras", "Guerras"), ("Liga", "Liga"), ("Raide", "Raide"),
+                            ("Doações", "Doações"), ("Jogos do Clã", "Jogos"), ("Capital do Clã", "Capital")
+                        ]:
+                            stats_html.append(
+                                f"<div class='gh-stat-cell'><div class='gh-stat-label'>{label}</div>"
+                                f"<div class='gh-stat-value'>{int(row[column])}</div></div>"
+                            )
+                        st.markdown(
+                            f"<div class='gh-performance-card'><div class='gh-performance-name'>👤 {safe_name}</div>"
+                            f"<div class='gh-stat-grid'>{''.join(stats_html)}</div></div>",
+                            unsafe_allow_html=True
+                        )
                 else:
-                    st.info("Não há jogadores cadastrados para exibir.")
+                    st.info("Não há dados de desempenho disponíveis para este mês.")
             except Exception as guest_stats_error:
                 st.warning("Não foi possível carregar o desempenho agora.")
                 st.caption(str(guest_stats_error))
