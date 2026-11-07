@@ -724,7 +724,7 @@ def build_ranking(players_data, events_data):
             continue
         bucket = totals.setdefault(name, {
             "Guerras": 0, "Liga dos Clãs": 0, "Doações": 0,
-            "Jogos": 0, "Raide": 0, "Capital": 0, "Penalidades": 0
+            "Jogos": 0, "Raide": 0, "Penalidades": 0
         })
         points = int(event.get("points") or 0)
         category = event.get("category") or ""
@@ -741,8 +741,6 @@ def build_ranking(players_data, events_data):
             bucket["Jogos"] = max(bucket["Jogos"], points)
         elif category == "Raide de Fim de Semana":
             bucket["Raide"] += points
-        elif category == "Capital do Clã":
-            bucket["Capital"] += points
 
     rows = []
     for player in players_data:
@@ -752,13 +750,12 @@ def build_ranking(players_data, events_data):
         donations = min(20, bucket.get("Doações", 0))
         games = min(25, bucket.get("Jogos", 0))
         raid = min(20, bucket.get("Raide", 0))
-        capital_gold = bucket.get("Capital", 0)
         penalties = bucket.get("Penalidades", 0)
         eligible = (
             player.get("eligible", "Elegível") == "Elegível"
             and player.get("whatsapp", "Sim") == "Sim"
         )
-        total = max(0, wars + league + donations + games + raid + capital_gold - penalties) if eligible else 0
+        total = max(0, wars + league + donations + games + raid - penalties) if eligible else 0
         rows.append({
             "Jogador": player["name"],
             "Elegibilidade": player.get("eligible", "Elegível"),
@@ -768,7 +765,6 @@ def build_ranking(players_data, events_data):
             "Doações": donations,
             "Jogos": games,
             "Raide": raid,
-            "Capital do Clã": capital_gold,
             "Penalidades": penalties,
             "Total": total
         })
@@ -1026,13 +1022,6 @@ if aba == "📊 Desempenho":
         for row in stat_rows
         if row.get("player")
     }
-    capital_events = load_events(selected_stat_month)
-    capital_by_player = {}
-    for event in capital_events:
-        if event.get("category") == "Capital do Clã":
-            key = str(event.get("player") or "").strip().casefold()
-            capital_by_player[key] = capital_by_player.get(key, 0) + int(event.get("points") or 0)
-
     performance_rows = []
     for player in players_all:
         tag = str(player.get("player_tag") or "").strip().upper()
@@ -1047,7 +1036,6 @@ if aba == "📊 Desempenho":
             "Raide": int(row.get("raid_attacks") or 0),
             "Doações": int(row.get("donations") or 0),
             "Jogos do Clã": int(row.get("clan_games_points") or 0),
-            "Capital do Clã": capital_by_player.get(name.strip().casefold(), 0),
             "Situação": "Ativo" if player.get("active", True) is not False else "Inativo",
         })
 
@@ -1055,7 +1043,7 @@ if aba == "📊 Desempenho":
     if performance_df.empty:
         st.info("Nenhum jogador cadastrado.")
     else:
-        metric_columns = ["Guerras", "Liga dos Clãs", "Raide", "Doações", "Jogos do Clã", "Capital do Clã"]
+        metric_columns = ["Guerras", "Liga dos Clãs", "Raide", "Doações", "Jogos do Clã"]
         show_inactive = st.toggle("Incluir jogadores inativos", value=True, key="performance_inactive")
         visible_df = performance_df.copy()
         if not show_inactive:
@@ -1077,7 +1065,7 @@ if aba == "📊 Desempenho":
 
         weight_columns = [f"_{metric}_peso" for metric in metric_columns]
         visible_df["Índice de atividade"] = visible_df[weight_columns].sum(axis=1).round(1)
-        visible_df["Índice de atividade"] = visible_df["Índice de atividade"].clip(0, 600)
+        visible_df["Índice de atividade"] = visible_df["Índice de atividade"].clip(0, 500)
         sort_direction = st.radio(
             "Ordem do ranking geral",
             ["Mais ativos primeiro", "Menos ativos primeiro"],
@@ -1156,7 +1144,7 @@ if aba == "📊 Desempenho":
             .performance-player-metric-value { font-size: 1.02rem; font-weight: 700; margin-top: 2px; overflow-wrap: anywhere; }
             .performance-player-status { font-size: .75rem; opacity: .7; margin-top: 9px; }
             @media (min-width: 900px) {
-                .performance-summary-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+                .performance-summary-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
                 .performance-player-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
                 .performance-player-card { margin-bottom: 0; }
             }
@@ -1177,7 +1165,7 @@ if aba == "📊 Desempenho":
         st.markdown("".join(summary_html), unsafe_allow_html=True)
 
         # Cartões individuais responsivos: nome e índice ficam sempre visíveis,
-        # enquanto os seis indicadores são organizados em duas colunas no celular.
+        # enquanto os cinco indicadores são organizados em duas colunas no celular.
         cards_html = ['<div class="performance-player-list">']
         for _, player_row in visible_df.iterrows():
             player_name = html.escape(str(player_row["Jogador"]))
@@ -1186,15 +1174,24 @@ if aba == "📊 Desempenho":
             cards_html.append(
                 '<div class="performance-player-card"><div class="performance-player-head">'
                 f'<div class="performance-player-name"><span class="performance-player-position">#{position}</span>{player_name}</div>'
-                f'<div class="performance-index">{index_value} / 600</div></div>'
+                f'<div class="performance-index">{index_value} / 500</div></div>'
                 '<div class="performance-player-metrics">'
             )
+            metric_units = {
+                "Guerras": "Ataques",
+                "Liga dos Clãs": "Ataques",
+                "Raide": "Ataques",
+                "Doações": "Tropas",
+                "Jogos do Clã": "pontos",
+                "Capital do Clã": "moedas doadas",
+            }
             for metric in metric_columns:
                 metric_value = f'{int(player_row[metric]):,}'.replace(",", ".")
+                unit = metric_units.get(metric, "")
                 cards_html.append(
                     '<div class="performance-player-metric">'
                     f'<div class="performance-player-metric-label">{html.escape(metric)}</div>'
-                    f'<div class="performance-player-metric-value">{metric_value}</div></div>'
+                    f'<div class="performance-player-metric-value">{metric_value} {html.escape(unit)}</div></div>'
                 )
             cards_html.append('</div>')
             cards_html.append(
@@ -1204,9 +1201,9 @@ if aba == "📊 Desempenho":
         cards_html.append('</div>')
         st.markdown("".join(cards_html), unsafe_allow_html=True)
         st.caption(
-            "Ranking geral equilibrado: cada uma das seis categorias vale até 100 pontos no índice de atividade. "
+            "Ranking geral equilibrado: cada uma das cinco categorias vale até 100 pontos. "
             "A pontuação de cada categoria é proporcional ao maior resultado daquela categoria no mês selecionado. "
-            "Capital do Clã corresponde a 1 ponto por moeda registrada; Guerras, Liga e Raide são contagens de ataques; Doações e Jogos do Clã são totais mensais. "
+            "Guerras, Liga e Raide são contagens de ataques; Doações e Jogos do Clã são totais mensais. "
             "Jogadores sem registros aparecem com zero; dados anteriores à implantação não são reconstruídos automaticamente."
         )
 
