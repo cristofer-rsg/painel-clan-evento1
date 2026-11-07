@@ -859,7 +859,61 @@ def render_live_ranking(player_mode=False):
     st.markdown("".join(podium_html), unsafe_allow_html=True)
     st.markdown("### 📊 Classificação completa")
     if player_mode:
-        st.dataframe(live_ranking[["Posição", "Jogador", "Guerras", "Liga", "Doações", "Jogos", "Raide", "Capital do Clã", "Penalidades", "Total"]], use_container_width=True, hide_index=True, height=620)
+        st.markdown("""
+        <style>
+        .gh-main-rank-card{display:flex;align-items:center;gap:10px;border:1px solid #294866;
+          border-radius:15px;padding:11px;margin:8px 0;background:linear-gradient(145deg,#10243a,#091625);
+          box-shadow:0 6px 15px rgba(0,0,0,.18);}
+        .gh-main-rank-medal{flex:0 0 42px;height:42px;border-radius:50%;display:grid;place-items:center;
+          background:#17334e;border:1px solid #315574;font-size:22px;font-weight:900;color:#fff;}
+        .gh-main-rank-info{flex:1;min-width:0;}
+        .gh-main-rank-name{font-size:15px;font-weight:900;color:#f4f7fc;overflow-wrap:anywhere;}
+        .gh-main-rank-tag{font-size:11px;color:#aebfd3;font-weight:750;margin:2px 0 4px;}
+        .gh-main-rank-stats{font-size:11px;line-height:1.55;color:#c0cede;overflow-wrap:anywhere;}
+        .gh-main-rank-score{font-size:18px;font-weight:950;color:#ffd36c;white-space:nowrap;}
+        </style>
+        """, unsafe_allow_html=True)
+        rank_search = st.text_input(
+            "🔎 Buscar jogador", placeholder="Digite o nome do jogador ou tag",
+            key="guest_home_rank_search" if player_mode else "admin_home_rank_search"
+        )
+        ranked_cards = live_ranking.copy()
+        if rank_search.strip():
+            search_mask = ranked_cards["Jogador"].astype(str).str.contains(rank_search.strip(), case=False, na=False)
+            if "Tag" in ranked_cards.columns:
+                search_mask = search_mask | ranked_cards["Tag"].astype(str).str.contains(rank_search.strip(), case=False, na=False)
+            ranked_cards = ranked_cards[search_mask]
+        st.caption(f"{len(ranked_cards)} de {len(live_ranking)} jogador(es)")
+        show_all_key = "guest_home_rank_show_all" if player_mode else "admin_home_rank_show_all"
+        if show_all_key not in st.session_state:
+            st.session_state[show_all_key] = False
+        visible_cards = ranked_cards if rank_search.strip() or st.session_state[show_all_key] else ranked_cards.head(5)
+        for _, rank_row in visible_cards.iterrows():
+            position = int(rank_row.get("Posição") or 0)
+            medal = "🥇" if position == 1 else "🥈" if position == 2 else "🥉" if position == 3 else str(position)
+            player_name = html.escape(str(rank_row.get("Jogador") or "Jogador"))
+            player_tag = html.escape(str(rank_row.get("Tag") or ""))
+            score = int(rank_row.get("Total") or 0)
+            compact_stats = (
+                f"Guerras: {int(rank_row.get('Guerras') or 0)} • Liga: {int(rank_row.get('Liga') or 0)}"
+                f" • Raide: {int(rank_row.get('Raide') or 0)}<br>"
+                f"Doações: {int(rank_row.get('Doações') or 0):,}".replace(",", ".")
+                + f" • Jogos: {int(rank_row.get('Jogos') or 0):,}".replace(",", ".")
+                + f" • Capital: {int(rank_row.get('Capital do Clã') or 0):,}".replace(",", ".")
+            )
+            st.markdown(
+                f"<div class='gh-main-rank-card'><div class='gh-main-rank-medal'>{medal}</div>"
+                f"<div class='gh-main-rank-info'><div class='gh-main-rank-name'>👤 {player_name}</div>"
+                f"<div class='gh-main-rank-tag'>{player_tag}</div>"
+                f"<div class='gh-main-rank-stats'>{compact_stats}</div></div>"
+                f"<div class='gh-main-rank-score'>{score} pts</div></div>",
+                unsafe_allow_html=True
+            )
+        if not rank_search.strip() and len(ranked_cards) > 5:
+            button_label = "📊 Ver classificação completa" if not st.session_state[show_all_key] else "Mostrar somente os 5 primeiros"
+            if st.button(button_label, key=f"{show_all_key}_button", use_container_width=True):
+                st.session_state[show_all_key] = not st.session_state[show_all_key]
+                st.rerun()
     else:
         st.caption("🥇 1º lugar • 🥈 2º lugar • 🥉 3º lugar")
         st.dataframe(live_ranking, use_container_width=True, hide_index=True, height=620)
