@@ -1080,26 +1080,117 @@ if aba == "📊 Desempenho":
         ).reset_index(drop=True)
         visible_df.insert(0, "Pos.", range(1, len(visible_df) + 1))
 
-        metric_cols = st.columns(5)
-        for col, metric in zip(metric_cols, metric_columns):
-            with col:
-                col.metric(metric, f"{int(performance_df[metric].sum()):,}".replace(",", "."))
-
-        display_columns = [
-            "Pos.", "Jogador", "Índice de atividade", "Guerras",
-            "Liga dos Clãs", "Raide", "Doações", "Jogos do Clã", "Situação"
-        ]
-        st.dataframe(
-            visible_df[display_columns],
-            use_container_width=True,
-            hide_index=True,
-            height=min(680, max(220, 38 * (len(visible_df) + 1))),
-            column_config={
-                "Índice de atividade": st.column_config.NumberColumn(
-                    "Índice (0–500)", format="%.1f"
-                )
-            },
+        # Resumo em cartões compactos: evita cinco colunas espremidas no celular.
+        st.markdown(
+            """
+            <style>
+            .performance-summary-grid {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 10px;
+                margin: 8px 0 18px 0;
+            }
+            .performance-summary-card {
+                background: rgba(35, 54, 78, .72);
+                border: 1px solid rgba(130, 160, 195, .35);
+                border-radius: 12px;
+                padding: 12px;
+                min-width: 0;
+            }
+            .performance-summary-label { font-size: .82rem; opacity: .82; }
+            .performance-summary-value { font-size: 1.35rem; font-weight: 750; margin-top: 3px; }
+            .performance-player-card {
+                border: 1px solid rgba(130, 160, 195, .32);
+                border-radius: 13px;
+                padding: 13px;
+                margin: 0 0 10px 0;
+                background: rgba(30, 43, 59, .42);
+                min-width: 0;
+            }
+            .performance-player-head {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 8px;
+                margin-bottom: 11px;
+            }
+            .performance-player-name {
+                font-weight: 700;
+                font-size: 1rem;
+                overflow-wrap: anywhere;
+            }
+            .performance-player-position { opacity: .72; font-size: .82rem; margin-right: 5px; }
+            .performance-index {
+                flex: 0 0 auto;
+                border-radius: 9px;
+                background: rgba(245, 190, 75, .16);
+                border: 1px solid rgba(245, 190, 75, .45);
+                padding: 6px 9px;
+                font-weight: 800;
+                white-space: nowrap;
+            }
+            .performance-player-metrics {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 8px;
+            }
+            .performance-player-metric {
+                background: rgba(0, 0, 0, .13);
+                border-radius: 8px;
+                padding: 8px 9px;
+                min-width: 0;
+            }
+            .performance-player-metric-label { font-size: .76rem; opacity: .76; }
+            .performance-player-metric-value { font-size: 1.02rem; font-weight: 700; margin-top: 2px; overflow-wrap: anywhere; }
+            .performance-player-status { font-size: .75rem; opacity: .7; margin-top: 9px; }
+            @media (min-width: 900px) {
+                .performance-summary-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+                .performance-player-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+                .performance-player-card { margin-bottom: 0; }
+            }
+            </style>
+            """,
+            unsafe_allow_html=True,
         )
+
+        summary_html = ['<div class="performance-summary-grid">']
+        for metric in metric_columns:
+            total = f"{int(performance_df[metric].sum()):,}".replace(",", ".")
+            summary_html.append(
+                '<div class="performance-summary-card">'
+                f'<div class="performance-summary-label">{html.escape(metric)}</div>'
+                f'<div class="performance-summary-value">{total}</div></div>'
+            )
+        summary_html.append('</div>')
+        st.markdown("".join(summary_html), unsafe_allow_html=True)
+
+        # Cartões individuais responsivos: nome e índice ficam sempre visíveis,
+        # enquanto os cinco indicadores são organizados em duas colunas no celular.
+        cards_html = ['<div class="performance-player-list">']
+        for _, player_row in visible_df.iterrows():
+            player_name = html.escape(str(player_row["Jogador"]))
+            position = int(player_row["Pos."])
+            index_value = f'{float(player_row["Índice de atividade"]):.1f}'.replace(".", ",")
+            cards_html.append(
+                '<div class="performance-player-card"><div class="performance-player-head">'
+                f'<div class="performance-player-name"><span class="performance-player-position">#{position}</span>{player_name}</div>'
+                f'<div class="performance-index">{index_value} / 500</div></div>'
+                '<div class="performance-player-metrics">'
+            )
+            for metric in metric_columns:
+                metric_value = f'{int(player_row[metric]):,}'.replace(",", ".")
+                cards_html.append(
+                    '<div class="performance-player-metric">'
+                    f'<div class="performance-player-metric-label">{html.escape(metric)}</div>'
+                    f'<div class="performance-player-metric-value">{metric_value}</div></div>'
+                )
+            cards_html.append('</div>')
+            cards_html.append(
+                f'<div class="performance-player-status">{html.escape(str(player_row["Situação"]))}</div>'
+                '</div>'
+            )
+        cards_html.append('</div>')
+        st.markdown("".join(cards_html), unsafe_allow_html=True)
         st.caption(
             "Ranking geral equilibrado: cada uma das cinco categorias vale até 100 pontos. "
             "A pontuação de cada categoria é proporcional ao maior resultado daquela categoria no mês selecionado. "
