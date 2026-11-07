@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Background Capital Raid scorer for Ghost Hunt. Runs from GitHub Actions."""
+"""Background Capital Raid scorer and monthly activity sync for Ghost Hunt."""
 import os
 import sys
 from datetime import datetime, timedelta, timezone
@@ -20,13 +20,27 @@ HTTP = requests.Session()
 
 
 def weekend_start(value):
-    """Return Saturday local date identifying the raid weekend."""
+    """Return Friday local date identifying the raid weekend."""
     if isinstance(value, str):
         value = datetime.fromisoformat(value.replace("Z", "+00:00"))
-    if value.tzinfo is not None:
-        value = value.astimezone(TZ)
-    day = value.date() if isinstance(value, datetime) else value
-    return day - timedelta(days=(day.weekday() + 2) % 7)
+    if isinstance(value, datetime):
+        if value.tzinfo is not None:
+            value = value.astimezone(TZ)
+        day = value.date()
+    else:
+        day = value
+    # Capital Raid weekend is treated as Friday through Monday.
+    return day - timedelta(days=(day.weekday() - 4) % 7)
+
+
+def weekend_end(value):
+    """Return Monday, the closing date of the Friday-to-Monday raid."""
+    return weekend_start(value) + timedelta(days=3)
+
+
+def raid_month_key(value):
+    """Assign the entire raid weekend to the month in which it ends."""
+    return weekend_end(value).strftime("%Y-%m")
 
 
 def api_get_raid_season():
@@ -95,13 +109,15 @@ def fetch_players():
     return players_by_tag
 
 
-def fetch_month_raid_events(now_local):
-    start = now_local.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+def fetch_raid_events(month_key):
+    """Fetch raid events spanning the target month and the prior weekend."""
+    start = datetime.strptime(month_key + "-01", "%Y-%m-%d").replace(tzinfo=TZ)
     if start.month == 12:
         end = start.replace(year=start.year + 1, month=1)
     else:
         end = start.replace(month=start.month + 1)
-    start_utc = start.astimezone(timezone.utc).isoformat()
+    query_start = start - timedelta(days=7)
+    start_utc = query_start.astimezone(timezone.utc).isoformat()
     end_utc = end.astimezone(timezone.utc).isoformat()
     _, rows = supabase_request(
         "GET", "events",
@@ -113,7 +129,61 @@ def fetch_month_raid_events(now_local):
             "limit": "1000",
         },
     )
-    return rows
+    # Attribute an event to the month in which its raid weekend ended.
+    filtered = []
+    for event in rows:
+        try:
+            if raid_month_key(event.get("created_at")) == month_key:
+                filtered.append(event)
+        except Exception:
+            continue
+    return filtered
+
+
+def sync_raid_attack_stats(members, players_by_tag, month_key, weekend_key):
+    """Upsert one source per player/weekend, then rebuild monthly attack totals."""
+    sources = []
+    seen_tags = set()
+    for member in members:
+        if not isinstance(member, dict):
+            continue
+        tag = str(member.get("tag") or "").strip().upper()
+        if not tag or tag not in players_by_tag:
+            continue
+        if tag in seen_tags:
+            raise RuntimeError(f"A API retornou a tag duplicada na Raide: {tag}")
+        seen_tags.add(tag)
+        attacks = member.get("attacks")
+        if not isinstance(attacks, int) or attacks < 0:
+            raise RuntimeError(
+                f"Quantidade de ataques inválida para {member.get('name') or tag}."
+            )
+        sources.append({
+            "month_key": month_key,
+            "source_key": f"raid:{weekend_key}:{tag}",
+            "player_tag": tag,
+            "player": players_by_tag[tag]["name"],
+            "war_attacks": 0,
+            "league_attacks": 0,
+            "raid_attacks": attacks,
+        })
+
+    if not sources:
+        raise RuntimeError(
+            "Nenhum membro da temporada corresponde aos jogadores cadastrados. "
+            "Estatísticas mensais não foram alteradas."
+        )
+
+    _, result = supabase_request(
+        "POST",
+        "rpc/sync_player_monthly_stat_sources",
+        payload={"p_sources": sources},
+    )
+    if isinstance(result, list) and result:
+        result = result[0]
+    print(f"Estatísticas de ataques do Raide sincronizadas: {len(sources)}")
+    print(f"Resposta da sincronização mensal: {result}")
+    return len(sources)
 
 
 def run():
@@ -122,15 +192,26 @@ def run():
     start_raw = season.get("startTime")
     if not start_raw:
         raise RuntimeError("A temporada retornada não possui startTime.")
-    season_start = datetime.fromisoformat(start_raw.replace("Z", "+00:00")).astimezone(TZ)
+
+    season_start = datetime.fromisoformat(
+        start_raw.replace("Z", "+00:00")
+    ).astimezone(TZ)
+
     anchor = weekend_start(season_start)
+    closing_date = anchor + timedelta(days=3)
     weekend_key = anchor.strftime("%Y-%m-%d")
+    month_key = closing_date.strftime("%Y-%m")
     weekend_label = season_start.strftime("%d/%m/%Y")
     marker_prefix = f"RAIDE_AUTO:{weekend_key}:5_ATAQUES"
 
     players = fetch_players()
-    events = fetch_month_raid_events(now_local)
+    events = fetch_raid_events(month_key)
     members = season.get("members") or []
+
+    # Sync attack counts independently from reward eligibility.
+    synced_sources = sync_raid_attack_stats(
+        members, players, month_key, weekend_key
+    )
 
     awarded, already, capped, unmatched, under = [], [], [], [], []
     for member in members:
@@ -145,20 +226,18 @@ def run():
             under.append(api_name or api_tag)
             continue
 
-        # Keep the existing database name so historical event links remain intact.
         registered_name = str(player["name"]).strip()
         player_events = [
             event for event in events
-            if str(event.get("player", "")).strip().casefold() == registered_name.casefold()
+            if str(event.get("player", "")).strip().casefold()
+            == registered_name.casefold()
         ]
 
-        # Any manual or automatic raid award in this same weekend blocks another award.
         same_weekend = False
         for event in player_events:
-            created_at = event.get("created_at")
             same_marker = marker_prefix in str(event.get("activity") or "")
             try:
-                same_date = weekend_start(created_at) == anchor
+                same_date = weekend_start(event.get("created_at")) == anchor
             except Exception:
                 same_date = False
             if same_marker or same_date:
@@ -196,8 +275,13 @@ def run():
                 **payload, "created_at": now_local.isoformat()
             }])
 
-    print(f"Temporada: {weekend_label} | estado: {season.get('state', 'desconhecido')}")
+    print(
+        f"Temporada: {weekend_label} | encerramento: "
+        f"{closing_date.strftime('%d/%m/%Y')} | mês contabilizado: {month_key} "
+        f"| estado: {season.get('state', 'desconhecido')}"
+    )
     print(f"Jogadores analisados: {len(members)}")
+    print(f"Fontes mensais sincronizadas: {synced_sources}")
     print(f"Novos lançamentos (+5): {len(awarded)}")
     if awarded:
         print("Premiados: " + ", ".join(awarded))
