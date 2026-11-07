@@ -312,14 +312,74 @@ def fetch_clan_members(api_token, clan_tag):
 @st.cache_data(ttl=21600, max_entries=2, show_spinner=False)
 def sync_clan_member_entries(api_token, clan_tag):
     """
-    Registra a primeira aparição de cada tag no histórico.
-    A primeira consulta cria uma linha de base (não anunciada como entrada nova);
-    membros que aparecerem nas consultas seguintes são registrados como novos.
+    Sincroniza os membros atuais para a tabela players e mantém o histórico
+    de entradas no clã. Preserva elegibilidade e WhatsApp dos cadastros existentes.
     """
     if not api_token:
         return {"status": "disabled", "message": "Token da API não configurado."}
+
     try:
         members = fetch_clan_members(api_token, clan_tag)
+        player_rows = fetch_all_pages(
+            db.table("players").select("name,player_tag,eligible,whatsapp,active")
+        )
+        by_name = {
+            str(row.get("name", "")).strip().casefold(): row
+            for row in player_rows if row.get("name")
+        }
+        by_tag = {
+            str(row.get("player_tag", "")).strip().upper(): row
+            for row in player_rows if row.get("player_tag")
+        }
+
+        players_added = 0
+        tags_linked = 0
+        players_activated = 0
+        tag_conflicts = 0
+
+        for member in members:
+            tag = str(member.get("tag") or "").strip().upper()
+            name = str(member.get("name") or "").strip()
+            if not tag or not name:
+                continue
+
+            existing = by_tag.get(tag) or by_name.get(name.casefold())
+            if existing:
+                current_tag = str(existing.get("player_tag") or "").strip().upper()
+                if current_tag and current_tag != tag:
+                    tag_conflicts += 1
+                    continue
+
+                updates = {}
+                if not current_tag:
+                    updates["player_tag"] = tag
+                if existing.get("active", True) is False:
+                    updates["active"] = True
+
+                if updates:
+                    db.table("players").update(updates).eq(
+                        "name", existing["name"]
+                    ).execute()
+                    existing.update(updates)
+                    if "player_tag" in updates:
+                        by_tag[tag] = existing
+                        tags_linked += 1
+                    if updates.get("active") is True:
+                        players_activated += 1
+                continue
+
+            new_player = {
+                "name": name,
+                "player_tag": tag,
+                "eligible": "Elegível",
+                "whatsapp": "Sim",
+                "active": True,
+            }
+            db.table("players").insert(new_player).execute()
+            by_name[name.casefold()] = new_player
+            by_tag[tag] = new_player
+            players_added += 1
+
         existing_rows = fetch_all_pages(
             db.table("clan_member_entries").select("player_tag,is_baseline")
         )
@@ -329,6 +389,7 @@ def sync_clan_member_entries(api_token, clan_tag):
         }
         is_initial_baseline = len(existing_rows) == 0
         inserted_count = 0
+
         for member in members:
             tag = str(member.get("tag") or "").strip().upper()
             name = str(member.get("name") or "").strip()
@@ -342,11 +403,17 @@ def sync_clan_member_entries(api_token, clan_tag):
             }).execute()
             existing_tags.add(tag)
             inserted_count += 1
+
+        load_players.clear()
         return {
             "status": "ok",
             "inserted": inserted_count,
             "baseline": is_initial_baseline,
             "member_count": len(members),
+            "players_added": players_added,
+            "players_activated": players_activated,
+            "tags_linked": tags_linked,
+            "tag_conflicts": tag_conflicts,
         }
     except Exception as exc:
         return {"status": "error", "message": str(exc)}
@@ -496,6 +563,13 @@ def make_export_workbook(ranking_records, event_records):
                     cell.border = Border(bottom=Side(style="hair", color="D9E2F3"))
     return output.getvalue()
 
+# Sincroniza primeiro; assim, a lista de jogadores já aparece atualizada nesta execução.
+# A consulta é limitada a uma vez a cada seis horas e só ocorre no acesso administrativo.
+clan_member_sync_result = (
+    sync_clan_member_entries(CLASH_API_TOKEN, CLASH_CLAN_TAG)
+    if is_admin else {"status": "read_only"}
+)
+
 try:
     players_all = load_players()
     if not players_all:
@@ -530,13 +604,6 @@ def load_recent_clan_members():
         .execute()
         .data or []
     )
-
-
-# A consulta à lista atual do clã é limitada a uma vez a cada seis horas.
-clan_member_sync_result = (
-    sync_clan_member_entries(CLASH_API_TOKEN, CLASH_CLAN_TAG)
-    if is_admin else {"status": "read_only"}
-)
 
 
 def build_raid_api_preview(players_data):
