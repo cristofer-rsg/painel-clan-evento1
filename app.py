@@ -714,10 +714,12 @@ def build_ranking(players_data, events_data):
             continue
         bucket = totals.setdefault(name, {
             "Guerras": 0, "Liga dos Clãs": 0, "Doações": 0,
+            "Doações antigas": 0, "Tropas doadas": 0,
             "Jogos": 0, "Raide": 0, "Capital do Clã": 0, "Penalidades": 0
         })
         points = int(event.get("points") or 0)
         category = event.get("category") or ""
+        activity = str(event.get("activity") or "")
         if points < 0:
             bucket["Penalidades"] += abs(points)
         elif category == "Guerras":
@@ -725,7 +727,12 @@ def build_ranking(players_data, events_data):
         elif category == "Liga dos Clãs":
             bucket["Liga dos Clãs"] += points
         elif category == "Doações":
-            bucket["Doações"] += points
+            # Novos registros guardam a quantidade de tropas, não pontos.
+            # O prefixo diferencia esses registros dos lançamentos antigos.
+            if activity.startswith("TROPAS_DOADAS:"):
+                bucket["Tropas doadas"] += max(0, points)
+            else:
+                bucket["Doações antigas"] += points
         elif category == "Jogos do Clã":
             # Mantém a regra original: vale a maior faixa registrada.
             bucket["Jogos"] = max(bucket["Jogos"], points)
@@ -740,7 +747,13 @@ def build_ranking(players_data, events_data):
         bucket = totals.get(player["name"], {})
         wars = bucket.get("Guerras", 0)
         league = bucket.get("Liga dos Clãs", 0)  # Sem teto mensal: pontos por ataque, estrelas e espelho
-        donations = bucket.get("Doações", 0)
+        # Mantém os lançamentos antigos e aplica a nova conversão aos novos:
+        # 100 tropas = 1 ponto, com teto mensal total de 50 pontos.
+        donation_points = (
+            bucket.get("Doações antigas", 0)
+            + bucket.get("Tropas doadas", 0) // 100
+        )
+        donations = min(50, donation_points)
         games = min(25, bucket.get("Jogos", 0))
         raid = bucket.get("Raide", 0)
         capital_coins = bucket.get("Capital do Clã", 0)
@@ -1305,18 +1318,20 @@ if aba == "➕ Lançar pontos":
             category_db = "Liga dos Clãs"
 
         elif kind == "Doações":
-            donation_actions = {
-                "Ficou em 1º lugar em doações (+10)": 10,
-                "Ficou em 2º lugar em doações (+8)": 8,
-                "Ficou em 3º lugar em doações (+6)": 6,
-                "Ficou em 4º lugar em doações (+4)": 4,
-                "Ficou em 5º lugar em doações (+2)": 2,
-                "Não fez doações (-5)": -5,
-            }
-            activity = st.selectbox(
-                "Ação", list(donation_actions), key="add_points_action_donations"
+            st.caption(
+                "Nova regra: a cada 100 tropas efetivamente doadas = 1 ponto. "
+                "A pontuação é acumulada no mês, com limite de 50 pontos por jogador."
             )
-            pts = donation_actions[activity]
+            donated_troops = st.number_input(
+                "Quantidade de tropas doadas neste lançamento",
+                min_value=0,
+                max_value=100000,
+                value=100,
+                step=100,
+                key="add_points_donated_troops"
+            )
+            pts = int(donated_troops)
+            activity = f"TROPAS_DOADAS: {int(donated_troops)} tropas"
             category_db = "Doações"
 
         elif kind == "Jogos do Clã":
@@ -1370,8 +1385,8 @@ if aba == "➕ Lançar pontos":
 
         st.caption(f"Pontuação deste lançamento: **{int(pts):+d} pontos**")
         if st.button("💾 Salvar lançamento", use_container_width=True, key="save_add_points"):
-            if kind == "Doações" and not activity:
-                st.warning("Informe uma descrição para o lançamento de doações.")
+            if kind == "Doações" and int(pts) <= 0:
+                st.warning("Informe uma quantidade de tropas doadas maior que zero.")
             elif kind == "Raide de Fim de Semana" and any(
                 e.get("player") == who
                 and e.get("category") == "Raide de Fim de Semana"
