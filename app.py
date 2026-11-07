@@ -274,6 +274,100 @@ CLASH_CLAN_TAG = st.secrets.get("CLASH_CLAN_TAG", "#2GCGP0RQ9")
 CLASH_API_BASE = "https://cocproxy.royaleapi.dev/v1"
 
 
+@st.cache_data(ttl=21600, max_entries=2, show_spinner=False)
+def fetch_clan_members(api_token, clan_tag):
+    """Consulta os membros atuais do clã pela API oficial via proxy RoyaleAPI."""
+    tag_path = "%23" + str(clan_tag).strip().lstrip("#")
+    url = f"{CLASH_API_BASE}/clans/{tag_path}"
+    token = str(api_token or "").strip()
+    response = requests.get(
+        url,
+        headers={
+            "Authorization": f"Bearer {token}",
+            "auth": token,
+            "Accept": "application/json",
+        },
+        timeout=20,
+    )
+    if response.status_code == 403:
+        raise RuntimeError("A API/proxy recusou a autenticação (403). Confira o Secret CLASH_API_TOKEN.")
+    if response.status_code == 401:
+        raise RuntimeError("A API retornou 401: não reconheceu a autenticação enviada.")
+    if response.status_code == 429:
+        raise RuntimeError("A API limitou temporariamente as consultas (429).")
+    response.raise_for_status()
+    return (response.json() or {}).get("memberList") or []
+
+
+@st.cache_data(ttl=21600, max_entries=2, show_spinner=False)
+def sync_clan_member_entries(api_token, clan_tag):
+    """
+    Registra a primeira aparição de cada tag no histórico.
+    A primeira consulta cria uma linha de base (não anunciada como entrada nova);
+    membros que aparecerem nas consultas seguintes são registrados como novos.
+    """
+    if not api_token:
+        return {"status": "disabled", "message": "Token da API não configurado."}
+    try:
+        members = fetch_clan_members(api_token, clan_tag)
+        existing_rows = fetch_all_pages(
+            db.table("clan_member_entries").select("player_tag,is_baseline")
+        )
+        existing_tags = {
+            str(row.get("player_tag", "")).strip().upper()
+            for row in existing_rows if row.get("player_tag")
+        }
+        is_initial_baseline = len(existing_rows) == 0
+        inserted_count = 0
+        for member in members:
+            tag = str(member.get("tag") or "").strip().upper()
+            name = str(member.get("name") or "").strip()
+            if not tag or not name or tag in existing_tags:
+                continue
+            db.table("clan_member_entries").insert({
+                "player_tag": tag,
+                "player_name": name,
+                "first_seen_at": datetime.now(TZ).isoformat(),
+                "is_baseline": is_initial_baseline,
+            }).execute()
+            existing_tags.add(tag)
+            inserted_count += 1
+        return {
+            "status": "ok",
+            "inserted": inserted_count,
+            "baseline": is_initial_baseline,
+            "member_count": len(members),
+        }
+    except Exception as exc:
+        return {"status": "error", "message": str(exc)}
+
+
+@st.cache_data(ttl=180, max_entries=2, show_spinner=False)
+def fetch_clan_raid_season(api_token, clan_tag):
+    tag_path = "%23" + str(clan_tag).strip().lstrip("#")
+    url = f"{CLASH_API_BASE}/clans/{tag_path}/capitalraidseasons"
+    token = str(api_token or "").strip()
+    response = requests.get(
+        url,
+        headers={
+            "Authorization": f"Bearer {token}",
+            "auth": token,
+            "Accept": "application/json",
+        },
+        params={"limit": 1},
+        timeout=20,
+    )
+    if response.status_code == 403:
+        raise RuntimeError("A API/proxy recusou a autenticação (403). Confira o Secret CLASH_API_TOKEN.")
+    if response.status_code == 401:
+        raise RuntimeError("A API retornou 401: não reconheceu a autenticação enviada.")
+    if response.status_code == 429:
+        raise RuntimeError("A API limitou temporariamente as consultas (429).")
+    response.raise_for_status()
+    items = (response.json() or {}).get("items") or []
+    return items[0] if items else None
+
+
 if st.session_state.auth_role is None:
     st.markdown("<div class='gh-login-heading'>🔒 Acesso ao Aplicativo</div>", unsafe_allow_html=True)
     st.markdown(
