@@ -3,12 +3,15 @@ import os
 import sys
 import urllib.error
 import urllib.request
+from datetime import datetime, timezone
 from urllib.parse import quote
+from zoneinfo import ZoneInfo
 
 from supabase import create_client
 
 CLAN_TAG = "#2GCGP0RQ9"
 API_URL = "https://cocproxy.royaleapi.dev/v1"
+TZ = ZoneInfo("America/Sao_Paulo")
 
 
 def api_get(path, token):
@@ -33,7 +36,7 @@ def api_get(path, token):
 
 def make_war_events(war, players_by_tag):
     if war.get("state") not in ("inWar", "warEnded"):
-        return []
+        return [], []
 
     clan = war.get("clan") or {}
     opponent = war.get("opponent") or {}
@@ -43,9 +46,15 @@ def make_war_events(war, players_by_tag):
     elif opponent.get("tag") == CLAN_TAG:
         own_clan, enemy_clan = opponent, clan
     else:
-        return []
+        return [], []
 
-    war_key = war.get("startTime") or war.get("endTime") or "unknown"
+    war_time = war.get("startTime") or war.get("endTime")
+    if not war_time:
+        raise RuntimeError("Guerra da Liga sem startTime/endTime.")
+
+    month_key = datetime.strptime(
+        war_time[:15], "%Y%m%dT%H%M%S"
+    ).replace(tzinfo=timezone.utc).astimezone(TZ).strftime("%Y-%m")
 
     enemy_positions = {
         member.get("tag"): member.get("mapPosition")
@@ -54,6 +63,7 @@ def make_war_events(war, players_by_tag):
     }
 
     events = []
+    stat_sources = []
 
     for member in own_clan.get("members") or []:
         tag = member.get("tag")
@@ -67,15 +77,27 @@ def make_war_events(war, players_by_tag):
             key=lambda attack: int(attack.get("order") or 0),
         )
 
+        name = player["name"]
+
+        # Uma origem por jogador e guerra da Liga. Reexecuções atualizam
+        # a quantidade, em vez de somar novamente os mesmos ataques.
+        stat_sources.append({
+            "month_key": month_key,
+            "source_key": f"league:{war_time}:{tag}",
+            "player_tag": tag,
+            "player": name,
+            "war_attacks": 0,
+            "league_attacks": len(attacks),
+            "raid_attacks": 0,
+        })
+
         if not attacks:
             continue
 
-        name = player["name"]
-
         def add(suffix, activity, points):
             events.append({
-                "source_key": f"{war_key}:{tag}:{suffix}",
-                "war_key": str(war_key),
+                "source_key": f"{war_time}:{tag}:{suffix}",
+                "war_key": str(war_time),
                 "player_tag": tag,
                 "player": name,
                 "activity": activity,
@@ -126,7 +148,7 @@ def make_war_events(war, players_by_tag):
                     3
                 )
 
-    return events
+    return events, stat_sources
 
 
 def main():
@@ -183,6 +205,7 @@ def main():
         return
 
     all_events = []
+    all_stat_sources = []
     failed_wars = []
 
     for war_tag in war_tags:
@@ -194,9 +217,9 @@ def main():
                 token
             )
 
-            all_events.extend(
-                make_war_events(war, players_by_tag)
-            )
+            war_events, war_stats = make_war_events(war, players_by_tag)
+            all_events.extend(war_events)
+            all_stat_sources.extend(war_stats)
 
         except Exception as error:
             failed_wars.append(
@@ -206,8 +229,26 @@ def main():
     for failure in failed_wars:
         print(f"ATENÇÃO: {failure}")
 
+    # Não grava um total parcial se alguma guerra não pôde ser consultada.
+    if failed_wars:
+        raise RuntimeError(
+            "Sincronização da Liga incompleta; estatísticas mensais não "
+            "foram atualizadas para evitar contagem parcial."
+        )
+
+    if all_stat_sources:
+        stats_result = db.rpc(
+            "sync_player_monthly_stat_sources",
+            {"p_sources": all_stat_sources}
+        ).execute()
+        print(
+            "Registros de ataques da Liga sincronizados: "
+            f"{len(all_stat_sources)}"
+        )
+        print(f"Resposta da estatística: {stats_result.data}")
+
     if not all_events:
-        print("Nenhum evento da Liga encontrado.")
+        print("Nenhum evento de pontuação da Liga encontrado.")
         return
 
     result = db.rpc(
