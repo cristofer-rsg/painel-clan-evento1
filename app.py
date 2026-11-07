@@ -654,7 +654,7 @@ def build_raid_api_preview(players_data):
 
 
 def apply_automatic_raid_points(preview, players_data, month_events):
-    """Lança a pontuação de cada jogador no Raide, uma única vez por fim de semana."""
+    """Sincroniza um único lançamento automático por jogador/fim de semana."""
     result = {"awarded": [], "already_awarded": [], "unmatched": [], "errors": []}
     if preview.get("status") != "ok":
         return result
@@ -667,6 +667,7 @@ def apply_automatic_raid_points(preview, players_data, month_events):
     if weekend_anchor is None:
         result["errors"].append("Não foi possível calcular o identificador do fim de semana.")
         return result
+
     weekend_key = weekend_anchor.strftime("%Y-%m-%d")
     weekend_label = weekend_date.strftime("%d/%m/%Y")
     known_events = list(month_events or [])
@@ -676,53 +677,136 @@ def apply_automatic_raid_points(preview, players_data, month_events):
         if p.get("name") and p.get("active", True) is not False
     }
 
-    for row in preview.get("rows", []):
-        attacks = max(0, min(6, int(row.get("Ataques") or 0)))
-        if attacks <= 0:
-            continue
-        registered_name = str(row.get("Cadastro no Ghost Hunt") or "").strip()
-        if not registered_name or registered_name.casefold() not in active_players:
-            result["unmatched"].append(row.get("Jogador na API", ""))
-            continue
-        player_name = active_players[registered_name.casefold()].get("name")
-        marker = f"RAIDE_AUTO:{weekend_key}:ATAQUES_{attacks}"
-        weekend_events = [
-            event for event in known_events
-            if str(event.get("player", "")).strip().casefold() == str(player_name).casefold()
+    def is_same_player_weekend(event, player_name):
+        return (
+            str(event.get("player", "")).strip().casefold() == str(player_name).strip().casefold()
             and event.get("category") == "Raide de Fim de Semana"
             and (
                 str(event.get("activity") or "").startswith(f"RAIDE_AUTO:{weekend_key}:")
                 or raid_weekend_start(event.get("created_at")) == weekend_anchor
             )
-        ]
+        )
+
+    def refresh_history():
+        load_all_events_for_export.clear()
+        return load_all_events_for_export()
+
+    for row in preview.get("rows", []):
+        attacks = max(0, min(6, int(row.get("Ataques") or 0)))
+        if attacks <= 0:
+            continue
+
+        registered_name = str(row.get("Cadastro no Ghost Hunt") or "").strip()
+        if not registered_name or registered_name.casefold() not in active_players:
+            result["unmatched"].append(row.get("Jogador na API", ""))
+            continue
+
+        player_name = active_players[registered_name.casefold()].get("name")
+        marker = f"RAIDE_AUTO:{weekend_key}:ATAQUES_{attacks}"
         points = attacks + (2 if attacks >= 5 else 0)
         activity = (
             f"{marker} | {attacks} ataque(s) utilizados"
             f" | bônus de 5 ataques: {2 if attacks >= 5 else 0} ponto(s)"
             f" | total: {points} pontos | {weekend_label}"
         )
-        # Se a API atualizar de 5 para 6 ataques durante o fim de semana,
-        # atualiza o lançamento automático existente em vez de duplicá-lo.
-        automatic_event = next((
-            event for event in weekend_events
-            if str(event.get("activity") or "").startswith(f"RAIDE_AUTO:{weekend_key}:")
-        ), None)
-        if automatic_event:
-            previous_points = int(automatic_event.get("points") or 0)
-            if points > previous_points and automatic_event.get("id") is not None:
-                try:
-                    db.table("events").update({"activity": activity, "points": points}).eq("id", automatic_event["id"]).execute()
-                    automatic_event.update({"activity": activity, "points": points})
-                    result["awarded"].append(f"{player_name} (atualizado para +{points})")
-                except Exception as exc:
-                    result["errors"].append(f"{player_name}: não foi possível atualizar o Raide: {exc}")
-            else:
-                result["already_awarded"].append(player_name)
+
+        weekend_events = [e for e in known_events if is_same_player_weekend(e, player_name)]
+        automatic_events = [
+            e for e in weekend_events
+            if str(e.get("activity") or "").startswith(f"RAIDE_AUTO:{weekend_key}:")
+        ]
+        target_event = next(
+            (e for e in automatic_events
+             if str(e.get("activity") or "").startswith(marker)),
+            None
+        )
+
+        # Se o lançamento para a quantidade atual já existe, ele é o registro
+        # canônico. Removemos somente outros registros AUTOMÁTICOS do mesmo
+        # jogador/fim de semana, que seriam pontuação duplicada. Lançamentos
+        # manuais nunca são apagados por esta rotina.
+        if target_event:
+            try:
+                if int(target_event.get("points") or 0) != points:
+                    db.table("events").update({"points": points}).eq("id", target_event["id"]).execute()
+                    target_event["points"] = points
+
+                redundant = [
+                    e for e in automatic_events
+                    if e.get("id") is not None and e.get("id") != target_event.get("id")
+                ]
+                for old_event in redundant:
+                    db.table("events").delete().eq("id", old_event["id"]).execute()
+                    if old_event in known_events:
+                        known_events.remove(old_event)
+
+                if redundant or int(target_event.get("points") or 0) == points:
+                    result["already_awarded"].append(player_name)
+            except Exception as exc:
+                result["errors"].append(
+                    f"{player_name}: já existe um lançamento automático para {attacks} ataques, "
+                    f"mas não foi possível consolidar os registros: {exc}"
+                )
             continue
+
+        # Há um lançamento automático antigo (ex.: 5 ataques) e a API passou
+        # a informar 6. Como o lançamento de 6 pode já existir, o caso acima
+        # o utiliza sem tentar violar o índice único (player, activity).
+        if automatic_events:
+            old_event = automatic_events[0]
+            try:
+                db.table("events").update({
+                    "activity": activity,
+                    "points": points
+                }).eq("id", old_event["id"]).execute()
+                old_event.update({"activity": activity, "points": points})
+
+                # Se havia mais de um registro automático antigo, conserva
+                # apenas o registro atualizado.
+                for extra_event in automatic_events[1:]:
+                    if extra_event.get("id") is not None:
+                        db.table("events").delete().eq("id", extra_event["id"]).execute()
+                    if extra_event in known_events:
+                        known_events.remove(extra_event)
+
+                result["awarded"].append(f"{player_name} (atualizado para +{points})")
+            except Exception as exc:
+                # Uma gravação concorrente pode ter criado o marcador-alvo
+                # entre a leitura e a atualização. Reconsulta e consolida.
+                try:
+                    refreshed = refresh_history()
+                    refreshed_weekend = [
+                        e for e in refreshed if is_same_player_weekend(e, player_name)
+                    ]
+                    refreshed_target = next(
+                        (e for e in refreshed_weekend
+                         if str(e.get("activity") or "").startswith(marker)),
+                        None
+                    )
+                    if refreshed_target:
+                        extras = [
+                            e for e in refreshed_weekend
+                            if str(e.get("activity") or "").startswith(f"RAIDE_AUTO:{weekend_key}:")
+                            and e.get("id") != refreshed_target.get("id")
+                        ]
+                        for extra in extras:
+                            if extra.get("id") is not None:
+                                db.table("events").delete().eq("id", extra["id"]).execute()
+                        result["already_awarded"].append(player_name)
+                        known_events = refreshed
+                    else:
+                        result["errors"].append(f"{player_name}: não foi possível atualizar o Raide: {exc}")
+                except Exception as refresh_exc:
+                    result["errors"].append(
+                        f"{player_name}: falha ao reconciliar lançamentos automáticos: {refresh_exc}"
+                    )
+            continue
+
         if weekend_events:
             # Um lançamento manual no mesmo fim de semana prevalece; não duplica.
             result["already_awarded"].append(player_name)
             continue
+
         payload = {
             "player": player_name,
             "category": "Raide de Fim de Semana",
@@ -740,19 +824,8 @@ def apply_automatic_raid_points(preview, players_data, month_events):
             result["awarded"].append(f"{player_name} (+{points})")
         except Exception as exc:
             try:
-                # Reconsulta o histórico completo para reconhecer um lançamento
-                # que tenha sido gravado no mês anterior.
-                load_all_events_for_export.clear()
-                refreshed = load_all_events_for_export()
-                duplicate_now = any(
-                    str(event.get("player", "")).strip().casefold() == str(player_name).casefold()
-                    and event.get("category") == "Raide de Fim de Semana"
-                    and (
-                        str(event.get("activity") or "").startswith(f"RAIDE_AUTO:{weekend_key}:")
-                        or raid_weekend_start(event.get("created_at")) == weekend_anchor
-                    )
-                    for event in refreshed
-                )
+                refreshed = refresh_history()
+                duplicate_now = any(is_same_player_weekend(event, player_name) for event in refreshed)
             except Exception:
                 duplicate_now = False
             if duplicate_now:
