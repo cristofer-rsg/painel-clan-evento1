@@ -1043,47 +1043,67 @@ if aba == "📊 Desempenho":
     if performance_df.empty:
         st.info("Nenhum jogador cadastrado.")
     else:
-        metric_options = {
-            "Guerras": "Guerras",
-            "Liga dos Clãs": "Liga dos Clãs",
-            "Raide": "Raide",
-            "Doações": "Doações",
-            "Jogos do Clã": "Jogos do Clã",
-        }
-        selected_metric = st.selectbox(
-            "Ordenar jogadores por",
-            list(metric_options.keys()),
-            key="performance_sort"
-        )
-        sort_direction = st.radio(
-            "Ordem",
-            ["Maior para menor", "Menor para maior"],
-            horizontal=True,
-            key="performance_direction"
-        )
+        metric_columns = ["Guerras", "Liga dos Clãs", "Raide", "Doações", "Jogos do Clã"]
         show_inactive = st.toggle("Incluir jogadores inativos", value=True, key="performance_inactive")
         visible_df = performance_df.copy()
         if not show_inactive:
-            visible_df = visible_df[visible_df["Situação"] == "Ativo"]
+            visible_df = visible_df[visible_df["Situação"] == "Ativo"].copy()
+
+        # Índice equilibrado: cada categoria contribui com até 100 pontos.
+        # A pontuação de cada categoria é proporcional ao maior valor daquela
+        # categoria no mês selecionado, evitando comparar unidades diferentes.
+        maxima = {
+            metric: int(visible_df[metric].max()) if not visible_df.empty else 0
+            for metric in metric_columns
+        }
+        for metric in metric_columns:
+            max_value = maxima[metric]
+            visible_df[f"_{metric}_peso"] = (
+                visible_df[metric].astype(float).div(max_value).mul(100)
+                if max_value > 0 else 0.0
+            )
+
+        weight_columns = [f"_{metric}_peso" for metric in metric_columns]
+        visible_df["Índice de atividade"] = visible_df[weight_columns].sum(axis=1).round(1)
+        visible_df["Índice de atividade"] = visible_df["Índice de atividade"].clip(0, 500)
+        sort_direction = st.radio(
+            "Ordem do ranking geral",
+            ["Mais ativos primeiro", "Menos ativos primeiro"],
+            horizontal=True,
+            key="performance_direction",
+        )
+        descending = sort_direction == "Mais ativos primeiro"
         visible_df = visible_df.sort_values(
-            by=[selected_metric, "Jogador"],
-            ascending=[sort_direction == "Menor para maior", True],
-            kind="stable"
+            by=["Índice de atividade", *weight_columns, "Jogador"],
+            ascending=[not descending] * (1 + len(weight_columns)) + [True],
+            kind="stable",
         ).reset_index(drop=True)
         visible_df.insert(0, "Pos.", range(1, len(visible_df) + 1))
 
         metric_cols = st.columns(5)
-        for col, metric in zip(metric_cols, metric_options):
+        for col, metric in zip(metric_cols, metric_columns):
             with col:
                 col.metric(metric, f"{int(performance_df[metric].sum()):,}".replace(",", "."))
+
+        display_columns = [
+            "Pos.", "Jogador", "Índice de atividade", "Guerras",
+            "Liga dos Clãs", "Raide", "Doações", "Jogos do Clã", "Situação"
+        ]
         st.dataframe(
-            visible_df,
+            visible_df[display_columns],
             use_container_width=True,
             hide_index=True,
-            height=min(680, max(220, 38 * (len(visible_df) + 1)))
+            height=min(680, max(220, 38 * (len(visible_df) + 1))),
+            column_config={
+                "Índice de atividade": st.column_config.NumberColumn(
+                    "Índice (0–500)", format="%.1f"
+                )
+            },
         )
         st.caption(
-            "Guerras, Liga e Raide são contagens de ataques. Doações e Jogos do Clã são os totais mensais. "
+            "Ranking geral equilibrado: cada uma das cinco categorias vale até 100 pontos. "
+            "A pontuação de cada categoria é proporcional ao maior resultado daquela categoria no mês selecionado. "
+            "Guerras, Liga e Raide são contagens de ataques; Doações e Jogos do Clã são totais mensais. "
             "Jogadores sem registros aparecem com zero; dados anteriores à implantação não são reconstruídos automaticamente."
         )
 
