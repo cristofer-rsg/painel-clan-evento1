@@ -746,7 +746,7 @@ def build_ranking(players_data, events_data):
     for player in players_data:
         bucket = totals.get(player["name"], {})
         wars = min(200, bucket.get("Guerras", 0))
-        league = min(20, bucket.get("Liga dos Clãs", 0))
+        league = bucket.get("Liga dos Clãs", 0)  # Sem teto mensal: pontos por ataque, estrelas e espelho
         donations = min(20, bucket.get("Doações", 0))
         games = min(25, bucket.get("Jogos", 0))
         raid = min(20, bucket.get("Raide", 0))
@@ -1268,8 +1268,9 @@ if aba == "➕ Lançar pontos":
             category_db = "Guerras"
 
         elif kind == "Liga dos Clãs":
+            st.caption("Liga: +5 por ataque realizado, +1 por estrela conquistada e +5 por espelho acertado. Sem limite mensal.")
             league_actions = {
-                "Participou da guerra (+5)": 5,
+                "Realizou um ataque (+5)": 5,
                 "Acertou o espelho (+5)": 5,
                 "Fez 1 estrela (+1)": 1,
                 "Fez 2 estrelas (+2)": 2,
