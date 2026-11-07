@@ -745,7 +745,7 @@ def build_ranking(players_data, events_data):
     rows = []
     for player in players_data:
         bucket = totals.get(player["name"], {})
-        wars = min(200, bucket.get("Guerras", 0))
+        wars = bucket.get("Guerras", 0)
         league = bucket.get("Liga dos Clãs", 0)  # Sem teto mensal: pontos por ataque, estrelas e espelho
         donations = min(20, bucket.get("Doações", 0))
         games = min(25, bucket.get("Jogos", 0))
