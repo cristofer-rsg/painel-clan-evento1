@@ -5,11 +5,13 @@ import sys
 import urllib.error
 import urllib.request
 from urllib.parse import quote
+from zoneinfo import ZoneInfo
 
 from supabase import create_client
 
 CLAN_TAG = "#2GCGP0RQ9"
 API_URL = "https://cocproxy.royaleapi.dev/v1"
+TZ = ZoneInfo("America/Sao_Paulo")
 
 
 def api_get(path, token):
@@ -191,10 +193,7 @@ def main():
     ).replace(tzinfo=timezone.utc)
 
     cutoff = datetime(2026, 11, 6, 13, 50, tzinfo=timezone.utc)
-
-    if war_started <= cutoff:
-        print("Guerra anterior à data de corte. Nenhum ponto lançado.")
-        return
+    allow_points = war_started > cutoff
 
     db = create_client(supabase_url, supabase_key)
 
@@ -215,6 +214,46 @@ def main():
     events, missing_players = build_war_events(
         war, players_by_tag
     )
+
+    # Estatística mensal: uma origem por jogador e guerra. A mesma chave
+    # é atualizada nas próximas execuções, sem somar ataques em duplicidade.
+    month_key = war_started.astimezone(TZ).strftime("%Y-%m")
+    war_key = f"{CLAN_TAG}:{start_time}"
+    stat_sources = []
+
+    for member in (war.get("clan") or {}).get("members") or []:
+        player_tag = member.get("tag")
+        player = players_by_tag.get(player_tag)
+        if not player_tag or not player:
+            continue
+
+        stat_sources.append({
+            "month_key": month_key,
+            "source_key": f"war:{war_key}:{player_tag}",
+            "player_tag": player_tag,
+            "player": player["name"],
+            "war_attacks": len(member.get("attacks") or []),
+            "league_attacks": 0,
+            "raid_attacks": 0,
+        })
+
+    if stat_sources:
+        stats_result = db.rpc(
+            "sync_player_monthly_stat_sources",
+            {"p_sources": stat_sources},
+        ).execute()
+        print(
+            "Jogadores com estatística de guerra sincronizada: "
+            f"{len(stat_sources)}"
+        )
+        print(f"Resultado da estatística: {stats_result.data}")
+
+    if not allow_points:
+        print(
+            "Guerra anterior à data de corte: estatísticas atualizadas, "
+            "mas nenhum ponto será lançado."
+        )
+        return
 
     if missing_players:
         print(
