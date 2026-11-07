@@ -724,7 +724,7 @@ def build_ranking(players_data, events_data):
             continue
         bucket = totals.setdefault(name, {
             "Guerras": 0, "Liga dos Clãs": 0, "Doações": 0,
-            "Jogos": 0, "Raide": 0, "Penalidades": 0
+            "Jogos": 0, "Raide": 0, "Capital do Clã": 0, "Penalidades": 0
         })
         points = int(event.get("points") or 0)
         category = event.get("category") or ""
@@ -741,6 +741,9 @@ def build_ranking(players_data, events_data):
             bucket["Jogos"] = max(bucket["Jogos"], points)
         elif category == "Raide de Fim de Semana":
             bucket["Raide"] += points
+        elif category == "Capital do Clã":
+            # Exibe o total de moedas doadas, sem somar ao ranking mensal.
+            bucket["Capital do Clã"] += points
 
     rows = []
     for player in players_data:
@@ -765,6 +768,7 @@ def build_ranking(players_data, events_data):
             "Doações": donations,
             "Jogos": games,
             "Raide": raid,
+            "Capital do Clã": bucket.get("Capital do Clã", 0),
             "Penalidades": penalties,
             "Total": total
         })
@@ -864,7 +868,7 @@ def render_live_ranking(player_mode=False):
     st.markdown("".join(podium_html), unsafe_allow_html=True)
     st.markdown("### 📊 Classificação completa")
     if player_mode:
-        st.dataframe(live_ranking[["Posição", "Jogador", "Guerras", "Liga", "Doações", "Jogos", "Raide", "Penalidades", "Total"]], use_container_width=True, hide_index=True, height=620)
+        st.dataframe(live_ranking[["Posição", "Jogador", "Guerras", "Liga", "Doações", "Jogos", "Raide", "Capital do Clã", "Penalidades", "Total"]], use_container_width=True, hide_index=True, height=620)
     else:
         st.caption("🥇 1º lugar • 🥈 2º lugar • 🥉 3º lugar")
         st.dataframe(live_ranking, use_container_width=True, hide_index=True, height=620)
