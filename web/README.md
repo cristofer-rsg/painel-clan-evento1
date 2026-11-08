@@ -54,21 +54,13 @@ As credenciais de Clash of Clans permanecem nos GitHub Secrets utilizados pelos 
 
 O arquivo raiz `supabase_schema.sql` não representa mais o schema completo usado pelo aplicativo atual: ele documenta apenas `players` e `events` em uma versão antiga e não inclui colunas/tabelas que o código atual consulta, como `player_tag`, `active`, `clan_member_entries`, `monthly_rankings` e `player_monthly_stats`. **Não execute esse SQL no projeto Supabase existente.** Antes de implementar as consultas da nova aplicação, faça uma inspeção somente de leitura do schema real no Supabase e valide as colunas, constraints, índices e políticas RLS.
 
-## Estado desta primeira entrega
+## Validações ainda pendentes
 
-- Estrutura do Next.js criada em `web/`.
-- Identidade visual mobile-first responsiva.
-- Painel inicial consulta `players` e `events` no servidor e calcula o ranking mensal com as regras atuais do `app.py`.
-- A chave Supabase permanece exclusivamente no servidor.
-- Endpoint de health check sem expor segredos.
-- Schema real consultado em modo somente leitura; nenhuma tabela ou dado do Supabase foi alterado.
-- Workflow independente de validação web; os workflows de sincronização existentes permanecem intocados.
+- Teste ponta a ponta com as variáveis reais do Supabase em um ambiente Preview.
+- Comparação visual e de dados com o Streamlit original, incluindo meses arquivados, jogadores inativos e exportações.
+- Teste funcional de login, expiração/logout, gestão de jogadores e edição/exclusão de lançamentos.
+- Configuração e validação de um projeto Vercel Preview.
+- Revisão final de segurança antes de qualquer implantação de produção.
 
-## Próximas etapas obrigatórias
+O workflow de build comprova a compilação do Next.js, mas não substitui esses testes de integração. Nenhuma implantação Vercel foi criada, nenhum dado do Supabase foi alterado e nenhum merge foi realizado.
 
-1. Implementar autenticação administrativa com cookie HttpOnly, expiração e proteção CSRF adequada; acesso de jogador permanece somente leitura.
-2. Mapear e validar colunas e políticas das cinco tabelas existentes: `players`, `events`, `monthly_rankings`, `player_monthly_stats`, `clan_member_entries`.
-3. Portar as funções de ranking, arquivamento mensal, histórico, desempenho e novos membros sem mudar as regras.
-4. Criar operações administrativas protegidas para editar/excluir lançamentos e gerenciar jogadores.
-5. Validar sincronização e exportação Excel/CSV.
-6. Configurar Vercel com Root Directory `web`, testar em preview e comparar com Streamlit antes de qualquer troca de endereço.
