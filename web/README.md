@@ -32,6 +32,10 @@ Configure em Vercel > Project Settings > Environment Variables:
 
 O arquivo `.env.example` documenta os nomes sem incluir valores.
 
+## Atenção: schema SQL legado
+
+O arquivo raiz `supabase_schema.sql` não representa mais o schema completo usado pelo aplicativo atual: ele documenta apenas `players` e `events` em uma versão antiga e não inclui colunas/tabelas que o código atual consulta, como `player_tag`, `active`, `clan_member_entries`, `monthly_rankings` e `player_monthly_stats`. **Não execute esse SQL no projeto Supabase existente.** Antes de implementar as consultas da nova aplicação, faça uma inspeção somente de leitura do schema real no Supabase e valide as colunas, constraints, índices e políticas RLS.
+
 ## Estado desta primeira entrega
 
 - Estrutura inicial do Next.js criada em `web/`.
