@@ -105,7 +105,8 @@ export async function getDashboardData(): Promise<DashboardData> {
 
     const bounds = monthBounds(monthKey);
     const events = await fetchAllEvents(bounds.start, bounds.end);
-    const players = (playerData ?? []) as Player[];
+    // O ranking operacional considera somente membros atualmente ativos no clã.
+    const players = ((playerData ?? []) as Player[]).filter((player) => player.active !== false);
     const totals = new Map<string, {
       wars: number; league: number; donatedTroops: number;
       games: number; raid: number; capitalCoins: number; penalties: number;
