@@ -87,12 +87,11 @@ async function fetchAllEvents(start: string, end: string): Promise<EventRow[]> {
 
 export async function getDashboardData(): Promise<DashboardData> {
   const monthKey = getSaoPauloMonth();
-  const [year, month] = monthKey.split("-");
   const monthLabel = new Intl.DateTimeFormat("pt-BR", {
     month: "long",
     year: "numeric",
     timeZone: "America/Sao_Paulo",
-  }).format(new Date(`${monthKey}-15T12:00:00-03:00"));
+  }).format(new Date(`${monthKey}-15T12:00:00-03:00`));
 
   try {
     const supabase = createSupabaseAdmin();
