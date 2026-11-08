@@ -35,8 +35,8 @@ export async function GET(request: NextRequest) {
     if (!dashboard.connected) return NextResponse.json({ error: "Não foi possível consultar o ranking no Supabase." }, { status: 503 });
     const events = await fetchAllEvents();
     if (format === "csv") {
-      const headers = ["Posição", "Jogador", "Total", "Guerras", "Liga", "Doações", "Jogos", "Raide", "Capital do Clã", "Penalidades", "Elegível"];
-      const rows = dashboard.ranking.map(row => [row.position, row.player, row.total, row.wars, row.league, row.donations, row.games, row.raid, row.capitalCoins, row.penalties, row.eligible ? "Sim" : "Não"]);
+      const headers = ["Posição", "Jogador", "Elegibilidade", "WhatsApp", "Guerras", "Liga", "Doações", "Jogos", "Raide", "Capital do Clã", "Penalidades", "Total"];
+      const rows = dashboard.ranking.map(row => [row.position, row.player, row.eligibilityStatus, row.whatsapp, row.wars, row.league, row.donations, row.games, row.raid, row.capitalCoins, row.penalties, row.total]);
       const csv = "\uFEFF" + [headers, ...rows].map(row => row.map(csvCell).join(";")).join("\r\n");
       return new NextResponse(csv, { headers: {
         "Content-Type": "text/csv; charset=utf-8",
@@ -51,18 +51,18 @@ export async function GET(request: NextRequest) {
     const rankingSheet = workbook.addWorksheet("Ranking do mês");
     rankingSheet.columns = [
       { header: "Posição", key: "position", width: 10 }, { header: "Jogador", key: "player", width: 26 },
-      { header: "Total", key: "total", width: 12 }, { header: "Guerras", key: "wars", width: 12 },
-      { header: "Liga", key: "league", width: 12 }, { header: "Doações", key: "donations", width: 12 },
-      { header: "Jogos", key: "games", width: 12 }, { header: "Raide", key: "raid", width: 12 },
-      { header: "Capital do Clã", key: "capitalCoins", width: 18 }, { header: "Penalidades", key: "penalties", width: 14 },
-      { header: "Elegível", key: "eligible", width: 12 },
+      { header: "Elegibilidade", key: "eligibilityStatus", width: 16 }, { header: "WhatsApp", key: "whatsapp", width: 12 },
+      { header: "Guerras", key: "wars", width: 12 }, { header: "Liga", key: "league", width: 12 },
+      { header: "Doações", key: "donations", width: 12 }, { header: "Jogos", key: "games", width: 12 },
+      { header: "Raide", key: "raid", width: 12 }, { header: "Capital do Clã", key: "capitalCoins", width: 18 },
+      { header: "Penalidades", key: "penalties", width: 14 }, { header: "Total", key: "total", width: 12 },
     ];
-    dashboard.ranking.forEach(row => rankingSheet.addRow({ ...row, eligible: row.eligible ? "Sim" : "Não" }));
-    const eventSheet = workbook.addWorksheet("Histórico completo");
+    dashboard.ranking.forEach(row => rankingSheet.addRow(row));
+    const eventSheet = workbook.addWorksheet("Historico completo");
     eventSheet.columns = [
-      { header: "ID", key: "id", width: 12 }, { header: "Data", key: "created_at", width: 24 },
-      { header: "Jogador", key: "player", width: 26 }, { header: "Categoria", key: "category", width: 24 },
-      { header: "Atividade", key: "activity", width: 64 }, { header: "Pontos", key: "points", width: 12 },
+      { header: "id", key: "id", width: 12 }, { header: "player", key: "player", width: 26 },
+      { header: "category", key: "category", width: 24 }, { header: "activity", key: "activity", width: 64 },
+      { header: "points", key: "points", width: 12 }, { header: "created_at", key: "created_at", width: 24 },
     ];
     events.forEach(event => eventSheet.addRow(event));
     for (const sheet of [rankingSheet, eventSheet]) {

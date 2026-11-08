@@ -30,6 +30,8 @@ export type RankingRow = {
   capitalCoins: number;
   penalties: number;
   eligible: boolean;
+  eligibilityStatus: string;
+  whatsapp: string;
 };
 
 export type DashboardData = {
@@ -153,6 +155,8 @@ export async function getDashboardData(): Promise<DashboardData> {
         capitalCoins: bucket.capitalCoins,
         penalties: bucket.penalties,
         eligible,
+        eligibilityStatus: player.eligible ?? "Elegível",
+        whatsapp: player.whatsapp ?? "Sim",
       };
     }).sort((a, b) => b.total - a.total || a.player.localeCompare(b.player, "pt-BR"))
       .map((row, index) => ({ ...row, position: index + 1 }));
