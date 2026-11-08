@@ -1,19 +1,30 @@
+import { getDashboardData } from "@/lib/ghost-hunt/dashboard";
+
+export const dynamic = "force-dynamic";
+
 const navigation = [
-  { icon: "⌂", label: "Início", active: true },
-  { icon: "♛", label: "Ranking" },
-  { icon: "◈", label: "Desempenho" },
-  { icon: "⚔", label: "Pontos" },
-  { icon: "♟", label: "Clã" },
+  { icon: "⌂", label: "Início", href: "/" },
+  { icon: "♛", label: "Ranking", href: "#ranking" },
+  { icon: "◈", label: "Desempenho", href: "#ranking" },
+  { icon: "⚔", label: "Pontos", href: "#ranking" },
+  { icon: "♟", label: "Clã", href: "#ranking" },
 ];
 
-const metrics = [
-  { icon: "♛", label: "PONTOS DO LÍDER", value: "—", note: "Aguardando Supabase" },
-  { icon: "♟", label: "JOGADORES ATIVOS", value: "—", note: "Aguardando Supabase" },
-  { icon: "⚔", label: "REGISTROS DE GUERRA", value: "—", note: "Mês atual" },
-  { icon: "▤", label: "LANÇAMENTOS", value: "—", note: "Mês atual" },
-];
+function number(value: number) {
+  return new Intl.NumberFormat("pt-BR").format(value);
+}
 
-export default function HomePage() {
+export default async function HomePage() {
+  const data = await getDashboardData();
+  const topThree = [data.ranking[1], data.ranking[0], data.ranking[2]];
+
+  const metrics = [
+    { icon: "♛", label: "PONTOS DO LÍDER", value: number(data.leaderPoints), note: "Ranking do mês" },
+    { icon: "♟", label: "JOGADORES ATIVOS", value: number(data.activePlayers), note: "Membros cadastrados" },
+    { icon: "⚔", label: "REGISTROS DE GUERRA", value: number(data.warRecords), note: "Lançamentos no mês" },
+    { icon: "▤", label: "LANÇAMENTOS", value: number(data.eventCount), note: "Todos os eventos do mês" },
+  ];
+
   return (
     <main className="app-shell">
       <header className="topbar">
@@ -22,23 +33,25 @@ export default function HomePage() {
           <span className="brand-copy"><strong>GHOST <i>HUNT</i></strong><small>CLAN MANAGEMENT</small></span>
         </a>
         <div className="topbar-right">
-          <span className="status"><span className="status-dot" /> NOVA PLATAFORMA</span>
-          <button className="avatar" aria-label="Área de acesso">GH</button>
+          <span className={data.connected ? "status" : "status status-offline"}>
+            <span className="status-dot" /> {data.connected ? "SUPABASE CONECTADO" : "AGUARDANDO CONEXÃO"}
+          </span>
+          <a className="avatar" href="#ranking" aria-label="Área de acesso">GH</a>
         </div>
       </header>
 
       <div className="layout">
         <aside className="sidebar">
           <div className="side-label">MENU PRINCIPAL</div>
-          {navigation.map((item) => (
-            <a className={item.active ? "nav-item active" : "nav-item"} href="#" key={item.label}>
+          {navigation.map((item, index) => (
+            <a className={index === 0 ? "nav-item active" : "nav-item"} href={item.href} key={item.label}>
               <span className="nav-icon">{item.icon}</span><span>{item.label}</span>
-              {item.active && <span className="active-bar" />}
+              {index === 0 && <span className="active-bar" />}
             </a>
           ))}
           <div className="side-divider" />
           <div className="side-label">ADMINISTRAÇÃO</div>
-          <a className="nav-item" href="#"><span className="nav-icon">⚙</span><span>Gerenciar aplicativo</span></a>
+          <a className="nav-item" href="#ranking"><span className="nav-icon">⚙</span><span>Gerenciar aplicativo</span></a>
           <div className="sidebar-foot"><span className="shield">◆</span><span><b>GHOST HUNT</b><small>Temporada do clã</small></span></div>
         </aside>
 
@@ -46,8 +59,14 @@ export default function HomePage() {
           <div className="eyebrow"><span /> CENTRAL DO CLÃ</div>
           <div className="welcome-row">
             <div><p className="overline">BEM-VINDO DE VOLTA</p><h1>Olá, <em>Caçador.</em></h1><p className="muted">Acompanhe a atividade e o desempenho do seu clã.</p></div>
-            <div className="season-chip"><span>◷</span><div><small>TEMPORADA ATUAL</small><b>Novembro / 2026</b></div></div>
+            <div className="season-chip"><span>◷</span><div><small>TEMPORADA ATUAL</small><b>{data.monthLabel}</b></div></div>
           </div>
+
+          {!data.connected && <div className="connection-alert">
+            <b>Não foi possível carregar os dados reais.</b>
+            <span>O painel continua protegido; confira as variáveis do Supabase no ambiente de hospedagem.</span>
+            {data.error && <small>{data.error}</small>}
+          </div>}
 
           <div className="metrics-grid">
             {metrics.map((metric) => <article className="metric-card" key={metric.label}>
@@ -56,22 +75,35 @@ export default function HomePage() {
             </article>)}
           </div>
 
-          <div className="section-heading"><div><p className="overline">DESTAQUES</p><h2>Hall da Fama</h2></div><span className="period-pill">MÊS ATUAL</span></div>
+          <div className="section-heading"><div><p className="overline">DESTAQUES</p><h2>Hall da Fama</h2></div><span className="period-pill">{data.monthLabel.toUpperCase()}</span></div>
           <section className="podium-panel">
             <div className="panel-caption"><span className="gold-line" /> PÓDIO DO MÊS <span className="panel-caption-right">TOP 3 JOGADORES</span></div>
             <div className="podium">
-              <div className="podium-place second"><span className="medal">Ⅱ</span><div className="player-orb">?</div><b>2º LUGAR</b><strong>—</strong><small>Aguardando dados</small></div>
-              <div className="podium-place first"><span className="crown">♛</span><div className="player-orb champion">?</div><b>1º LUGAR</b><strong>—</strong><small>Aguardando dados</small><span className="champion-base" /></div>
-              <div className="podium-place third"><span className="medal">Ⅲ</span><div className="player-orb">?</div><b>3º LUGAR</b><strong>—</strong><small>Aguardando dados</small></div>
+              {topThree.map((player, index) => {
+                const place = index === 0 ? "second" : index === 1 ? "first" : "third";
+                const label = index === 0 ? "2º LUGAR" : index === 1 ? "1º LUGAR" : "3º LUGAR";
+                return <div className={`podium-place ${place}`} key={label}>
+                  {index === 1 ? <span className="crown">♛</span> : <span className="medal">{index === 0 ? "Ⅱ" : "Ⅲ"}</span>}
+                  <div className={index === 1 ? "player-orb champion" : "player-orb"}>{player ? player.player.slice(0, 1).toUpperCase() : "—"}</div>
+                  <b>{label}</b><strong>{player ? number(player.total) : "—"}</strong>
+                  <small>{player ? player.player : "Sem classificação"}</small>
+                  {index === 1 && <span className="champion-base" />}
+                </div>;
+              })}
             </div>
           </section>
 
-          <div className="section-heading ranking-heading"><div><p className="overline">CLASSIFICAÇÃO</p><h2>Ranking do clã</h2></div><button className="outline-button">Ver ranking completo <span>→</span></button></div>
+          <div className="section-heading ranking-heading" id="ranking"><div><p className="overline">CLASSIFICAÇÃO</p><h2>Ranking do clã</h2></div><span className="period-pill">MÊS ATUAL</span></div>
           <section className="ranking-panel">
             <div className="ranking-head"><span>JOGADOR</span><span>PONTUAÇÃO</span></div>
-            <div className="empty-state"><span className="empty-icon">♜</span><b>Conectando os dados do clã</b><p>O ranking real aparecerá aqui após a integração segura com o Supabase.</p></div>
+            {data.ranking.length ? data.ranking.slice(0, 10).map((player) => (
+              <div className="ranking-row" key={player.player}>
+                <span className="ranking-player"><b className="ranking-position">{player.position}</b><span>{player.player}<small>{player.eligible ? "Elegível" : "Não elegível"}</small></span></span>
+                <strong>{number(player.total)} pts</strong>
+              </div>
+            )) : <div className="empty-state"><span className="empty-icon">♜</span><b>{data.connected ? "Ainda não há jogadores cadastrados" : "Conectando os dados do clã"}</b><p>{data.connected ? "Os jogadores aparecerão aqui assim que estiverem cadastrados." : "O ranking será exibido quando a conexão com o Supabase estiver configurada."}</p></div>}
           </section>
-          <footer className="footer"><span>GHOST HUNT <b>•</b> CENTRAL DO CLÃ</span><span>Nova experiência em construção</span></footer>
+          <footer className="footer"><span>GHOST HUNT <b>•</b> CENTRAL DO CLÃ</span><span>Dados do Supabase • Atualizado ao abrir</span></footer>
         </section>
       </div>
     </main>
