@@ -21,6 +21,7 @@ type EventRow = {
 export type RankingRow = {
   position: number;
   player: string;
+  tag: string;
   total: number;
   wars: number;
   league: number;
@@ -99,7 +100,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     const supabase = createSupabaseAdmin();
     const { data: playerData, error: playerError } = await supabase
       .from("players")
-      .select("name,eligible,whatsapp,active")
+      .select("name,player_tag,eligible,whatsapp,active")
       .order("name", { ascending: true });
     if (playerError) throw new Error(`Falha ao consultar jogadores: ${playerError.message}`);
 
@@ -147,6 +148,7 @@ export async function getDashboardData(): Promise<DashboardData> {
       return {
         position: 0,
         player: player.name,
+        tag: (player as Player & { player_tag?: string | null }).player_tag || "",
         total,
         wars: bucket.wars,
         league: bucket.league,

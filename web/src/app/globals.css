@@ -113,3 +113,10 @@ button{font:inherit}
   .active-bar{top:auto;left:10px;right:10px;bottom:-1px;width:auto;height:2px}
 }
 @media(max-width:560px){.sidebar{top:64px;padding:7px 9px}.nav-item{font-size:9px;padding:8px 9px}}
+
+.ranking-search{display:flex;align-items:center;gap:10px;padding:12px 17px;border-bottom:1px solid #1c3552}
+.ranking-search input{min-width:0;flex:1;border:1px solid #314966;border-radius:8px;background:#091827;color:#eef3f9;padding:10px 11px;font:inherit;font-size:11px;outline:none}
+.ranking-search input:focus{border-color:#c49a4b;box-shadow:0 0 0 2px #c49a4b22}
+.ranking-search small{font-size:9px;color:#8095ad;white-space:nowrap}
+.ranking-actions{display:flex;justify-content:center;padding:13px}
+@media(max-width:560px){.ranking-search{padding:10px 12px;flex-wrap:wrap}.ranking-search input{flex-basis:100%}}

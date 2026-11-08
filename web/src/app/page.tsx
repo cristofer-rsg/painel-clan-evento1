@@ -1,4 +1,5 @@
 import { getDashboardData } from "@/lib/ghost-hunt/dashboard";
+import RankingList from "@/components/ranking-list";
 
 export const dynamic = "force-dynamic";
 
@@ -97,12 +98,7 @@ export default async function HomePage() {
           <div className="section-heading ranking-heading" id="ranking"><div><p className="overline">CLASSIFICAÇÃO</p><h2>Ranking do clã</h2></div><span className="period-pill">MÊS ATUAL</span></div>
           <section className="ranking-panel">
             <div className="ranking-head"><span>JOGADOR</span><span>PONTUAÇÃO</span></div>
-            {data.ranking.length ? data.ranking.slice(0, 10).map((player) => (
-              <div className="ranking-row" key={player.player}>
-                <span className="ranking-player"><b className="ranking-position">{player.position}</b><span>{player.player}<small>{player.eligible ? "Elegível" : "Não elegível"}</small></span></span>
-                <strong>{number(player.total)} pts</strong>
-              </div>
-            )) : <div className="empty-state"><span className="empty-icon">♜</span><b>{data.connected ? "Ainda não há jogadores cadastrados" : "Conectando os dados do clã"}</b><p>{data.connected ? "Os jogadores aparecerão aqui assim que estiverem cadastrados." : "O ranking será exibido quando a conexão com o Supabase estiver configurada."}</p></div>}
+            {data.ranking.length ? <RankingList players={data.ranking} /> : <div className="empty-state"><span className="empty-icon">♜</span><b>{data.connected ? "Ainda não há jogadores cadastrados" : "Conectando os dados do clã"}</b><p>{data.connected ? "Os jogadores aparecerão aqui assim que estiverem cadastrados." : "O ranking será exibido quando a conexão com o Supabase estiver configurada."}</p></div>}
           </section>
           <footer className="footer"><span>GHOST HUNT <b>•</b> CENTRAL DO CLÃ</span><span>Dados do Supabase • Atualizado ao abrir</span></footer>
         </section>
