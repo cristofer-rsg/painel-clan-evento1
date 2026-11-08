@@ -1,0 +1,36 @@
+import { getPerformanceData } from "@/lib/ghost-hunt/performance";
+
+export const dynamic = "force-dynamic";
+
+function fmt(value: number) { return new Intl.NumberFormat("pt-BR").format(value); }
+
+export default async function PerformancePage() {
+  const data = await getPerformanceData();
+  const metrics = [
+    ["Guerras", data.totals.wars, "ataques"],
+    ["Liga", data.totals.league, "ataques"],
+    ["Raide", data.totals.raid, "ataques"],
+    ["Doações", data.totals.donations, "tropas"],
+    ["Jogos", data.totals.games, "pontos"],
+    ["Capital", data.totals.capital, "moedas"],
+  ] as const;
+  return <main className="admin-shell">
+    <header className="admin-header"><a className="brand" href="/"><span className="brand-mark">GH</span><span className="brand-copy"><strong>GHOST <i>HUNT</i></strong><small>CLAN MANAGEMENT</small></span></a><a className="back-link" href="/">← Ranking</a></header>
+    <section className="admin-content performance-content">
+      <span className="auth-kicker">INDICADORES DO CLÃ</span><h1>Desempenho <em>mensal</em></h1><p>Índice de atividade equilibrado, com até 100 pontos em cada uma das seis categorias.</p>
+      <div className="performance-period">{data.monthLabel}</div>
+      {!data.connected && <div className="connection-alert"><b>Não foi possível carregar o desempenho.</b><span>Confira a conexão do servidor com o Supabase.</span>{data.error && <small>{data.error}</small>}</div>}
+      <div className="performance-totals">{metrics.map(([label, value, unit]) => <article key={label}><small>{label}</small><b>{fmt(value)}</b><span>{unit}</span></article>)}</div>
+      <div className="performance-list">{data.rows.map(row => <article className="performance-card" key={row.player}>
+        <div className="performance-card-head"><b><span>#{row.position}</span>{row.player}</b><strong>{row.index.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} <small>/ 600</small></strong></div>
+        <div className="performance-card-grid">
+          <span>Guerras <b>{fmt(row.wars)}</b></span><span>Liga <b>{fmt(row.league)}</b></span><span>Raide <b>{fmt(row.raid)}</b></span>
+          <span>Doações <b>{fmt(row.donations)}</b></span><span>Jogos <b>{fmt(row.games)}</b></span><span>Capital <b>{fmt(row.capital)}</b></span>
+        </div>
+        <small className={row.active ? "performance-status active" : "performance-status"}>{row.active ? "ATIVO" : "INATIVO"} {row.tag}</small>
+      </article>)}
+      {!data.rows.length && data.connected && <p>Nenhum jogador cadastrado.</p>}</div>
+      <a className="back-link" href="/">← Voltar ao ranking</a>
+    </section>
+  </main>;
+}

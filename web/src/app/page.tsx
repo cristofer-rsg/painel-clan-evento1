@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 const navigation = [
   { icon: "⌂", label: "Início", href: "/" },
   { icon: "♛", label: "Ranking", href: "#ranking" },
-  { icon: "◈", label: "Desempenho", href: "#ranking" },
+  { icon: "◈", label: "Desempenho", href: "/performance" },
   { icon: "⚔", label: "Pontos", href: "#ranking" },
   { icon: "♟", label: "Clã", href: "#ranking" },
 ];
