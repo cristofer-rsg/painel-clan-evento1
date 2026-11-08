@@ -1589,7 +1589,7 @@ if aba == "📊 Desempenho":
         if row.get("player")
     }
     performance_rows = []
-    for player in players_all:
+    for player in players:
         tag = str(player.get("player_tag") or "").strip().upper()
         name = str(player.get("name") or "")
         row = stats_by_tag.get(tag) if tag else None
