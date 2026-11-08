@@ -414,6 +414,15 @@ def sync_clan_member_entries(api_token, clan_tag):
             "players_activated": players_activated,
             "tags_linked": tags_linked,
             "tag_conflicts": tag_conflicts,
+            "test_player_found": any(
+                str(member.get("tag") or "").strip().upper() == "#P8CCGYU0"
+                for member in members
+            ),
+            "test_player_active_after_sync": next((
+                row.get("active") for row in fetch_all_pages(
+                    db.table("players").select("active").eq("player_tag", "#P8CCGYU0")
+                )
+            ), None),
         }
     except Exception as exc:
         return {"status": "error", "message": str(exc)}
@@ -564,11 +573,35 @@ def make_export_workbook(ranking_records, event_records):
     return output.getvalue()
 
 # Sincroniza primeiro; assim, a lista de jogadores já aparece atualizada nesta execução.
-# A consulta é limitada a uma vez a cada seis horas e só ocorre no acesso administrativo.
+# A consulta automática é limitada a uma vez a cada seis horas e só ocorre no acesso administrativo.
+if is_admin:
+    with st.expander("🔎 Diagnóstico da sincronização do clã", expanded=True):
+        st.caption("Verificação temporária para diagnosticar a reativação automática do MK.")
+        st.write(f"Token da API configurado: {'Sim' if bool(str(CLASH_API_TOKEN).strip()) else 'Não'}")
+        st.write(f"Tag do clã configurada: {CLASH_CLAN_TAG}")
+        if st.button("🔄 Forçar sincronização agora", key="force_clan_sync_diagnostic", use_container_width=True):
+            sync_clan_member_entries.clear()
+            fetch_clan_members.clear()
+            st.rerun()
+
 clan_member_sync_result = (
     sync_clan_member_entries(CLASH_API_TOKEN, CLASH_CLAN_TAG)
     if is_admin else {"status": "read_only"}
 )
+
+if is_admin:
+    with st.expander("📋 Resultado da última sincronização", expanded=True):
+        st.write(f"Status: {clan_member_sync_result.get('status', 'desconhecido')}")
+        if clan_member_sync_result.get("message"):
+            st.error(clan_member_sync_result["message"])
+        if clan_member_sync_result.get("status") == "ok":
+            st.write(f"Membros recebidos da API: {clan_member_sync_result.get('member_count', 0)}")
+            st.write(f"Jogadores reativados: {clan_member_sync_result.get('players_activated', 0)}")
+            st.write(f"MK encontrado na lista da API: {'Sim' if clan_member_sync_result.get('test_player_found') else 'Não'}")
+            mk_active = clan_member_sync_result.get("test_player_active_after_sync")
+            st.write(f"MK ativo após sincronização: {mk_active if mk_active is not None else 'Cadastro não encontrado'}")
+        elif clan_member_sync_result.get("status") == "disabled":
+            st.warning(clan_member_sync_result.get("message", "Token não configurado."))
 
 try:
     players_all = load_players()
