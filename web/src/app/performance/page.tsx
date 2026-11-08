@@ -1,13 +1,13 @@
 import { getPerformanceData } from "@/lib/ghost-hunt/performance";
 
 export const dynamic = "force-dynamic";
-type Props = { searchParams: Promise<{ month?: string; inactive?: string }> };
+type Props = { searchParams: Promise<{ month?: string; active?: string }> };
 function fmt(value: number) { return new Intl.NumberFormat("pt-BR").format(value); }
 
 export default async function PerformancePage({ searchParams }: Props) {
   const params = await searchParams;
   const data = await getPerformanceData(params.month);
-  const showInactive = params.inactive !== "0";
+  const showInactive = params.active !== "1";
   const visibleRows = showInactive ? data.rows : data.rows.filter(row => row.active);
   const metrics = [
     ["Guerras", data.totals.wars, "ataques"],
@@ -21,7 +21,7 @@ export default async function PerformancePage({ searchParams }: Props) {
     <header className="admin-header"><a className="brand" href="/"><span className="brand-mark">GH</span><span className="brand-copy"><strong>GHOST <i>HUNT</i></strong><small>CLAN MANAGEMENT</small></span></a><a className="back-link" href="/">← Ranking</a></header>
     <section className="admin-content performance-content">
       <span className="auth-kicker">INDICADORES DO CLÃ</span><h1>Desempenho <em>mensal</em></h1><p>Índice de atividade equilibrado, com até 100 pontos em cada uma das seis categorias.</p>
-      <form className="history-filter" action="/performance" method="get"><label htmlFor="month">Mês de referência</label><select id="month" name="month" defaultValue={data.monthKey}>{data.months.map(month => <option value={month} key={month}>{new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric", timeZone: "America/Sao_Paulo" }).format(new Date(month + "-15T12:00:00-03:00"))}</option>)}</select><label className="performance-inactive"><input type="checkbox" name="inactive" value="1" defaultChecked={showInactive} /> Incluir jogadores inativos</label><button type="submit">Consultar</button></form>
+      <form className="history-filter" action="/performance" method="get"><label htmlFor="month">Mês de referência</label><select id="month" name="month" defaultValue={data.monthKey}>{data.months.map(month => <option value={month} key={month}>{new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric", timeZone: "America/Sao_Paulo" }).format(new Date(month + "-15T12:00:00-03:00"))}</option>)}</select><label htmlFor="active">Jogadores</label><select id="active" name="active" defaultValue={showInactive ? "0" : "1"}><option value="0">Incluir inativos</option><option value="1">Somente ativos</option></select><button type="submit">Consultar</button></form>
       {!data.connected && <div className="connection-alert"><b>Não foi possível carregar o desempenho.</b><span>Confira a conexão do servidor com o Supabase.</span>{data.error && <small>{data.error}</small>}</div>}
       <div className="performance-period">{data.monthLabel}</div>
       <div className="performance-totals">{metrics.map(([label, value, unit]) => <article key={label}><small>{label}</small><b>{fmt(value)}</b><span>{unit}</span></article>)}</div>
