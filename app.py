@@ -929,8 +929,7 @@ def build_ranking(players_data, events_data):
         if not name:
             continue
         bucket = totals.setdefault(name, {
-            "Guerras": 0, "Liga dos Clãs": 0, "Doações": 0,
-            "Doações antigas": 0, "Tropas doadas": 0,
+            "Guerras": 0, "Liga dos Clãs": 0, "Tropas doadas": 0,
             "Jogos": 0, "Raide": 0, "Capital do Clã": 0, "Penalidades": 0
         })
         points = int(event.get("points") or 0)
@@ -943,12 +942,10 @@ def build_ranking(players_data, events_data):
         elif category == "Liga dos Clãs":
             bucket["Liga dos Clãs"] += points
         elif category == "Doações":
-            # Novos registros guardam a quantidade de tropas, não pontos.
-            # O prefixo diferencia esses registros dos lançamentos antigos.
+            # Somente a quantidade real de tropas doadas gera pontos.
+            # Lançamentos antigos por colocação no ranking são ignorados.
             if activity.startswith("TROPAS_DOADAS:"):
                 bucket["Tropas doadas"] += max(0, points)
-            else:
-                bucket["Doações antigas"] += points
         elif category == "Jogos do Clã":
             # Mantém a regra original: vale a maior faixa registrada.
             bucket["Jogos"] = max(bucket["Jogos"], points)
@@ -963,13 +960,9 @@ def build_ranking(players_data, events_data):
         bucket = totals.get(player["name"], {})
         wars = bucket.get("Guerras", 0)
         league = bucket.get("Liga dos Clãs", 0)  # Sem teto mensal: pontos por ataque, estrelas e espelho
-        # Mantém os lançamentos antigos e aplica a nova conversão aos novos:
-        # 100 tropas = 1 ponto, com teto mensal total de 50 pontos.
-        donation_points = (
-            bucket.get("Doações antigas", 0)
-            + bucket.get("Tropas doadas", 0) // 100
-        )
-        donations = min(50, donation_points)
+        # Regra oficial: 100 tropas doadas = 1 ponto,
+        # limitado a 50 pontos por jogador no mês.
+        donations = min(50, bucket.get("Tropas doadas", 0) // 100)
         games = min(25, bucket.get("Jogos", 0))
         raid = bucket.get("Raide", 0)
         capital_coins = bucket.get("Capital do Clã", 0)
