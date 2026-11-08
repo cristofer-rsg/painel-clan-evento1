@@ -1302,7 +1302,7 @@ if not is_admin:
                             donated_troops_by_name[player_key] = donated_troops_by_name.get(player_key, 0) + max(0, int(event.get("points") or 0))
 
                 detail_rows = []
-                for player in players_all:
+                for player in players:
                     name = str(player.get("name") or "")
                     name_key = name.strip().casefold()
                     tag = str(player.get("player_tag") or "").strip().upper()
