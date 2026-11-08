@@ -77,6 +77,14 @@ export default async function HomePage() {
             </article>)}
           </div>
 
+          <section className="recent-members-panel">
+            <div className="recent-members-heading"><div><p className="overline">CHEGARAM RECENTEMENTE</p><h2>Novos membros do clã</h2></div><span>3 RECENTES</span></div>
+            {data.recentMembers.length ? <div className="recent-members-list">{data.recentMembers.map(member => <article key={member.player_tag || member.player_name}>
+              <span className="recent-member-shield">♜</span><div><b>{member.player_name}</b><small>{member.player_tag || "Tag não informada"}</small></div>
+              <time>{new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(member.first_seen_at))}</time><strong>NOVO</strong>
+            </article>)}</div> : <p className="recent-members-empty">Aguardando novos integrantes identificados pela sincronização.</p>}
+          </section>
+
           <div className="section-heading"><div><p className="overline">DESTAQUES</p><h2>Hall da Fama</h2></div><span className="period-pill">{data.monthLabel.toUpperCase()}</span></div>
           <section className="podium-panel">
             <div className="panel-caption"><span className="gold-line" /> PÓDIO DO MÊS <span className="panel-caption-right">TOP 3 JOGADORES</span></div>

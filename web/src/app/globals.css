@@ -120,3 +120,21 @@ button{font:inherit}
 .ranking-search small{font-size:9px;color:#8095ad;white-space:nowrap}
 .ranking-actions{display:flex;justify-content:center;padding:13px}
 @media(max-width:560px){.ranking-search{padding:10px 12px;flex-wrap:wrap}.ranking-search input{flex-basis:100%}}
+
+
+/* Recent clan members */
+.recent-members-panel{margin:24px 0 30px;padding:18px;border:1px solid #244765;border-radius:18px;background:linear-gradient(145deg,#102b45,#071522);box-shadow:0 8px 24px rgba(0,0,0,.18)}
+.recent-members-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.recent-members-heading .overline{margin:0 0 4px}
+.recent-members-heading h2{margin:0;font-size:clamp(18px,3vw,23px);color:#f4f7fc}
+.recent-members-heading>span{border:1px solid #28784a;border-radius:20px;padding:6px 10px;color:#9cf0b1;background:#0b3824;font-size:10px;font-weight:900;white-space:nowrap}
+.recent-members-list{display:grid;gap:8px}
+.recent-members-list article{display:flex;align-items:center;gap:10px;min-width:0;padding:11px;border:1px solid #24415d;border-radius:13px;background:rgba(4,17,31,.62)}
+.recent-member-shield{display:grid;place-items:center;flex:0 0 34px;height:34px;border-radius:10px;background:#173a59;color:#eac66e;font-size:20px}
+.recent-members-list article>div{display:grid;gap:3px;flex:1;min-width:0}
+.recent-members-list article b{overflow-wrap:anywhere;color:#f4f7fc;font-size:13px}
+.recent-members-list article small{color:#9fb2c8;font-size:11px}
+.recent-members-list time{color:#c4d1df;font-size:11px;white-space:nowrap}
+.recent-members-list article>strong{border:1px solid #28784a;border-radius:16px;padding:4px 8px;color:#9cf0b1;font-size:9px}
+.recent-members-empty{margin:0;padding:15px;border:1px dashed #35516c;border-radius:12px;color:#aebed2;font-size:13px}
+@media(max-width:600px){.recent-members-panel{padding:13px;margin:18px 0 24px}.recent-members-list article{gap:7px;padding:9px}.recent-members-list article time{font-size:10px;white-space:normal;text-align:right}.recent-members-list article>strong{font-size:8px;padding:4px 6px}}

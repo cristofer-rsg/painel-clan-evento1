@@ -35,6 +35,8 @@ export type RankingRow = {
   whatsapp: string;
 };
 
+export type RecentMember = { player_name: string; player_tag: string | null; first_seen_at: string };
+
 export type DashboardData = {
   monthKey: string;
   monthLabel: string;
@@ -43,6 +45,7 @@ export type DashboardData = {
   warRecords: number;
   eventCount: number;
   ranking: RankingRow[];
+  recentMembers: RecentMember[];
   connected: boolean;
   error?: string;
 };
@@ -106,6 +109,11 @@ export async function getDashboardData(): Promise<DashboardData> {
 
     const bounds = monthBounds(monthKey);
     const events = await fetchAllEvents(bounds.start, bounds.end);
+    // O painel de novos membros é complementar: sua indisponibilidade não derruba o ranking.
+    const recentResult = await supabase.from("clan_member_entries")
+      .select("player_name,player_tag,first_seen_at").eq("is_baseline", false)
+      .order("first_seen_at", { ascending: false }).limit(3);
+    const recentMembers = recentResult.error ? [] : (recentResult.data ?? []) as RecentMember[];
     // O ranking operacional considera somente membros atualmente ativos no clã.
     const players = ((playerData ?? []) as Player[]).filter((player) => player.active !== false);
     const totals = new Map<string, {
@@ -172,6 +180,7 @@ export async function getDashboardData(): Promise<DashboardData> {
       warRecords: events.filter((event) => event.category === "Guerras").length,
       eventCount: events.length,
       ranking,
+      recentMembers,
       connected: true,
     };
   } catch (error) {
@@ -183,6 +192,7 @@ export async function getDashboardData(): Promise<DashboardData> {
       warRecords: 0,
       eventCount: 0,
       ranking: [],
+      recentMembers: [],
       connected: false,
       error: error instanceof Error ? error.message : "Não foi possível carregar os dados.",
     };
