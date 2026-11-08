@@ -31,6 +31,10 @@ jobs:
           node-version: 20
       - name: Install dependencies
         run: npm install
+      - name: Dependency security summary
+        run: |
+          npm audit --json > /tmp/npm-audit.json || true
+          node -e 'const a=require("/tmp/npm-audit.json"); for (const [name,v] of Object.entries(a.vulnerabilities || {})) console.log(name + " | " + v.severity + " | fix: " + JSON.stringify(v.fixAvailable) + " | via: " + v.via.map(x => typeof x === "string" ? x : x.name).join(", ")); console.log("Total:", JSON.stringify(a.metadata?.vulnerabilities || {}));'
       - name: Build Next.js
         env:
           NEXT_TELEMETRY_DISABLED: 1
