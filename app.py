@@ -1965,7 +1965,7 @@ if aba == "➕ Lançar pontos":
                 e.get("player") == who
                 and e.get("category") == "Raide de Fim de Semana"
                 and raid_weekend_start(e.get("created_at")) == raid_weekend_start(datetime.now(TZ))
-                for e in load_events(CURRENT_MONTH)
+                for e in load_all_events_for_export()
             ):
                 st.warning("Este jogador já possui um lançamento de Raide neste fim de semana (automático ou manual).")
             else:
