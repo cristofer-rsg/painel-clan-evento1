@@ -38,12 +38,13 @@ O arquivo raiz `supabase_schema.sql` não representa mais o schema completo usad
 
 ## Estado desta primeira entrega
 
-- Estrutura inicial do Next.js criada em `web/`.
-- Primeira versão da identidade visual responsiva criada.
-- Cliente Supabase administrativo isolado em módulo server-only.
+- Estrutura do Next.js criada em `web/`.
+- Identidade visual mobile-first responsiva.
+- Painel inicial consulta `players` e `events` no servidor e calcula o ranking mensal com as regras atuais do `app.py`.
+- A chave Supabase permanece exclusivamente no servidor.
 - Endpoint de health check sem expor segredos.
-- Nenhuma tabela ou dado do Supabase foi alterado.
-- Nenhum workflow existente foi removido ou modificado.
+- Schema real consultado em modo somente leitura; nenhuma tabela ou dado do Supabase foi alterado.
+- Workflow independente de validação web; os workflows de sincronização existentes permanecem intocados.
 
 ## Próximas etapas obrigatórias
 
