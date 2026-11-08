@@ -1864,7 +1864,7 @@ if aba == "➕ Lançar pontos":
         who = st.selectbox("Jogador", player_names, key="add_points_player")
         kind = st.selectbox(
             "Tipo de lançamento",
-            ["Guerras", "Liga dos Clãs", "Doações", "Jogos do Clã", "Raide de Fim de Semana", "Penalidade"],
+            ["Guerras", "Liga dos Clãs", "Doações", "Jogos do Clã", "Penalidade"],
             key="add_points_kind"
         )
 
@@ -1928,14 +1928,7 @@ if aba == "➕ Lançar pontos":
             pts = games_actions[activity]
             category_db = "Jogos do Clã"
 
-        elif kind == "Raide de Fim de Semana":
-            raid_attacks = st.selectbox("Quantidade de ataques utilizados", [1, 2, 3, 4, 5, 6], key="add_points_raid_attacks")
-            raid_bonus = 2 if raid_attacks >= 5 else 0
-            pts = raid_attacks + raid_bonus
-            activity = f"{raid_attacks} ataque(s) utilizados + bônus de {raid_bonus} ponto(s) por completar 5 ataques (total {pts})"
-            category_db = "Raide de Fim de Semana"
-            st.info("Regra: +1 por ataque utilizado; ao completar 5 ataques, recebe +2 de bônus uma única vez no fim de semana. O 6º ataque também vale +1. Sem limite mensal.")
-        else:
+        elif kind == "Penalidade":
             activity = st.selectbox(
                 "Ação / motivo",
                 [
@@ -1968,13 +1961,6 @@ if aba == "➕ Lançar pontos":
         if st.button("💾 Salvar lançamento", use_container_width=True, key="save_add_points"):
             if kind == "Doações" and int(pts) <= 0:
                 st.warning("Informe uma quantidade de tropas doadas maior que zero.")
-            elif kind == "Raide de Fim de Semana" and any(
-                e.get("player") == who
-                and e.get("category") == "Raide de Fim de Semana"
-                and raid_weekend_start(e.get("created_at")) == raid_weekend_start(datetime.now(TZ))
-                for e in load_all_events_for_export()
-            ):
-                st.warning("Este jogador já possui um lançamento de Raide neste fim de semana (automático ou manual).")
             else:
                 try:
                     db.table("events").insert({
