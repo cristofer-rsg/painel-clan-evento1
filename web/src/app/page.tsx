@@ -36,7 +36,7 @@ export default async function HomePage() {
           <span className={data.connected ? "status" : "status status-offline"}>
             <span className="status-dot" /> {data.connected ? "SUPABASE CONECTADO" : "AGUARDANDO CONEXÃO"}
           </span>
-          <a className="avatar" href="#ranking" aria-label="Área de acesso">GH</a>
+          <a className="avatar" href="/login" aria-label="Acesso administrativo">GH</a>
         </div>
       </header>
 
