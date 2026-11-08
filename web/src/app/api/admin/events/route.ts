@@ -7,7 +7,7 @@ const categories = ["Guerras", "Liga dos Clãs", "Doações", "Jogos do Clã", "
 
 function originIsValid(request: NextRequest) {
   const origin = request.headers.get("origin");
-  return !origin || origin === request.nextUrl.origin;
+  return origin === request.nextUrl.origin;
 }
 async function authorized(request: NextRequest) {
   return isAdminSessionValid(request.cookies.get(adminSessionCookie.name)?.value);

@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 function originIsValid(request: NextRequest) {
   const origin = request.headers.get("origin");
-  return !origin || origin === request.nextUrl.origin;
+  return origin === request.nextUrl.origin;
 }
 
 export async function GET(request: NextRequest) {
