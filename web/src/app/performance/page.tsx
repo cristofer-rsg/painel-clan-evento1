@@ -32,13 +32,13 @@ export default async function PerformancePage({ searchParams }: Props) {
   return <main className="admin-shell">
     <header className="admin-header"><a className="brand" href="/"><span className="brand-mark">GH</span><span className="brand-copy"><strong>GHOST <i>HUNT</i></strong><small>CLAN MANAGEMENT</small></span></a><a className="back-link" href="/">← Ranking</a></header>
     <section className="admin-content performance-content">
-      <span className="auth-kicker">INDICADORES DO CLÃ</span><h1>Desempenho <em>mensal</em></h1><p>Índice de atividade equilibrado, com até 100 pontos em cada uma das seis categorias.</p>
+      <span className="auth-kicker">INDICADORES DO CLÃ</span><h1>Desempenho <em>mensal</em></h1><p>Índice de atividade equilibrado, com até 100 pontos por categoria, totalizando 600 pontos.</p>
       <form className="history-filter" action="/performance" method="get"><label htmlFor="month">Mês de referência</label><select id="month" name="month" defaultValue={data.monthKey}>{data.months.map(month => <option value={month} key={month}>{new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric", timeZone: "America/Sao_Paulo" }).format(new Date(month + "-15T12:00:00-03:00"))}</option>)}</select><label htmlFor="active">Jogadores</label><select id="active" name="active" defaultValue={showInactive ? "0" : "1"}><option value="0">Incluir inativos</option><option value="1">Somente ativos</option></select><label htmlFor="direction">Ordenação</label><select id="direction" name="direction" defaultValue={descending ? "desc" : "asc"}><option value="desc">Mais ativos primeiro</option><option value="asc">Menos ativos primeiro</option></select><button type="submit">Consultar</button></form>
       {!data.connected && <div className="connection-alert"><b>Não foi possível carregar o desempenho.</b><span>Confira a conexão do servidor com o Supabase.</span>{data.error && <small>{data.error}</small>}</div>}
       <div className="performance-period">{data.monthLabel}</div>
       <div className="performance-totals">{metrics.map(([label, value, unit]) => <article key={label}><small>{label}</small><b>{fmt(value)}</b><span>{unit}</span></article>)}</div>
       <div className="performance-list">{visibleRows.map(row => <article className="performance-card" key={row.player}>
-        <div className="performance-card-head"><b><span>#{row.position}</span>{row.player}</b><strong>{row.index.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} <small>/ 100</small></strong></div>
+        <div className="performance-card-head"><b><span>#{row.position}</span>{row.player}</b><strong>{row.index.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} <small>/ 600</small></strong></div>
         <div className="performance-card-grid">
           <span>Guerras <b>{fmt(row.wars)}</b></span><span>Liga <b>{fmt(row.league)}</b></span><span>Raide <b>{fmt(row.raid)}</b></span>
           <span>Doações <b>{fmt(row.donations)}</b></span><span>Jogos <b>{fmt(row.games)}</b></span><span>Capital <b>{fmt(row.capital)}</b></span>
