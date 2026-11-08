@@ -3,7 +3,7 @@ import { createSupabaseAdmin } from "@/lib/supabase/admin";
 
 type Player = { name: string; player_tag: string | null; active: boolean | null };
 type Stats = { month_key: string; player_tag: string | null; player: string | null; war_attacks: number | null; league_attacks: number | null; raid_attacks: number | null; donations: number | null; clan_games_points: number | null };
-type EventRow = { player: string | null; category: string | null; activity: string | null; points: number | null };
+type EventRow = { player: string | null; category: string | null; points: number | null };
 export type PerformanceRow = {
   position: number; player: string; tag: string; wars: number; league: number;
   raid: number; donations: number; games: number; capital: number; index: number; active: boolean;
@@ -51,16 +51,13 @@ export async function getPerformanceData(requestedMonth?: string): Promise<Perfo
     const start = new Date(monthKey + "-01T00:00:00-03:00");
     const [year, month] = monthKey.split("-").map(Number);
     const end = new Date((month === 12 ? year + 1 : year) + "-" + String(month === 12 ? 1 : month + 1).padStart(2, "0") + "-01T00:00:00-03:00");
-    const events = await allRows<EventRow>(db.from("events").select("player,category,activity,points")
+    const events = await allRows<EventRow>(db.from("events").select("player,category,points")
       .gte("created_at", start.toISOString()).lt("created_at", end.toISOString()));
     const capital = new Map<string, number>();
-    const donated = new Map<string, number>();
     for (const event of events) {
       const key = (event.player || "").trim().toLocaleLowerCase("pt-BR");
       if (!key) continue;
       if ((event.category || "").trim() === "Capital do Clã") capital.set(key, (capital.get(key) || 0) + Number(event.points || 0));
-      if ((event.category || "").trim() === "Doações" && (event.activity || "").startsWith("TROPAS_DOADAS:"))
-        donated.set(key, (donated.get(key) || 0) + Math.max(0, Number(event.points || 0)));
     }
     const byTag = new Map(stats.filter(row => row.player_tag).map(row => [String(row.player_tag).trim().toUpperCase(), row]));
     const byName = new Map(stats.filter(row => row.player).map(row => [String(row.player).trim().toLocaleLowerCase("pt-BR"), row]));
@@ -68,23 +65,17 @@ export async function getPerformanceData(requestedMonth?: string): Promise<Perfo
     const rows = players.map((player: Player) => {
       const stat = (player.player_tag ? byTag.get(player.player_tag.trim().toUpperCase()) : undefined)
         || byName.get(player.name.trim().toLocaleLowerCase("pt-BR"));
-      let donations = Number(stat?.donations || 0);
-      if (donations <= 0) donations = donated.get(player.name.trim().toLocaleLowerCase("pt-BR")) || 0;
+      const donations = Number(stat?.donations || 0);
       const wars = Number(stat?.war_attacks || 0);
       const league = Number(stat?.league_attacks || 0);
       const raid = Number(stat?.raid_attacks || 0);
       const games = Number(stat?.clan_games_points || 0);
       const capitalValue = capital.get(player.name.trim().toLocaleLowerCase("pt-BR")) || 0;
-      // Reproduz os limites oficiais do app.py: cada uma das seis categorias vale até 100%.
-      const percentages = [
-        Math.min(wars / 20, 1), Math.min(league / 7, 1), Math.min(raid / 24, 1),
-        Math.min(donations / 5000, 1), Math.min(games / 10000, 1), Math.min(capitalValue / 250000, 1),
-      ];
+      // O índice definitivo é calculado na tela, usando os máximos do conjunto visível,
+      // exatamente como no app.py: cada categoria contribui proporcionalmente até 100 pontos.
       return {
         player: player.name, tag: player.player_tag || "", wars, league, raid, donations, games,
-        capital: capitalValue, active: player.active !== false,
-        index: Math.round((percentages.reduce((sum, value) => sum + value, 0) / 6 * 100) * 10) / 10,
-        position: 0,
+        capital: capitalValue, active: player.active !== false, index: 0, position: 0,
       };
     });
     const totals = {
@@ -95,9 +86,7 @@ export async function getPerformanceData(requestedMonth?: string): Promise<Perfo
       games: rows.reduce((sum, row) => sum + row.games, 0),
       capital: rows.reduce((sum, row) => sum + row.capital, 0),
     };
-    const ordered = rows.sort((a, b) => b.index - a.index || a.player.localeCompare(b.player, "pt-BR"))
-      .map((row, index) => ({ ...row, position: index + 1 }));
-    return { monthKey, monthLabel: label(monthKey), months, rows: ordered, totals, connected: true };
+    return { monthKey, monthLabel: label(monthKey), months, rows, totals, connected: true };
   } catch (error) {
     return {
       monthKey: fallbackMonth, monthLabel: label(fallbackMonth), months: [fallbackMonth], rows: [],

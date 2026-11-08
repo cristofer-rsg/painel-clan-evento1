@@ -1,14 +1,26 @@
 import { getPerformanceData } from "@/lib/ghost-hunt/performance";
 
 export const dynamic = "force-dynamic";
-type Props = { searchParams: Promise<{ month?: string; active?: string }> };
+type Props = { searchParams: Promise<{ month?: string; active?: string; direction?: string }> };
 function fmt(value: number) { return new Intl.NumberFormat("pt-BR").format(value); }
 
 export default async function PerformancePage({ searchParams }: Props) {
   const params = await searchParams;
   const data = await getPerformanceData(params.month);
   const showInactive = params.active !== "1";
-  const visibleRows = showInactive ? data.rows : data.rows.filter(row => row.active);
+  const descending = params.direction !== "asc";
+  const filteredRows = showInactive ? data.rows : data.rows.filter(row => row.active);
+  const metricsForIndex = [
+    ["wars", 0], ["league", 0], ["raid", 0], ["donations", 0], ["games", 0], ["capital", 0],
+  ] as const;
+  const maxima = Object.fromEntries(metricsForIndex.map(([key]) => [key, Math.max(0, ...filteredRows.map(row => row[key]))])) as Record<string, number>;
+  const visibleRows = filteredRows.map(row => ({
+    ...row,
+    index: Number(metricsForIndex.reduce((sum, [key]) => sum + (maxima[key] > 0 ? row[key] / maxima[key] * 100 : 0), 0).toFixed(1)),
+  })).sort((a, b) => (descending ? b.index - a.index : a.index - b.index)
+    || b.wars - a.wars || b.league - a.league || b.raid - a.raid || b.donations - a.donations
+    || b.games - a.games || b.capital - a.capital || a.player.localeCompare(b.player, "pt-BR"))
+    .map((row, index) => ({ ...row, position: index + 1 }));
   const metrics = [
     ["Guerras", data.totals.wars, "ataques"],
     ["Liga", data.totals.league, "ataques"],
@@ -21,7 +33,7 @@ export default async function PerformancePage({ searchParams }: Props) {
     <header className="admin-header"><a className="brand" href="/"><span className="brand-mark">GH</span><span className="brand-copy"><strong>GHOST <i>HUNT</i></strong><small>CLAN MANAGEMENT</small></span></a><a className="back-link" href="/">← Ranking</a></header>
     <section className="admin-content performance-content">
       <span className="auth-kicker">INDICADORES DO CLÃ</span><h1>Desempenho <em>mensal</em></h1><p>Índice de atividade equilibrado, com até 100 pontos em cada uma das seis categorias.</p>
-      <form className="history-filter" action="/performance" method="get"><label htmlFor="month">Mês de referência</label><select id="month" name="month" defaultValue={data.monthKey}>{data.months.map(month => <option value={month} key={month}>{new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric", timeZone: "America/Sao_Paulo" }).format(new Date(month + "-15T12:00:00-03:00"))}</option>)}</select><label htmlFor="active">Jogadores</label><select id="active" name="active" defaultValue={showInactive ? "0" : "1"}><option value="0">Incluir inativos</option><option value="1">Somente ativos</option></select><button type="submit">Consultar</button></form>
+      <form className="history-filter" action="/performance" method="get"><label htmlFor="month">Mês de referência</label><select id="month" name="month" defaultValue={data.monthKey}>{data.months.map(month => <option value={month} key={month}>{new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric", timeZone: "America/Sao_Paulo" }).format(new Date(month + "-15T12:00:00-03:00"))}</option>)}</select><label htmlFor="active">Jogadores</label><select id="active" name="active" defaultValue={showInactive ? "0" : "1"}><option value="0">Incluir inativos</option><option value="1">Somente ativos</option></select><label htmlFor="direction">Ordenação</label><select id="direction" name="direction" defaultValue={descending ? "desc" : "asc"}><option value="desc">Mais ativos primeiro</option><option value="asc">Menos ativos primeiro</option></select><button type="submit">Consultar</button></form>
       {!data.connected && <div className="connection-alert"><b>Não foi possível carregar o desempenho.</b><span>Confira a conexão do servidor com o Supabase.</span>{data.error && <small>{data.error}</small>}</div>}
       <div className="performance-period">{data.monthLabel}</div>
       <div className="performance-totals">{metrics.map(([label, value, unit]) => <article key={label}><small>{label}</small><b>{fmt(value)}</b><span>{unit}</span></article>)}</div>
