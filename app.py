@@ -1855,128 +1855,15 @@ if aba == "🏆 Ranking do mês":
     live_ranking_fragment(player_mode=False)
 
 if aba == "➕ Lançar pontos":
-    st.subheader("➕ Lançar pontuação")
-    if not player_names:
-        st.warning("Cadastre um jogador primeiro.")
-    else:
-        # O tipo fica fora de st.form para que a tela seja atualizada
-        # imediatamente quando o usuário troca a categoria.
-        who = st.selectbox("Jogador", player_names, key="add_points_player")
-        kind = st.selectbox(
-            "Tipo de lançamento",
-            ["Guerras", "Liga dos Clãs", "Doações", "Jogos do Clã", "Penalidade"],
-            key="add_points_kind"
-        )
-
-        if kind == "Guerras":
-            war_actions = {
-                "Participou da guerra (+2)": 2,
-                "Fez os dois ataques (+2)": 2,
-                "Acertou o espelho (+2)": 2,
-                "Fez 1 estrela (+1)": 1,
-                "Fez 2 estrelas (+2)": 2,
-                "Fez 3 estrelas (+3)": 3,
-            }
-            activity = st.selectbox(
-                "Ação", list(war_actions), key="add_points_action_wars"
-            )
-            pts = war_actions[activity]
-            category_db = "Guerras"
-
-        elif kind == "Liga dos Clãs":
-            st.caption("Liga: +2 por ataque realizado, +2 por espelho acertado e +1, +2 ou +3 pelas estrelas conquistadas. Sem limite mensal.")
-            league_actions = {
-                "Realizou um ataque (+2)": 2,
-                "Acertou o espelho (+2)": 2,
-                "Fez 1 estrela (+1)": 1,
-                "Fez 2 estrelas (+2)": 2,
-                "Fez 3 estrelas (+3)": 3,
-            }
-            activity = st.selectbox(
-                "Ação", list(league_actions), key="add_points_action_league"
-            )
-            pts = league_actions[activity]
-            category_db = "Liga dos Clãs"
-
-        elif kind == "Doações":
-            st.caption(
-                "Nova regra: a cada 100 tropas efetivamente doadas = 1 ponto. "
-                "A pontuação é acumulada no mês, com limite de 50 pontos por jogador."
-            )
-            donated_troops = st.number_input(
-                "Quantidade de tropas doadas neste lançamento",
-                min_value=0,
-                max_value=100000,
-                value=100,
-                step=100,
-                key="add_points_donated_troops"
-            )
-            pts = int(donated_troops)
-            activity = f"TROPAS_DOADAS: {int(donated_troops)} tropas"
-            category_db = "Doações"
-
-        elif kind == "Jogos do Clã":
-            games_actions = {
-                "Atingiu 4.000 pontos (+10)": 10,
-                "Atingiu 6.000 pontos (+15)": 15,
-                "Atingiu 8.000 pontos (+20)": 20,
-                "Atingiu 10.000 pontos (+25)": 25,
-            }
-            activity = st.selectbox(
-                "Faixa alcançada", list(games_actions), key="add_points_action_games"
-            )
-            pts = games_actions[activity]
-            category_db = "Jogos do Clã"
-
-        elif kind == "Penalidade":
-            activity = st.selectbox(
-                "Ação / motivo",
-                [
-                    "Não fez um ataque (-5)",
-                    "Não fez os dois ataques (-10)",
-                    "Atacou fora do espelho sem autorização (-5)",
-                    "Outra penalidade"
-                ],
-                key="add_points_action_penalty"
-            )
-            if activity == "Outra penalidade":
-                penalty_value = st.number_input(
-                    "Valor da penalidade",
-                    min_value=1,
-                    max_value=200,
-                    value=5,
-                    step=1,
-                    key="add_points_penalty_value"
-                )
-                pts = -int(penalty_value)
-            elif "(-10)" in activity:
-                pts = -10
-            else:
-                pts = -5
-            # Mantém a compatibilidade com o formato de categoria já usado
-            # nos registros anteriores de penalidade.
-            category_db = "Guerras"
-
-        st.caption(f"Pontuação deste lançamento: **{int(pts):+d} pontos**")
-        if st.button("💾 Salvar lançamento", use_container_width=True, key="save_add_points"):
-            if kind == "Doações" and int(pts) <= 0:
-                st.warning("Informe uma quantidade de tropas doadas maior que zero.")
-            else:
-                try:
-                    db.table("events").insert({
-                        "player": who,
-                        "category": category_db,
-                        "activity": activity,
-                        "points": int(pts)
-                    }).execute()
-                    load_events.clear()
-                    load_all_events_for_export.clear()
-                    make_export_workbook.clear()
-                    st.success("Lançamento salvo no mês atual!")
-                    st.rerun()
-                except Exception as e:
-                    st.error("Não foi possível salvar o lançamento.")
-                    st.code(str(e))
+    st.subheader("➕ Lançamentos de pontuação")
+    st.info(
+        "Os lançamentos manuais foram desativados. "
+        "A pontuação será registrada pelas sincronizações automáticas do aplicativo."
+    )
+    st.caption(
+        "Guerras, Liga dos Clãs, Doações, Jogos do Clã e Raide "
+        "não podem mais receber lançamentos manuais por esta tela."
+    )
 
 if aba == "✏️ Editar lançamento":
     st.subheader("✏️ Editar lançamento")
