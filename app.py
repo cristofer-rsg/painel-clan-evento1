@@ -26,14 +26,21 @@ CURRENT_MONTH = NOW.strftime("%Y-%m")
 
 
 def raid_weekend_start(value):
-    """Retorna o sábado local que identifica o fim de semana do registro."""
-    if isinstance(value, str):
-        value = pd.to_datetime(value, utc=True, errors="coerce")
-    if pd.isna(value):
+    """Retorna o sábado local que identifica o fim de semana do registro.
+
+    Normaliza strings, datetime do Python e Timestamp do pandas para evitar
+    falhas quando o Supabase retorna created_at em tipos diferentes.
+    """
+    if value is None:
         return None
-    if getattr(value, "tzinfo", None) is not None:
-        value = value.tz_convert(TZ)
-    day = value.date() if hasattr(value, "date") else value
+    try:
+        timestamp = pd.to_datetime(value, utc=True, errors="coerce")
+    except (TypeError, ValueError, OverflowError):
+        return None
+    if pd.isna(timestamp):
+        return None
+    timestamp = pd.Timestamp(timestamp).tz_convert(TZ)
+    day = timestamp.date()
     return day - timedelta(days=(day.weekday() + 2) % 7)
 
 st.set_page_config(page_title="Ghost Hunt", page_icon="👻", layout="wide")
