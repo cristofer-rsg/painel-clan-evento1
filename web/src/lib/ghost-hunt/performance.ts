@@ -3,7 +3,7 @@ import { createSupabaseAdmin } from "@/lib/supabase/admin";
 
 type Player = { name: string; player_tag: string | null; active: boolean | null };
 type Stats = { month_key: string; player_tag: string | null; player: string | null; war_attacks: number | null; league_attacks: number | null; raid_attacks: number | null; donations: number | null; clan_games_points: number | null };
-type EventRow = { player: string | null; category: string | null; points: number | null };
+type EventRow = { player: string | null; category: string | null; activity: string | null; points: number | null };
 export type PerformanceRow = {
   position: number; player: string; tag: string; wars: number; league: number;
   raid: number; donations: number; games: number; capital: number; index: number; active: boolean;
@@ -51,13 +51,17 @@ export async function getPerformanceData(requestedMonth?: string): Promise<Perfo
     const start = new Date(monthKey + "-01T00:00:00-03:00");
     const [year, month] = monthKey.split("-").map(Number);
     const end = new Date((month === 12 ? year + 1 : year) + "-" + String(month === 12 ? 1 : month + 1).padStart(2, "0") + "-01T00:00:00-03:00");
-    const events = await allRows<EventRow>(db.from("events").select("player,category,points")
+    const events = await allRows<EventRow>(db.from("events").select("player,category,activity,points")
       .gte("created_at", start.toISOString()).lt("created_at", end.toISOString()));
     const capital = new Map<string, number>();
+    const manualDonations = new Map<string, number>();
     for (const event of events) {
       const key = (event.player || "").trim().toLocaleLowerCase("pt-BR");
       if (!key) continue;
       if ((event.category || "").trim() === "Capital do Clã") capital.set(key, (capital.get(key) || 0) + Number(event.points || 0));
+      if ((event.category || "").trim() === "Doações" && (event.activity || "").startsWith("TROPAS_DOADAS:")) {
+        manualDonations.set(key, (manualDonations.get(key) || 0) + Math.max(0, Number(event.points || 0)));
+      }
     }
     const byTag = new Map(stats.filter(row => row.player_tag).map(row => [String(row.player_tag).trim().toUpperCase(), row]));
     const byName = new Map(stats.filter(row => row.player).map(row => [String(row.player).trim().toLocaleLowerCase("pt-BR"), row]));
@@ -65,26 +69,28 @@ export async function getPerformanceData(requestedMonth?: string): Promise<Perfo
     const rows = players.map((player: Player) => {
       const stat = (player.player_tag ? byTag.get(player.player_tag.trim().toUpperCase()) : undefined)
         || byName.get(player.name.trim().toLocaleLowerCase("pt-BR"));
-      const donations = Number(stat?.donations || 0);
+      const recordedDonations = Number(stat?.donations || 0);
+      // Replica o app original: quando a sincronização não trouxe doações, usa os lançamentos manuais reais.
+      const donations = recordedDonations > 0 ? recordedDonations : (manualDonations.get(player.name.trim().toLocaleLowerCase("pt-BR")) || 0);
       const wars = Number(stat?.war_attacks || 0);
       const league = Number(stat?.league_attacks || 0);
       const raid = Number(stat?.raid_attacks || 0);
       const games = Number(stat?.clan_games_points || 0);
       const capitalValue = capital.get(player.name.trim().toLocaleLowerCase("pt-BR")) || 0;
-      // O índice definitivo é calculado na tela, usando os máximos do conjunto visível,
-      // exatamente como no app.py: cada categoria contribui proporcionalmente até 100 pontos.
+      // Índice original: seis metas fixas, com o mesmo peso e máximo de 100% por categoria.
+      // O total final varia de 0 a 100, não de 0 a 600.
       return {
         player: player.name, tag: player.player_tag || "", wars, league, raid, donations, games,
         capital: capitalValue, active: player.active !== false, index: 0, position: 0,
       };
     });
     const totals = {
-      wars: rows.reduce((sum, row) => sum + row.wars, 0),
-      league: rows.reduce((sum, row) => sum + row.league, 0),
-      raid: rows.reduce((sum, row) => sum + row.raid, 0),
-      donations: rows.reduce((sum, row) => sum + row.donations, 0),
-      games: rows.reduce((sum, row) => sum + row.games, 0),
-      capital: rows.reduce((sum, row) => sum + row.capital, 0),
+      wars: rows.filter(row => row.active).reduce((sum, row) => sum + row.wars, 0),
+      league: rows.filter(row => row.active).reduce((sum, row) => sum + row.league, 0),
+      raid: rows.filter(row => row.active).reduce((sum, row) => sum + row.raid, 0),
+      donations: rows.filter(row => row.active).reduce((sum, row) => sum + row.donations, 0),
+      games: rows.filter(row => row.active).reduce((sum, row) => sum + row.games, 0),
+      capital: rows.filter(row => row.active).reduce((sum, row) => sum + row.capital, 0),
     };
     return { monthKey, monthLabel: label(monthKey), months, rows, totals, connected: true };
   } catch (error) {
