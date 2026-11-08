@@ -1,0 +1,82 @@
+import "server-only";
+import { createSupabaseAdmin } from "@/lib/supabase/admin";
+
+type Player = { name: string; eligible: string | null; whatsapp: string | null };
+type EventRow = { id: number; player: string; category: string; activity: string; points: number; created_at: string };
+export type HistoryRanking = { position: number; player: string; eligible: string; whatsapp: string; wars: number; league: number; donations: number; games: number; raid: number; penalties: number; total: number };
+export type HistoryData = { month: string; months: string[]; ranking: HistoryRanking[]; events: EventRow[]; snapshot: boolean; error?: string };
+
+function currentMonth() {
+  const p = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit" }).formatToParts(new Date());
+  return (p.find(x => x.type === "year")?.value || "2026") + "-" + (p.find(x => x.type === "month")?.value || "01");
+}
+function rangeFor(key: string) {
+  const [year, month] = key.split("-").map(Number);
+  const start = new Date(key + "-01T00:00:00-03:00");
+  const y = month === 12 ? year + 1 : year;
+  const m = month === 12 ? 1 : month + 1;
+  return { start: start.toISOString(), end: new Date(y + "-" + String(m).padStart(2, "0") + "-01T00:00:00-03:00").toISOString() };
+}
+async function pages<T>(query: any): Promise<T[]> {
+  const result: T[] = [];
+  for (let offset = 0; ; offset += 1000) {
+    const { data, error } = await query.range(offset, offset + 999);
+    if (error) throw error;
+    const part = (data || []) as T[]; result.push(...part);
+    if (part.length < 1000) break;
+  }
+  return result;
+}
+function calculate(players: Player[], events: EventRow[]): HistoryRanking[] {
+  const totals = new Map<string, { wars: number; league: number; donated: number; games: number; raid: number; capital: number; penalties: number }>();
+  for (const event of events) {
+    if (!event.player) continue;
+    const b = totals.get(event.player) || { wars: 0, league: 0, donated: 0, games: 0, raid: 0, capital: 0, penalties: 0 };
+    const points = Number(event.points || 0), category = event.category || "", activity = event.activity || "";
+    if (points < 0) b.penalties += Math.abs(points);
+    else if (category === "Guerras") b.wars += points;
+    else if (category === "Liga dos Clãs") b.league += points;
+    else if (category === "Doações" && activity.startsWith("TROPAS_DOADAS:")) b.donated += Math.max(0, points);
+    else if (category === "Jogos do Clã") b.games = Math.max(b.games, points);
+    else if (category === "Raide de Fim de Semana") b.raid += points;
+    else if (category === "Capital do Clã") b.capital += points;
+    totals.set(event.player, b);
+  }
+  return players.map(player => {
+    const b = totals.get(player.name) || { wars: 0, league: 0, donated: 0, games: 0, raid: 0, capital: 0, penalties: 0 };
+    const eligible = (player.eligible || "Elegível") === "Elegível" && (player.whatsapp || "Sim") === "Sim";
+    return {
+      position: 0, player: player.name, eligible: player.eligible || "Elegível", whatsapp: player.whatsapp || "Sim",
+      wars: b.wars, league: b.league, donations: Math.min(50, Math.floor(b.donated / 100)),
+      games: Math.min(25, b.games), raid: b.raid, penalties: b.penalties,
+      total: eligible ? Math.max(0, b.wars + b.league + Math.min(50, Math.floor(b.donated / 100)) + Math.min(25, b.games) + b.raid + Math.floor(b.capital / 2500) - b.penalties) : 0,
+    };
+  }).sort((a, b) => b.total - a.total || a.player.localeCompare(b.player, "pt-BR"))
+    .map((row, i) => ({ ...row, position: i + 1 }));
+}
+
+export async function getHistoryData(requestedMonth?: string): Promise<HistoryData> {
+  try {
+    const db = createSupabaseAdmin();
+    const monthRows = await pages<{ month_key: string }>(db.from("monthly_rankings").select("month_key").order("month_key", { ascending: false }));
+    const months = Array.from(new Set([currentMonth(), ...monthRows.map(row => row.month_key).filter(Boolean)])).sort().reverse();
+    const month = requestedMonth && /^\d{4}-(0[1-9]|1[0-2])$/.test(requestedMonth) && months.includes(requestedMonth) ? requestedMonth : currentMonth();
+    const { data: snapshotData, error: snapshotError } = await db.from("monthly_rankings").select("*").eq("month_key", month).order("position", { ascending: true });
+    if (snapshotError) throw snapshotError;
+    const bounds = rangeFor(month);
+    const events = await pages<EventRow>(db.from("events").select("id,player,category,activity,points,created_at").gte("created_at", bounds.start).lt("created_at", bounds.end).order("created_at", { ascending: false }));
+    if (snapshotData?.length) {
+      const ranking = snapshotData.map(row => ({
+        position: Number(row.position), player: row.player, eligible: row.eligible || "", whatsapp: row.whatsapp || "",
+        wars: Number(row.wars || 0), league: Number(row.league || 0), donations: Number(row.donations || 0),
+        games: Number(row.games || 0), raid: Number(row.raid || 0), penalties: Number(row.penalties || 0), total: Number(row.total || 0),
+      }));
+      return { month, months, ranking, events, snapshot: true };
+    }
+    const { data: players, error: playerError } = await db.from("players").select("name,eligible,whatsapp").order("name", { ascending: true });
+    if (playerError) throw playerError;
+    return { month, months, ranking: calculate((players || []) as Player[], events), events, snapshot: false };
+  } catch (error) {
+    return { month: requestedMonth || currentMonth(), months: [currentMonth()], ranking: [], events: [], snapshot: false, error: error instanceof Error ? error.message : "Falha ao carregar histórico." };
+  }
+}

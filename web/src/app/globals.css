@@ -89,3 +89,19 @@ button{font:inherit}
 .performance-card-grid b{color:#e7edf5;font-size:9px}
 .performance-status{display:block;margin-top:10px;color:#d5a18c;font-size:8px;letter-spacing:.7px}.performance-status.active{color:#8bc59c}
 @media(max-width:560px){.performance-content{margin:24px auto;padding:20px 14px}.performance-totals{grid-template-columns:repeat(2,minmax(0,1fr))}.performance-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.history-content{max-width:920px;margin:34px auto;padding:26px}
+.history-filter{display:flex;align-items:end;gap:9px;margin:20px 0 25px;padding:14px;border:1px solid #29435f;border-radius:10px;background:#102139}
+.history-filter label{display:grid;gap:6px;color:#aabbd0;font-size:9px;font-weight:800;flex:1}
+.history-filter select{height:40px;padding:0 10px;border:1px solid #3a526d;border-radius:8px;background:#081629;color:#eef3fa}
+.history-filter button{height:40px;padding:0 16px;border:1px solid #a98447;border-radius:8px;background:#d5a84f;color:#182233;font-size:10px;font-weight:900}
+.history-section-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:24px 0 10px}
+.history-section-title h2{font:700 20px 'Barlow Condensed';margin:0}.history-section-title>span{font-size:8px;letter-spacing:.7px;color:var(--gold2)}
+.history-ranking,.history-events{display:grid;gap:8px}
+.history-ranking article,.history-events article{display:flex;align-items:center;gap:11px;padding:12px;border:1px solid #29435f;border-radius:9px;background:#0a192b}
+.history-position{width:27px;height:27px;flex:0 0 27px;display:grid;place-items:center;border-radius:7px;background:#1a3049;color:var(--gold2);font-size:10px}
+.history-player{display:grid;gap:3px;min-width:0;flex:1}.history-player strong,.history-events b{font-size:11px;overflow-wrap:anywhere}
+.history-player small,.history-events small{font-size:8px;color:#8195ad;line-height:1.5}
+.history-total,.history-events article>strong{white-space:nowrap;color:var(--gold2);font-size:10px}
+.history-events article{justify-content:space-between;align-items:flex-start}.history-events article>div{min-width:0;flex:1}.history-events p{margin:5px 0 0;color:#bdc9d8;font-size:9px;line-height:1.5;overflow-wrap:anywhere}
+@media(max-width:560px){.history-content{margin:24px auto;padding:20px 14px}.history-filter{align-items:stretch;flex-direction:column}.history-filter button{width:100%}.history-section-title h2{font-size:18px}.history-player small{font-size:7px}}

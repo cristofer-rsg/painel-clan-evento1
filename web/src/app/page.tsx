@@ -8,6 +8,7 @@ const navigation = [
   { icon: "◈", label: "Desempenho", href: "/performance" },
   { icon: "⚔", label: "Pontos", href: "#ranking" },
   { icon: "♟", label: "Clã", href: "#ranking" },
+  { icon: "▤", label: "Histórico", href: "/history" },
 ];
 
 function number(value: number) {
