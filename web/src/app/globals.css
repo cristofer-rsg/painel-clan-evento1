@@ -378,3 +378,20 @@ body{background:radial-gradient(ellipse at 78% -18%,rgba(201,164,92,.075),transp
   .event-editor{padding:15px}
   .event-actions{gap:8px}
 }
+
+
+/* Shared admin navigation */
+.admin-navigation{position:relative;z-index:2;display:flex;align-items:center;gap:7px;max-width:900px;margin:18px auto 0;padding:7px;border:1px solid #2b4058;border-radius:13px;background:linear-gradient(135deg,#142338dd,#0e1a29dd);box-shadow:0 8px 24px #0002}
+.admin-nav-link{display:flex;align-items:center;justify-content:center;gap:8px;min-height:39px;padding:0 15px;border:1px solid transparent;border-radius:9px;color:#9cacc0;font-size:10px;font-weight:800;white-space:nowrap;transition:background .18s,border-color .18s,color .18s}
+.admin-nav-link>span{font-size:15px;color:#aebdd0}
+.admin-nav-link:hover{background:#ffffff08;color:#fff}
+.admin-nav-link.active{border-color:#c9a45c45;background:linear-gradient(110deg,#c9a45c1c,#c9a45c08);color:#f1d9a6}
+.admin-nav-link.active>span{color:#e8cc91}
+.admin-shell>.admin-content{margin-top:28px}
+@media(max-width:600px){
+  .admin-navigation{margin:13px 0 0;padding:6px;gap:4px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none}
+  .admin-navigation::-webkit-scrollbar{display:none}
+  .admin-nav-link{flex:1 0 auto;min-height:42px;padding:0 12px;font-size:10px}
+  .admin-nav-link>span{font-size:14px}
+  .admin-shell>.admin-content{margin-top:20px}
+}
