@@ -54,14 +54,10 @@ export async function getPerformanceData(requestedMonth?: string): Promise<Perfo
     const events = await allRows<EventRow>(db.from("events").select("player,category,activity,points")
       .gte("created_at", start.toISOString()).lt("created_at", end.toISOString()));
     const capital = new Map<string, number>();
-    const manualDonations = new Map<string, number>();
     for (const event of events) {
       const key = (event.player || "").trim().toLocaleLowerCase("pt-BR");
       if (!key) continue;
       if ((event.category || "").trim() === "Capital do Clã") capital.set(key, (capital.get(key) || 0) + Number(event.points || 0));
-      if ((event.category || "").trim() === "Doações" && (event.activity || "").startsWith("TROPAS_DOADAS:")) {
-        manualDonations.set(key, (manualDonations.get(key) || 0) + Math.max(0, Number(event.points || 0)));
-      }
     }
     const byTag = new Map(stats.filter(row => row.player_tag).map(row => [String(row.player_tag).trim().toUpperCase(), row]));
     const byName = new Map(stats.filter(row => row.player).map(row => [String(row.player).trim().toLocaleLowerCase("pt-BR"), row]));
@@ -69,9 +65,9 @@ export async function getPerformanceData(requestedMonth?: string): Promise<Perfo
     const rows = players.map((player: Player) => {
       const stat = (player.player_tag ? byTag.get(player.player_tag.trim().toUpperCase()) : undefined)
         || byName.get(player.name.trim().toLocaleLowerCase("pt-BR"));
-      const recordedDonations = Number(stat?.donations || 0);
-      // Replica o app original: quando a sincronização não trouxe doações, usa os lançamentos manuais reais.
-      const donations = recordedDonations > 0 ? recordedDonations : (manualDonations.get(player.name.trim().toLocaleLowerCase("pt-BR")) || 0);
+      // A aba de desempenho original usa exclusivamente player_monthly_stats.donations.
+      // Os lançamentos events são usados no ranking mensal, não como fallback desta métrica.
+      const donations = Number(stat?.donations || 0);
       const wars = Number(stat?.war_attacks || 0);
       const league = Number(stat?.league_attacks || 0);
       const raid = Number(stat?.raid_attacks || 0);
