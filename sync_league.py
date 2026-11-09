@@ -14,6 +14,13 @@ API_URL = "https://cocproxy.royaleapi.dev/v1"
 TZ = ZoneInfo("America/Sao_Paulo")
 
 
+class ClashAPIError(RuntimeError):
+    def __init__(self, status, detail):
+        self.status = status
+        self.detail = detail
+        super().__init__(f"Erro na API Clash of Clans ({status}): {detail}")
+
+
 def api_get(path, token):
     request = urllib.request.Request(
         f"{API_URL}{path}",
@@ -25,7 +32,7 @@ def api_get(path, token):
             return json.loads(response.read().decode("utf-8"))
     except urllib.error.HTTPError as error:
         detail = error.read().decode("utf-8", errors="replace")
-        raise RuntimeError(f"Erro na API Clash of Clans ({error.code}): {detail}") from error
+        raise ClashAPIError(error.code, detail) from error
 
 
 def sync_capital_gold(db, token, players_by_tag):
@@ -164,7 +171,24 @@ def main():
     sync_capital_gold(db, token, players_by_tag)
 
     clan_tag = quote(CLAN_TAG, safe="")
-    group = api_get(f"/clans/{clan_tag}/currentwar/leaguegroup", token)
+    try:
+        group = api_get(f"/clans/{clan_tag}/currentwar/leaguegroup", token)
+    except ClashAPIError as error:
+        # Fora da temporada, a API retorna 404/notFound porque não existe
+        # grupo de Liga ativo. Isso é um estado esperado, não uma falha.
+        try:
+            payload = json.loads(error.detail)
+        except (TypeError, ValueError):
+            payload = {}
+        if error.status == 404 and payload.get("reason") == "notFound":
+            print(
+                "Liga dos Clãs sem grupo ativo (temporada encerrada ou ainda "
+                "não iniciada). Sincronização da Liga ignorada; pontos e "
+                "histórico existentes foram preservados."
+            )
+            return
+        raise
+
     if group.get("state") == "notInWar":
         print("O clã não está em uma Liga ativa.")
         return
