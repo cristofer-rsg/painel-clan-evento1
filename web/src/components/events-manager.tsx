@@ -64,7 +64,7 @@ export default function EventsManager() {
     {loading ? <p>Carregando lançamentos...</p> : <div className="manager-list">{events.map(event => <article className="manager-player" key={event.id}>
       <div className="manager-player-title"><b>{event.player}</b><strong>{event.points} pts</strong></div>
       <small className="player-tag">{localDate(event.created_at)} • {event.category}</small><p className="event-activity">{event.activity}</p>
-      <div className="event-actions"><button className="manager-save" type="button" onClick={() => setSelected(event)}>Editar</button><button className="manager-delete" type="button" disabled={saving} onClick={() => void remove(event)}>Excluir</button></div>
+      <div className="event-actions"><button className="manager-save" type="button" onClick={() => setSelected({ ...event, player: players.some(player => player.name === event.player) ? event.player : (players[0]?.name ?? event.player), category: categories.includes(event.category) ? event.category : "Guerras" })}>Editar</button><button className="manager-delete" type="button" disabled={saving} onClick={() => void remove(event)}>Excluir</button></div>
     </article>)}{!events.length && <p>Não há lançamentos neste mês.</p>}</div>}
     <a className="back-link" href="/admin">← Voltar à administração</a>
   </section>;
