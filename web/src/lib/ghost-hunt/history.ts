@@ -32,14 +32,14 @@ function calculate(players: Player[], events: EventRow[]): HistoryRanking[] {
   for (const event of events) {
     if (!event.player) continue;
     const b = totals.get(event.player) || { wars: 0, league: 0, donated: 0, games: 0, raid: 0, capital: 0, penalties: 0 };
-    const points = Number(event.points || 0), category = event.category || "", activity = event.activity || "";
+    const points = Number(event.points || 0), category = (event.category || "").trim().toLocaleLowerCase("pt-BR"), activity = event.activity || "";
     if (points < 0) b.penalties += Math.abs(points);
-    else if (category === "Guerras") b.wars += points;
-    else if (category === "Liga dos Clãs") b.league += points;
-    else if (category === "Doações" && activity.startsWith("TROPAS_DOADAS:")) b.donated += Math.max(0, points);
-    else if (category === "Jogos do Clã") b.games = Math.max(b.games, points);
-    else if (category === "Raide de Fim de Semana") b.raid += points;
-    else if (category === "Capital do Clã") b.capital += points;
+    else if (category === "guerras") b.wars += points;
+    else if (category === "liga dos clãs") b.league += points;
+    else if (category === "doações" && activity.startsWith("TROPAS_DOADAS:")) b.donated += Math.max(0, points);
+    else if (category === "jogos do clã") b.games = Math.max(b.games, points);
+    else if (category === "raide de fim de semana") b.raid += points;
+    else if (category === "capital do clã") b.capital += points;
     totals.set(event.player, b);
   }
   return players.map(player => {
