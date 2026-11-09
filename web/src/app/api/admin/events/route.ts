@@ -61,6 +61,17 @@ export async function PATCH(request: NextRequest) {
     const { data: current, error: currentError } = await supabase.from("events").select("category,player").eq("id", id).maybeSingle();
     if (currentError) throw currentError;
     if (!current) return NextResponse.json({ error: "Lançamento não encontrado." }, { status: 404 });
+    if (player !== current.player) {
+      const { data: targetPlayers, error: playerError } = await supabase.from("players")
+        .select("player_tag").eq("name", player).eq("active", true).limit(2);
+      if (playerError) throw playerError;
+      if (!targetPlayers?.length) {
+        return NextResponse.json({ error: "O novo jogador precisa estar cadastrado e ativo no clã." }, { status: 400 });
+      }
+      if (targetPlayers.length > 1) {
+        return NextResponse.json({ error: "Há jogadores com esse nome. Não é possível identificar o destino com segurança." }, { status: 409 });
+      }
+    }
     // Categorias legadas e não editáveis (como Capital do Clã) podem ser mantidas,
     // mas nunca escolhidas como uma nova categoria para outro lançamento.
     if (!categories.includes(category) && category !== current.category) {
