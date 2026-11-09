@@ -15,13 +15,21 @@ SUPABASE_KEY = os.environ["SUPABASE_SECRET_KEY"].strip()
 HTTP = requests.Session()
 
 
-def weekend_start(value):
+def raid_weekend_start(value):
+    """Retorna a sexta-feira local, início real do Raide (sexta a segunda)."""
     if isinstance(value, str):
         value = datetime.fromisoformat(value.replace("Z", "+00:00"))
     if isinstance(value, datetime):
         if value.tzinfo is not None:
             value = value.astimezone(TZ)
         value = value.date()
+    return value - timedelta(days=(value.weekday() - 4) % 7)
+
+
+def legacy_stats_anchor(value):
+    """Preserva a chave antiga das fontes mensais para não duplicar históricos."""
+    if isinstance(value, datetime):
+        value = value.astimezone(TZ).date() if value.tzinfo else value.date()
     return value - timedelta(days=(value.weekday() + 2) % 7)
 
 
@@ -146,14 +154,15 @@ def run():
     if not start_raw:
         raise RuntimeError("A temporada retornada não possui startTime.")
     season_start = datetime.fromisoformat(start_raw.replace("Z", "+00:00")).astimezone(TZ)
-    anchor = weekend_start(season_start)
-    closing_date = anchor + timedelta(days=2)
+    anchor = raid_weekend_start(season_start)
+    closing_date = anchor + timedelta(days=3)
     weekend_key = anchor.isoformat()
     month_key = closing_date.strftime("%Y-%m")
+    stats_anchor = legacy_stats_anchor(season_start)
     weekend_label = season_start.strftime("%d/%m/%Y")
     players = fetch_players()
     members = season.get("members") or []
-    synced = sync_raid_attack_stats(members, players, month_key, weekend_key)
+    synced = sync_raid_attack_stats(members, players, month_key, stats_anchor.isoformat())
     result = award_raid_points(members, players, weekend_key, month_key, weekend_label)
     print(f"Temporada: {weekend_label} | fechamento: {closing_date:%d/%m/%Y} | competência: {month_key} | estado: {season.get('state', 'desconhecido')}")
     print(f"Jogadores analisados: {len(members)} | fontes sincronizadas: {synced}")
