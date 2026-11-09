@@ -18,29 +18,22 @@ export default async function PerformancePage({ searchParams }: Props) {
   const data = await getPerformanceData(params.month, true);
   const activeRows = data.rows.filter(row => row.active);
   const searchTerm = (params.q || "").trim().toLocaleLowerCase("pt-BR");
-  const rankedRows = activeRows.map(row => {
-    const score = metrics.reduce((sum, metric) => sum + Math.min(row[metric.key] / metric.target, 1), 0) / metrics.length * 100;
-    return { ...row, index: Number(score.toFixed(1)) };
-  }).sort((a, b) => b.index - a.index || a.player.localeCompare(b.player, "pt-BR"))
-    .map((row, index) => ({ ...row, position: index + 1 }));
   const leadershipNames = new Map([
     ["lilias", "LÍDER"],
     ["mk", "CO-LÍDER"],
     ["chama", "CO-LÍDER"],
     ["general ninja", "CO-LÍDER"],
   ]);
-  const withIndex = activeRows.map(row => {
+  const rankedRows = activeRows.map(row => {
     const score = metrics.reduce((sum, metric) => sum + Math.min(row[metric.key] / metric.target, 1), 0) / metrics.length * 100;
-    return { ...row, index: Number(score.toFixed(1)) };
-  });
-  const leadershipRows = withIndex
-    .filter(row => leadershipNames.has(row.player.trim().toLocaleLowerCase("pt-BR")))
-    .map(row => ({ ...row, role: leadershipNames.get(row.player.trim().toLocaleLowerCase("pt-BR"))! }));
-  const competitorRows = rankedRows.filter(row => !leadershipNames.has(row.player.trim().toLocaleLowerCase("pt-BR")));
-  const matchesSearch = (row: { player: string; tag: string }) =>
-    row.player.toLocaleLowerCase("pt-BR").includes(searchTerm) || row.tag.toLocaleLowerCase("pt-BR").includes(searchTerm);
-  const visibleRows = searchTerm ? competitorRows.filter(matchesSearch) : competitorRows;
-  const visibleLeaders = searchTerm ? leadershipRows.filter(matchesSearch) : leadershipRows;
+    const role = leadershipNames.get(row.player.trim().toLocaleLowerCase("pt-BR"));
+    return { ...row, index: Number(score.toFixed(1)), role };
+  }).sort((a, b) => b.index - a.index || a.player.localeCompare(b.player, "pt-BR"))
+    .map((row, index) => ({ ...row, position: index + 1 }));
+  const searchTerm = (params.q || "").trim().toLocaleLowerCase("pt-BR");
+  const visibleRows = searchTerm
+    ? rankedRows.filter(row => row.player.toLocaleLowerCase("pt-BR").includes(searchTerm) || row.tag.toLocaleLowerCase("pt-BR").includes(searchTerm))
+    : rankedRows;
   const totals = metrics.map(metric => ({
     ...metric,
     value: activeRows.reduce((sum, row) => sum + row[metric.key], 0),
@@ -58,36 +51,23 @@ export default async function PerformancePage({ searchParams }: Props) {
       {!data.connected && <div className="connection-alert"><b>Não foi possível carregar o desempenho.</b><span>Confira a conexão do servidor com o Supabase.</span>{data.error && <small>{data.error}</small>}</div>}
       <div className="performance-period">{data.monthLabel}</div>
       <div className="performance-totals">{totals.map(metric => <article key={metric.key}><small>{metric.label}</small><b>{fmt(metric.value)}</b><span>{metric.unit}</span></article>)}</div>
-      <section className="performance-leadership">
-        <div className="performance-leadership-heading">
-          <div><span>👑</span><div><small>ÁREA EXCLUSIVA</small><h2>Desempenho da liderança</h2></div></div>
-          <span>{visibleLeaders.length} DE 4</span>
-        </div>
-        <p className="performance-leadership-note">Acompanhamento individual do líder e dos co-líderes. Os dados são contabilizados normalmente, mas não entram na competição nem na classificação por posições.</p>
-        <div className="performance-leadership-grid">
-          {visibleLeaders.map(row => <article className="performance-card performance-leader-card" key={row.player}>
-            <div className="performance-card-head"><b><span>♛</span>{row.player}</b><strong>{row.index.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} <small>/ 100</small></strong></div>
-            <small className="performance-leader-role">{row.role}</small>
-            <div className="performance-progress" role="img" aria-label={`Meta geral: ${row.index.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`}><span style={{ width: `${Math.min(row.index, 100)}%` }} /></div>
-            <div className="performance-card-grid">
-              <span>Guerras <b>{fmt(row.wars)}</b></span><span>Liga <b>{fmt(row.league)}</b></span><span>Raide <b>{fmt(row.raid)}</b></span>
-              <span>Doações <b>{fmt(row.donations)}</b></span><span>Jogos <b>{fmt(row.games)}</b></span><span>Capital <b>{fmt(row.capital)}</b></span>
-            </div>
-            <small className="performance-status active">ATIVO {row.tag}</small>
-          </article>)}
-          {!visibleLeaders.length && <p>Nenhum integrante da liderança encontrado.</p>}
-        </div>
-      </section>
-      <div className="performance-list"><div className="performance-section-heading"><h2>🏆 Desempenho dos jogadores</h2><span>COMPETIÇÃO</span></div><p className="performance-result-count">{visibleRows.length} de {competitorRows.length} jogador(es)</p>{visibleRows.map(row => <article className="performance-card" key={row.player}>
-        <div className="performance-card-head"><b><span>#{row.position}</span>{row.player}</b><strong>{row.index.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} <small>/ 100</small></strong></div>
-        <div className="performance-progress" role="img" aria-label={`Meta geral: ${row.index.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`}><span style={{ width: `${Math.min(row.index, 100)}%` }} /></div>
-        <div className="performance-card-grid">
-          <span>Guerras <b>{fmt(row.wars)}</b></span><span>Liga <b>{fmt(row.league)}</b></span><span>Raide <b>{fmt(row.raid)}</b></span>
-          <span>Doações <b>{fmt(row.donations)}</b></span><span>Jogos <b>{fmt(row.games)}</b></span><span>Capital <b>{fmt(row.capital)}</b></span>
-        </div>
-        <small className="performance-status active">ATIVO {row.tag}</small>
-      </article>)}
-      {!visibleRows.length && data.connected && <p>Nenhum jogador cadastrado neste mês.</p>}</div>
+      <div className="performance-list">
+        <div className="performance-section-heading"><h2>Desempenho dos jogadores</h2><span>{visibleRows.length} JOGADORES</span></div>
+        <p className="performance-result-count">{visibleRows.length} de {rankedRows.length} jogador(es)</p>
+        {visibleRows.map(row => <article className={row.role ? "performance-card performance-leader-card" : "performance-card"} key={row.player}>
+          <div className="performance-card-head">
+            <b><span>#{row.position}</span>{row.player}{row.role && <small className="performance-leader-role">{row.role}</small>}</b>
+            <strong>{row.index.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} <small>/ 100</small></strong>
+          </div>
+          <div className="performance-progress" role="img" aria-label={`Meta geral: ${row.index.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`}><span style={{ width: `${Math.min(row.index, 100)}%` }} /></div>
+          <div className="performance-card-grid">
+            <span>Guerras <b>{fmt(row.wars)}</b></span><span>Liga <b>{fmt(row.league)}</b></span><span>Raide <b>{fmt(row.raid)}</b></span>
+            <span>Doações <b>{fmt(row.donations)}</b></span><span>Jogos <b>{fmt(row.games)}</b></span><span>Capital <b>{fmt(row.capital)}</b></span>
+          </div>
+          <small className="performance-status active">ATIVO {row.tag}</small>
+        </article>)}
+        {!visibleRows.length && data.connected && <p>Nenhum jogador cadastrado neste mês.</p>}
+      </div>
       <a className="back-link" href="/">← Voltar ao ranking</a>
     </section>
   </main>;
