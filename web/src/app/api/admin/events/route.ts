@@ -53,11 +53,20 @@ export async function PATCH(request: NextRequest) {
   const category = typeof body.category === "string" ? body.category : "";
   const activity = typeof body.activity === "string" ? body.activity.trim() : "";
   const points = Number(body.points);
-  if (!Number.isSafeInteger(id) || id <= 0 || !player || !categories.includes(category) || activity.length > 300 || !Number.isInteger(points) || points < -200 || points > 200) {
+  if (!Number.isSafeInteger(id) || id <= 0 || !player || !category || activity.length > 300 || !Number.isInteger(points) || points < -200 || points > 200) {
     return NextResponse.json({ error: "Confira jogador, categoria, descrição e pontuação (-200 a 200)." }, { status: 400 });
   }
   try {
-    const { data, error } = await createSupabaseAdmin().from("events")
+    const supabase = createSupabaseAdmin();
+    const { data: current, error: currentError } = await supabase.from("events").select("category").eq("id", id).maybeSingle();
+    if (currentError) throw currentError;
+    if (!current) return NextResponse.json({ error: "Lançamento não encontrado." }, { status: 404 });
+    // Categorias legadas e não editáveis (como Capital do Clã) podem ser mantidas,
+    // mas nunca escolhidas como uma nova categoria para outro lançamento.
+    if (!categories.includes(category) && category !== current.category) {
+      return NextResponse.json({ error: "Categoria não permitida." }, { status: 400 });
+    }
+    const { data, error } = await supabase.from("events")
       .update({ player, category, activity, points }).eq("id", id)
       .select("id,player,category,activity,points,created_at").maybeSingle();
     if (error) throw error;
