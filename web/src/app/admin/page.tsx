@@ -1,3 +1,4 @@
+import AdminNavigation from "@/components/admin-navigation";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { adminSessionCookie, isAdminSessionValid } from "@/lib/ghost-hunt/session";
@@ -10,7 +11,7 @@ export default async function AdminPage() {
   await archivePreviousMonthIfNeeded().catch(() => false);
   return <main className="admin-shell"><header className="admin-header">
     <a className="brand" href="/"><span className="brand-mark">GH</span><span className="brand-copy"><strong>GHOST <i>HUNT</i></strong><small>CLAN MANAGEMENT</small></span></a><LogoutButton />
-  </header><section className="admin-content">
+  </header><AdminNavigation current="/admin" /><section className="admin-content">
     <span className="auth-kicker">SESSÃO SEGURA • ADMINISTRADOR</span><h1>Central de <em>administração</em></h1>
     <p>Escolha uma ferramenta para administrar os registros atuais do Ghost Hunt.</p>
     <div className="admin-tools">
