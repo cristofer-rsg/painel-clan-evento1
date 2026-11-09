@@ -342,3 +342,33 @@
   min-width:100px;min-height:36px;padding:8px 10px;font-size:12px;
  }
 }
+
+
+/* Leadership performance is shown separately from the competitive list */
+.performance-leadership{
+ margin:22px 0 28px;padding:17px;border:1px solid #98713b;border-radius:17px;
+ background:radial-gradient(ellipse at 50% 0%,#8a642b2b,transparent 62%),linear-gradient(145deg,#211a11,#100e0b);
+ box-shadow:inset 0 1px #ffffff12,0 10px 26px #0005;
+}
+.performance-leadership-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+.performance-leadership-heading>div{display:flex;align-items:center;gap:10px}
+.performance-leadership-heading>div>span{font-size:27px}
+.performance-leadership-heading small{color:#d6b779;font-size:9px;font-weight:900;letter-spacing:1.5px}
+.performance-leadership-heading h2{margin:2px 0 0;color:#fff0d0;font-size:20px;font-weight:900}
+.performance-leadership-heading>span{color:#d9bd88;font-size:9px;font-weight:900;white-space:nowrap}
+.performance-leadership-note{margin:8px 0 15px;color:#c9bda7;font-size:12px;line-height:1.55}
+.performance-leadership-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.performance-leader-card{margin:0!important;border-color:#775a31!important;background:linear-gradient(145deg,#292015,#15110c)!important}
+.performance-leader-card .performance-card-head b{color:#ffedc8}
+.performance-leader-card .performance-card-head b>span{color:#e6bd69;margin-right:7px}
+.performance-leader-card .performance-card-head strong{color:#f0cb7a}
+.performance-leader-role{display:inline-block;margin:4px 0 8px;padding:4px 8px;border:1px solid #99733d;border-radius:20px;color:#f3d28f;font-size:9px;font-weight:900;letter-spacing:.7px}
+.performance-section-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:22px 0 8px;padding-bottom:10px;border-bottom:1px solid #59452c}
+.performance-section-heading h2{margin:0;color:#f6e8cb;font-size:19px;font-weight:900}
+.performance-section-heading>span{color:#cba65f;font-size:9px;font-weight:900;letter-spacing:1px}
+@media(max-width:560px){
+ .performance-leadership{padding:13px 10px;margin:17px 0 23px}
+ .performance-leadership-grid{grid-template-columns:1fr}
+ .performance-leadership-heading h2{font-size:18px}
+ .performance-leadership-note{font-size:11px}
+}
