@@ -18,22 +18,16 @@ export default async function PerformancePage({ searchParams }: Props) {
   const data = await getPerformanceData(params.month, true);
   const activeRows = data.rows.filter(row => row.active);
   const searchTerm = (params.q || "").trim().toLocaleLowerCase("pt-BR");
-  const normalizePlayerName = (name: string) => name
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLocaleLowerCase("pt-BR")
-    .replace(/[^a-z0-9]/g, "");
-  const getLeadershipRole = (name: string) => {
-    const normalized = normalizePlayerName(name);
-    if (normalized.includes("lilias")) return "LÍDER";
-    if (normalized === "mk" || normalized.startsWith("mk")) return "CO-LÍDER";
-    if (normalized === "chama" || normalized.startsWith("chama")) return "CO-LÍDER";
-    if (normalized.includes("generalninja")) return "CO-LÍDER";
-    return undefined;
-  };
+  // Cargos vinculados às tags permanentes, independentemente do nome visual.
+  const leadershipTags = new Map([
+    ["#L8GV8C2Y", "LÍDER"],
+    ["#P8CCGYU0", "CO-LÍDER"],
+    ["#QU0GC0VLU", "CO-LÍDER"],
+    ["#9CLLGV8CC", "CO-LÍDER"],
+  ]);
   const rankedRows = activeRows.map(row => {
     const score = metrics.reduce((sum, metric) => sum + Math.min(row[metric.key] / metric.target, 1), 0) / metrics.length * 100;
-    const role = getLeadershipRole(row.player);
+    const role = leadershipTags.get(row.tag.trim().toUpperCase());
     return { ...row, index: Number(score.toFixed(1)), role };
   }).sort((a, b) => b.index - a.index || a.player.localeCompare(b.player, "pt-BR"))
     .map((row, index) => ({ ...row, position: index + 1 }));
