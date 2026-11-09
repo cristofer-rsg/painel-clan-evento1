@@ -128,15 +128,15 @@ export async function getDashboardData(): Promise<DashboardData> {
         raid: 0, capitalCoins: 0, penalties: 0,
       };
       const points = Number(event.points ?? 0);
-      const category = event.category ?? "";
+      const category = (event.category ?? "").trim().toLocaleLowerCase("pt-BR");
       const activity = event.activity ?? "";
       if (points < 0) bucket.penalties += Math.abs(points);
-      else if (category === "Guerras") bucket.wars += points;
-      else if (category === "Liga dos Clãs") bucket.league += points;
-      else if (category === "Doações" && activity.startsWith("TROPAS_DOADAS:")) bucket.donatedTroops += Math.max(0, points);
-      else if (category === "Jogos do Clã") bucket.games = Math.max(bucket.games, points);
-      else if (category === "Raide de Fim de Semana") bucket.raid += points;
-      else if (category === "Capital do Clã") bucket.capitalCoins += points;
+      else if (category === "guerras") bucket.wars += points;
+      else if (category === "liga dos clãs") bucket.league += points;
+      else if (category === "doações" && activity.startsWith("TROPAS_DOADAS:")) bucket.donatedTroops += Math.max(0, points);
+      else if (category === "jogos do clã") bucket.games = Math.max(bucket.games, points);
+      else if (category === "raide de fim de semana") bucket.raid += points;
+      else if (category === "capital do clã") bucket.capitalCoins += points;
       totals.set(event.player, bucket);
     }
 
@@ -177,7 +177,7 @@ export async function getDashboardData(): Promise<DashboardData> {
       monthLabel: monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1),
       leaderPoints: ranking[0]?.total ?? 0,
       activePlayers: players.filter((player) => player.active !== false).length,
-      warRecords: events.filter((event) => event.category === "Guerras").length,
+      warRecords: events.filter((event) => (event.category ?? "").trim().toLocaleLowerCase("pt-BR") === "guerras").length,
       eventCount: events.length,
       ranking,
       recentMembers,
