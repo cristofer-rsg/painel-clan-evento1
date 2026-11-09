@@ -30,7 +30,6 @@ export default async function PerformancePage({ searchParams }: Props) {
     return { ...row, index: Number(score.toFixed(1)), role };
   }).sort((a, b) => b.index - a.index || a.player.localeCompare(b.player, "pt-BR"))
     .map((row, index) => ({ ...row, position: index + 1 }));
-  const searchTerm = (params.q || "").trim().toLocaleLowerCase("pt-BR");
   const visibleRows = searchTerm
     ? rankedRows.filter(row => row.player.toLocaleLowerCase("pt-BR").includes(searchTerm) || row.tag.toLocaleLowerCase("pt-BR").includes(searchTerm))
     : rankedRows;
