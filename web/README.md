@@ -13,7 +13,7 @@ Nova aplicação Next.js, independente do Streamlit atual. O diretório `web/` s
 
 ## Stack
 
-- Next.js App Router + React + TypeScript
+- Next.js App Router + React + TypeScript (Node.js 20.19+; CI validado com Node.js 22)
 - Supabase JS no servidor
 - Sessão administrativa JWT assinada com cookie HttpOnly, SameSite Strict e expiração de 8 horas
 - Vercel para hospedagem da interface e rotas HTTP
@@ -38,7 +38,7 @@ As credenciais de Clash of Clans permanecem nos GitHub Secrets utilizados pelos 
 - Histórico mensal, com preferência pelos snapshots arquivados e cálculo alternativo quando não há snapshot.
 - Área administrativa protegida por senha server-side e cookie HttpOnly; gestão de jogadores, edição/exclusão de lançamentos e exportação Excel/CSV.
 - Operações administrativas de escrita validam a origem da requisição.
-- Workflow de validação Next.js executa instalação de dependências e build.
+- Workflow de validação executa auditoria das dependências de produção, teste de geração/leitura XLSX com ExcelJS e build Next.js.
 - Os workflows de sincronização existentes permanecem independentes e intocados.
 - A branch `main` permanece preservada; desenvolvimento e validação ocorrem em `vercel-rebuild`.
 
@@ -56,7 +56,7 @@ O arquivo raiz `supabase_schema.sql` não representa mais o schema completo usad
 
 ## Validações ainda pendentes
 
-- Teste ponta a ponta com as variáveis reais do Supabase em um ambiente Preview.
+- Teste ponta a ponta com as variáveis reais do Supabase em um ambiente Preview (não substituído pelo CI).
 - Comparação visual e de dados com o Streamlit original, incluindo meses arquivados, jogadores inativos e exportações.
 - Teste funcional de login, expiração/logout, gestão de jogadores e edição/exclusão de lançamentos.
 - Configuração e validação de um projeto Vercel Preview.
