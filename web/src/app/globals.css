@@ -288,3 +288,59 @@ body{background:radial-gradient(ellipse at 78% -18%,rgba(201,164,92,.075),transp
   .ranking-row{padding:13px 12px}
   .ranking-search{padding:12px}
 }
+
+
+/* Admin and sign-in finishing pass */
+.auth-shell{position:relative;display:flex;flex-direction:column;justify-content:flex-start;padding-top:clamp(34px,8vh,82px);overflow:hidden}
+.auth-shell:before,.admin-shell:before{content:"";position:fixed;inset:0;pointer-events:none;background:linear-gradient(135deg,transparent 48%,#c9a45c05 49%,transparent 50%),radial-gradient(circle at 50% 55%,#c9a45c08,transparent 36%);opacity:.8}
+.auth-brand{position:relative;margin-bottom:34px}
+.auth-card{position:relative;overflow:hidden;padding:clamp(24px,5vw,36px);border-radius:20px;backdrop-filter:blur(12px)}
+.auth-card:before{content:"";position:absolute;left:0;right:0;top:0;height:2px;background:linear-gradient(90deg,transparent,#c9a45c,transparent)}
+.auth-kicker{display:flex;align-items:center;gap:9px}
+.auth-kicker:before{content:"";width:18px;height:1px;background:#c9a45c}
+.auth-card h1{font-size:clamp(34px,6vw,43px);line-height:1.02;margin-top:13px}
+.auth-card p{max-width:340px}
+.auth-card form{gap:11px}
+.auth-card label{margin-top:5px;letter-spacing:.3px}
+.auth-card input{height:49px;border-radius:10px;transition:border-color .18s,box-shadow .18s}
+.auth-card input:focus{border-color:#d7b879;box-shadow:0 0 0 3px #c9a45c1c}
+.auth-card form button{height:48px;margin-top:8px;border-radius:10px;letter-spacing:.6px;box-shadow:0 7px 20px #c9a45c20;transition:transform .18s,filter .18s}
+.auth-card form button:not(:disabled):hover,.logout-button:not(:disabled):hover{filter:brightness(1.08);transform:translateY(-1px)}
+.auth-error{border-radius:10px;line-height:1.55}
+.back-link{padding:7px 0;transition:color .18s}
+.back-link:hover{color:#fff}
+.admin-shell{position:relative;isolation:isolate}
+.admin-header{position:relative;z-index:1;padding:5px 0 20px}
+.admin-header .brand-mark{width:44px;height:44px}
+.admin-content{position:relative;z-index:1;max-width:900px;padding:clamp(22px,4vw,34px);margin:clamp(28px,6vh,62px) auto}
+.admin-content h1{font-size:clamp(34px,5vw,44px);line-height:1.05}
+.admin-notice{border-radius:12px;background:linear-gradient(120deg,#352a194d,#17263880);border-color:#c9a45c45}
+.admin-tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:24px}
+.admin-tools a{min-height:112px;display:flex;align-items:center;gap:14px;padding:17px;border:1px solid #34465b;border-radius:14px;background:linear-gradient(145deg,#17283d,#101c2b)}
+.admin-tools a>span{display:grid;place-items:center;flex:0 0 40px;height:40px;border:1px solid #c9a45c35;border-radius:12px;background:#c9a45c12;color:#e8cc91;font-size:19px}
+.admin-tools a b{font-size:12px;color:#f3f5f8}
+.admin-tools a small{display:block;margin-top:5px;color:#91a0b3;font-size:10px;line-height:1.5}
+.admin-content input,.admin-content select,.admin-content textarea,
+.manager-content input,.manager-content select,.manager-content textarea,
+.history-filter input,.history-filter select{
+  color:#f4f6f9;background:#0a1422;border:1px solid #3a4c61;border-radius:10px;outline:none
+}
+.admin-content input:focus,.admin-content select:focus,.admin-content textarea:focus,
+.manager-content input:focus,.manager-content select:focus,.manager-content textarea:focus{
+  border-color:#c9a45c;box-shadow:0 0 0 3px #c9a45c16
+}
+.admin-content button,.manager-content button{border-radius:9px;transition:filter .18s,transform .18s}
+.admin-content button:not(:disabled):hover,.manager-content button:not(:disabled):hover{filter:brightness(1.08)}
+@media(max-width:600px){
+  .auth-shell{padding:28px 14px calc(28px + env(safe-area-inset-bottom))}
+  .auth-brand{margin-bottom:25px}
+  .auth-card{padding:24px 20px;border-radius:17px}
+  .admin-shell{padding-left:14px;padding-right:14px}
+  .admin-header{align-items:center}
+  .admin-content{margin:24px auto 0;padding:22px 17px;border-radius:16px}
+  .admin-tools{grid-template-columns:1fr;gap:9px}
+  .admin-tools a{min-height:86px;padding:13px}
+}
+@media(prefers-reduced-motion:reduce){
+  .auth-card form button,.logout-button,.admin-tools a{transition:none}
+}
