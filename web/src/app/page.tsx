@@ -1,5 +1,6 @@
 import { getDashboardData } from "@/lib/ghost-hunt/dashboard";
 import RankingList from "@/components/ranking-list";
+import RankingAutoRefresh from "@/components/ranking-auto-refresh";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +28,7 @@ export default async function HomePage() {
 
   return (
     <main className="app-shell">
+      <RankingAutoRefresh />
       <header className="topbar">
         <a className="brand" href="/" aria-label="Ghost Hunt início">
           <span className="brand-mark">GH</span>
