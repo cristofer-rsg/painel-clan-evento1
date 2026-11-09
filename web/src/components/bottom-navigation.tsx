@@ -6,6 +6,7 @@ const items = [
   { href: "/", icon: "⌂", label: "Início" },
   { href: "/ranking", icon: "♛", label: "Ranking" },
   { href: "/performance", icon: "◈", label: "Desempenho" },
+  { href: "/rules", icon: "⚖", label: "Regras" },
   { href: "/history", icon: "▤", label: "Histórico" },
 ];
 
