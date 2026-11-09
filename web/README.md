@@ -39,8 +39,9 @@ As credenciais de Clash of Clans permanecem nos GitHub Secrets utilizados pelos 
 - Histórico mensal, com preferência pelos snapshots arquivados, cálculo alternativo quando não há snapshot e arquivamento automático do mês anterior na entrada administrativa (somente se ainda não houver snapshot e existirem lançamentos).
 - Área administrativa protegida por senha server-side e cookie HttpOnly; gestão de jogadores, visão administrativa de desempenho, edição/exclusão de lançamentos e exportação Excel/CSV.
 - Operações administrativas de escrita validam a origem da requisição.
-- Workflow de validação executa auditoria das dependências de produção, teste de geração/leitura XLSX com ExcelJS e build Next.js.
+- Workflow de validação executa testes unitários do planejador do Raide, auditoria das dependências de produção, teste de geração/leitura XLSX com ExcelJS e build Next.js.
 - Os workflows de sincronização existentes permanecem independentes e intocados.
+- A lógica pura de planejamento dos pontos automáticos do Raide foi isolada em `scripts/raid_points.py`, sem acesso ao banco, com testes de idempotência para inserção, atualização de ataques, precedência de lançamentos manuais e consolidação de duplicatas.
 - A branch `main` permanece preservada; desenvolvimento e validação ocorrem em `vercel-rebuild`.
 
 ## Preparação de implantação (ainda não executada)
@@ -57,7 +58,7 @@ O arquivo raiz `supabase_schema.sql` não representa mais o schema completo usad
 
 ## Validações ainda pendentes
 
-- Portar a concessão automática dos pontos do Raide para uma rotina independente: o workflow `raid-auto.yml` atualiza `raid_attacks`, mas a inserção/atualização dos eventos `RAIDE_AUTO:` ainda é executada pelo `app.py` quando o administrador abre o Streamlit.
+- Integrar o planejador testado `scripts/raid_points.py` a um gravador Supabase independente, preservando a idempotência e tratando concorrência com o Streamlit. Por segurança, `raid_automation.py` e `raid-auto.yml` ainda não foram alterados; os eventos `RAIDE_AUTO:` continuam sendo gravados pelo `app.py`.
 - Teste ponta a ponta com as variáveis reais do Supabase em um ambiente Preview (não substituído pelo CI).
 - Comparação visual e de dados com o Streamlit original, incluindo meses arquivados, jogadores inativos e exportações.
 - Teste funcional de login, expiração/logout, gestão de jogadores e edição/exclusão de lançamentos.
