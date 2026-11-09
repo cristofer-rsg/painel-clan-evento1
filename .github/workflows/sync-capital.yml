@@ -1,0 +1,39 @@
+name: Sincronizar doações da Capital do Clã
+
+on:
+  schedule:
+    - cron: "23 * * * *"
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "sync_capital.py"
+      - ".github/workflows/sync-capital.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sincronizar-capital-clan
+  cancel-in-progress: false
+
+jobs:
+  sync-capital:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v4
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Instalar dependência
+        run: python -m pip install "supabase>=2.5"
+      - name: Sincronizar Capital do Clã
+        env:
+          CLASH_API_TOKEN: ${{ secrets.CLASH_API_TOKEN }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        run: python sync_capital.py
