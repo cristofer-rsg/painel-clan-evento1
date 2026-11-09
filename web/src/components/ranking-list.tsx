@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 
 type RankingPlayer = {
@@ -36,12 +37,19 @@ export default function RankingList({ players }: { players: RankingPlayer[] }) {
     {visible.map(player => {
       const isExpanded = expanded === player.player;
       return <article className={`ranking-entry${player.position <= 3 ? ` ranking-top-${player.position}` : ""}`} key={player.player}>
-        <button className="ranking-row ranking-row-toggle" type="button" aria-expanded={isExpanded}
-          aria-label={`${isExpanded ? "Ocultar" : "Ver"} pontuação por categoria de ${player.player}`}
-          onClick={() => setExpanded(isExpanded ? null : player.player)}>
-          <span className="ranking-player"><b className="ranking-position">{player.position}</b><span>{player.player}<small>{player.eligible ? "Elegível" : "Não elegível"}{player.tag ? " · " + player.tag : ""}</small></span></span>
-          <span className="ranking-score"><strong>{number(player.total)} pts</strong><small>{isExpanded ? "Recolher" : "Detalhes"} <i>{isExpanded ? "−" : "+"}</i></small></span>
-        </button>
+        <div className="ranking-row ranking-row-toggle">
+          <span className="ranking-player"><b className="ranking-position">{player.position}</b><span>
+            {player.tag ? <Link className="ranking-profile-link" href={`/player/${encodeURIComponent(player.tag)}`}>{player.player}</Link> : <b>{player.player}</b>}
+            <small>{player.eligible ? "Elegível" : "Não elegível"}{player.tag ? " · " + player.tag : ""}</small>
+          </span></span>
+          <span className="ranking-score"><strong>{number(player.total)} pts</strong>
+            <button className="ranking-details-button" type="button" aria-expanded={isExpanded}
+              aria-label={`${isExpanded ? "Ocultar" : "Ver"} pontuação por categoria de ${player.player}`}
+              onClick={() => setExpanded(isExpanded ? null : player.player)}>
+              {isExpanded ? "Recolher" : "Detalhes"} <i>{isExpanded ? "−" : "+"}</i>
+            </button>
+          </span>
+        </div>
         {isExpanded && <div className="ranking-breakdown">
           <div className="ranking-breakdown-heading">PONTUAÇÃO POR CATEGORIA</div>
           <div className="ranking-breakdown-grid">{categories.map(category => <span key={category.key}>
