@@ -3,7 +3,7 @@ import { createSupabaseAdmin } from "@/lib/supabase/admin";
 
 type Player = { name: string; player_tag: string | null; eligible: string | null; whatsapp: string | null };
 type EventRow = { id: number; player: string; category: string; activity: string; points: number; created_at: string };
-export type HistoryRanking = { position: number; player: string; eligible: string; whatsapp: string; wars: number; league: number; donations: number; games: number; raid: number; penalties: number; total: number };
+export type HistoryRanking = { position: number; player: string; eligible: string; whatsapp: string; wars: number; league: number; donations: number; games: number; raid: number; capitalPoints: number; penalties: number; total: number };
 export type HistoryData = { month: string; months: string[]; ranking: HistoryRanking[]; events: EventRow[]; snapshot: boolean; error?: string };
 
 function currentMonth() {
@@ -50,10 +50,10 @@ function calculate(players: Player[], events: EventRow[]): HistoryRanking[] {
     return {
       position: 0, player: player.name, eligible: player.eligible || "Elegível", whatsapp: player.whatsapp || "Sim",
       wars: b.wars, league: b.league, donations: Math.min(50, Math.floor(b.donated / 100)),
-      games: Math.min(25, b.games), raid: b.raid, penalties: b.penalties,
+      games: Math.min(25, b.games), raid: b.raid, capitalPoints: Math.floor(b.capital / 2500), penalties: b.penalties,
       total: eligible ? Math.max(0, b.wars + b.league + Math.min(50, Math.floor(b.donated / 100)) + Math.min(25, b.games) + b.raid + Math.floor(b.capital / 2500) - b.penalties) : 0,
     };
-  }).sort((a, b) => b.total - a.total || a.player.localeCompare(b.player, "pt-BR"))
+  }).sort((a, b) => b.total - a.total || b.wars - a.wars || b.league - a.league || b.raid - a.raid || b.capitalPoints - a.capitalPoints || b.donations - a.donations || b.games - a.games || a.player.localeCompare(b.player, "pt-BR"))
     .map((row, i) => ({ ...row, position: i + 1 }));
 }
 
@@ -71,7 +71,7 @@ export async function getHistoryData(requestedMonth?: string): Promise<HistoryDa
       const ranking = snapshotData.map(row => ({
         position: Number(row.position), player: row.player, eligible: row.eligible || "", whatsapp: row.whatsapp || "",
         wars: Number(row.wars || 0), league: Number(row.league || 0), donations: Number(row.donations || 0),
-        games: Number(row.games || 0), raid: Number(row.raid || 0), penalties: Number(row.penalties || 0), total: Number(row.total || 0),
+        games: Number(row.games || 0), raid: Number(row.raid || 0), capitalPoints: Number(row.capital_points || 0), penalties: Number(row.penalties || 0), total: Number(row.total || 0),
       }));
       return { month, months, ranking, events, snapshot: true };
     }
