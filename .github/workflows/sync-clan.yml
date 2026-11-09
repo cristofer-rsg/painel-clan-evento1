@@ -4,6 +4,12 @@ on:
   schedule:
     - cron: "13 * * * *"
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "sync_clan.py"
+      - ".github/workflows/sync-clan.yml"
 
 permissions:
   contents: read
