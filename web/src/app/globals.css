@@ -225,3 +225,66 @@ body{background:radial-gradient(ellipse at 78% -18%,rgba(201,164,92,.075),transp
   .performance-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .history-player small{font-size:8px}
 }
+
+
+/* Home / podium / ranking premium polish */
+.welcome-row{margin-top:22px;margin-bottom:30px}
+.welcome-row h1{font-size:clamp(36px,4.5vw,48px);letter-spacing:-.3px}
+.welcome-row h1 em{background:linear-gradient(100deg,#e8cc91,#c9a45c);-webkit-background-clip:text;background-clip:text;color:transparent}
+.eyebrow{color:#e8cc91}
+.season-chip{border-color:#c9a45c55;background:linear-gradient(120deg,#192a3e,#111e2d);border-radius:12px}
+.metrics-grid{gap:14px}
+.metric-card{position:relative;overflow:hidden;min-height:132px;padding:17px;background:linear-gradient(145deg,#17283d,#101c2b);border-color:#34465b;border-radius:15px}
+.metric-card:after{content:"";position:absolute;top:-38px;right:-32px;width:100px;height:100px;border-radius:50%;border:1px solid #c9a45c16;box-shadow:0 0 0 12px #c9a45c08,0 0 0 24px #c9a45c05;pointer-events:none}
+.metric-icon{width:31px;height:31px;border:1px solid #c9a45c24;border-radius:9px;background:#c9a45c12;color:#e8cc91}
+.metric-value{font-size:34px;color:#f7f5ef}
+.section-heading{margin-top:36px}
+.section-heading h2{font-size:26px}
+.podium-panel{background:radial-gradient(ellipse at 50% 0%,#27384a 0%,transparent 64%),linear-gradient(145deg,#142338,#0c1827);border-color:#3a4b60;border-radius:17px}
+.panel-caption{background:#ffffff03;padding:16px 19px}
+.podium{padding-top:28px;padding-bottom:30px;min-height:245px}
+.podium-place{padding-left:4px;padding-right:4px}
+.player-orb{width:54px;height:54px;border-color:#8292a5;background:linear-gradient(145deg,#3b5068,#17283a);font-size:20px}
+.champion{width:68px;height:68px;border:2px solid #e1bd73;background:linear-gradient(145deg,#66512d,#1d2c3b);color:#ffe4a9;box-shadow:0 0 0 5px #c9a45c16,0 8px 26px #0006}
+.first .crown{font-size:25px;text-shadow:0 0 14px #c9a45c44}
+.podium-place>b{font-size:9px;letter-spacing:1.2px}
+.podium-place>strong{font-size:24px}
+.podium-place>small{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9px;color:#a6b3c2}
+.first:after{background:linear-gradient(90deg,#6d542c,#c9a45c,#6d542c);height:3px;border-radius:4px}
+.second:after,.third:after{background:#71869c;height:2px;border-radius:4px}
+.ranking-panel{border-color:#34465b;border-radius:16px}
+.ranking-head{padding:13px 18px;background:#ffffff04;color:#94a4b6}
+.ranking-search{padding:14px 16px}
+.ranking-search input{height:42px;border-radius:10px;border:1px solid #3a4c61;background:#0a1422;padding:0 13px;color:#f4f6f9;outline:none}
+.ranking-search input:focus{border-color:#c9a45c;box-shadow:0 0 0 3px #c9a45c18}
+.ranking-row{padding:14px 18px;min-height:62px}
+.ranking-position{border-radius:9px}
+.ranking-top-1 .ranking-position{background:linear-gradient(145deg,#e8cc91,#b88c42);border-color:#e8cc91;color:#1c2734;font-weight:900}
+.ranking-top-2 .ranking-position{background:linear-gradient(145deg,#c8d2dc,#75899e);border-color:#b5c2cf;color:#172434;font-weight:900}
+.ranking-top-3 .ranking-position{background:linear-gradient(145deg,#b9855c,#704a31);border-color:#b9855c;color:#fff4e8;font-weight:900}
+.ranking-top-1{background:linear-gradient(90deg,#c9a45c12,transparent 65%)}
+.ranking-top-2,.ranking-top-3{background:#ffffff02}
+.ranking-row>strong{font-size:12px;color:#f0d9a7}
+.ranking-actions{padding:14px}
+.outline-button{border-color:#c9a45c55;color:#e8cc91;border-radius:10px}
+.recent-members-panel{border-color:#c9a45c35;background:linear-gradient(145deg,#172a3d,#0d1a29);border-radius:16px}
+.recent-members-heading>span{border-color:#c9a45c55;color:#e8cc91;background:#c9a45c12}
+@media(max-width:900px){
+  .welcome-row{align-items:flex-start;flex-direction:column;gap:14px}
+  .season-chip{align-self:flex-start}
+}
+@media(max-width:560px){
+  .welcome-row{margin-top:17px;margin-bottom:22px}
+  .welcome-row h1{font-size:38px}
+  .metrics-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .metric-card{min-height:118px;padding:13px}
+  .metric-kicker{font-size:7px;letter-spacing:.55px}
+  .metric-value{font-size:30px}
+  .podium{gap:5px;padding:24px 5% 27px;min-height:224px}
+  .player-orb{width:46px;height:46px}
+  .champion{width:58px;height:58px}
+  .podium-place>strong{font-size:21px}
+  .podium-place>small{font-size:8px}
+  .ranking-row{padding:13px 12px}
+  .ranking-search{padding:12px}
+}
