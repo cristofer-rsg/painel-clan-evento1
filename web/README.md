@@ -34,6 +34,7 @@ As credenciais de Clash of Clans permanecem nos GitHub Secrets utilizados pelos 
 ## Funcionalidades implementadas
 
 - Painel público com pódio, ranking, pesquisa por nome/tag e expansão da classificação.
+- Perfil público individual, acessado pela TAG no ranking, com pontuação mensal, detalhamento por categoria e os últimos 30 lançamentos; consulta somente leitura, restrita a jogadores ativos e com a mesma regra de elegibilidade do ranking.
 - Consulta pública de desempenho com seis metas fixas (20 guerras, 7 ligas, 24 raides, 5.000 doações, 10.000 pontos de jogos e 250.000 moedas de capital), índice de 0 a 100 e somente jogadores ativos, conforme o acesso de jogador original.
 - Visão administrativa separada e protegida, com índice proporcional ao maior resultado de cada categoria (até 100 por categoria, total máximo de 600), filtro de inativos e ordenação completa, conforme a aba administrativa original.
 - Painel dos três membros mais recentes, a partir de `clan_member_entries`.
