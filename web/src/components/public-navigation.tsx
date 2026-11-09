@@ -16,6 +16,7 @@ export default function PublicNavigation() {
     {items.map(item => {
       const active = item.href === "/history" ? pathname === "/history"
         : item.href === "/performance" ? pathname === "/performance"
+        : item.href === "/#ranking" ? pathname.startsWith("/player/")
         : item.href === "/" ? pathname === "/" : false;
       return <Link href={item.href} key={item.label} className={active ? "public-page-nav-link active" : "public-page-nav-link"} aria-current={active ? "page" : undefined}>
         <span aria-hidden="true">{item.icon}</span>{item.label}
