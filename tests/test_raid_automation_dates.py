@@ -1,4 +1,5 @@
 import os
+import sys
 import unittest
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
@@ -7,6 +8,7 @@ os.environ.setdefault("CLASH_API_TOKEN", "test-token")
 os.environ.setdefault("SUPABASE_URL", "https://example.supabase.co")
 os.environ.setdefault("SUPABASE_SECRET_KEY", "test-key")
 
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from scripts.raid_automation import legacy_stats_anchor, raid_weekend_start
 
 
