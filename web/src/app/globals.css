@@ -927,3 +927,31 @@ body{
   .metric-card:hover,.admin-tools a:hover,.performance-card:hover,
   .history-ranking article:hover,.history-events article:hover,.export-option:hover{transform:none}
 }
+
+
+/* Mobile bottom navigation: keep all five destinations on one balanced row */
+@media(max-width:900px){
+  .mobile-bottom-nav{
+    grid-template-columns:repeat(5,minmax(0,1fr));
+    align-items:stretch;
+    gap:4px;
+    padding:7px 6px;
+    min-height:74px;
+  }
+  .mobile-nav-item{
+    min-width:0;
+    min-height:58px;
+    padding:7px 2px;
+    gap:5px;
+    font-size:clamp(7px,2vw,9px);
+    letter-spacing:-.18px;
+    line-height:1.15;
+    justify-content:center;
+    text-align:center;
+  }
+  .mobile-nav-icon{
+    display:block;
+    font-size:19px;
+    line-height:1;
+  }
+}
