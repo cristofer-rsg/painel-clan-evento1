@@ -129,3 +129,63 @@ body{background:radial-gradient(ellipse at 72% -15%,rgba(178,126,45,.13),transpa
 .gh-home .gh-top-player strong{border-color:#d6a64c44;color:#f5d995}
 .gh-home .gh-top-player.place-1 strong{border-color:#f0ca7899;color:#ffdb91;background:#49331b}
 .gh-home .gh-full-ranking,.gh-home .gh-view-all{color:#f0ca78}
+
+
+/* Player profile — remove the legacy blue surfaces and keep the Black / Gold identity. */
+.player-profile-shell .player-profile-content{
+  border-color:rgba(214,166,76,.38);
+  background:linear-gradient(145deg,#292219,#17130f);
+  box-shadow:0 20px 70px #0006,inset 0 1px #ffffff0b;
+}
+.player-profile-shell .player-profile-hero{
+  border-color:rgba(214,166,76,.52);
+  background:linear-gradient(130deg,#302416,#1c1711);
+  box-shadow:inset 0 1px #ffffff0b,0 8px 24px #0004;
+}
+.player-profile-shell .player-profile-avatar{
+  border-color:#d6a64c;
+  background:linear-gradient(145deg,#59401f,#21190f);
+  color:#f5d995;
+  box-shadow:0 0 0 5px #d6a64c18,0 0 20px #d6a64c22;
+}
+.player-profile-shell .player-profile-hero h1{color:#fff7e8}
+.player-profile-shell .player-profile-hero p{color:#c1b294}
+.player-profile-shell .player-profile-status.eligible{
+  border-color:#8c7548;background:#302719;color:#e7d29f;
+}
+.player-profile-shell .player-profile-status:not(.eligible){
+  border-color:#95614d;background:#382018;color:#e9b49b;
+}
+.player-profile-shell .player-profile-total{
+  border-color:#d6a64c77;
+  background:radial-gradient(ellipse at 90% 0%,#d6a64c20,transparent 48%),linear-gradient(145deg,#302416,#17130f);
+  box-shadow:inset 0 1px #ffffff0b,0 8px 24px #0004;
+}
+.player-profile-shell .player-profile-total small{color:#d1c09d}
+.player-profile-shell .player-profile-total strong{color:#f5d995}
+.player-profile-shell .player-profile-total strong i{color:#e2c17c}
+.player-profile-shell .player-profile-total>span{color:#b7a78a}
+.player-profile-shell .player-profile-metrics article{
+  border-color:#d6a64c55;
+  background:linear-gradient(145deg,#302416,#17130f);
+  box-shadow:inset 0 1px #ffffff0b,0 6px 18px #0003;
+}
+.player-profile-shell .player-profile-metrics small{color:#c4b493}
+.player-profile-shell .player-profile-metrics b{color:#f5d995}
+.player-profile-shell .player-profile-metrics span{color:#a99a7e}
+.player-profile-shell .history-section-title h2{color:#fff7e8}
+.player-profile-shell .history-section-title>span{
+  border:1px solid #d6a64c77;background:#d6a64c12;color:#f0ca78;
+}
+.player-profile-shell .player-profile-events article{
+  border-color:#594329;background:linear-gradient(145deg,#292219,#19150f);
+  box-shadow:inset 0 1px #ffffff0b;
+}
+.player-profile-shell .player-profile-events article b{color:#fff1d2}
+.player-profile-shell .player-profile-events article small,
+.player-profile-shell .player-profile-events article p{color:#b7a78a}
+.player-profile-shell .player-profile-events article>strong{color:#f0ca78}
+.player-profile-shell .player-profile-events article>strong.negative{color:#e9a58e}
+.player-profile-shell .player-profile-penalty{color:#d9b49a}
+.player-profile-shell .player-profile-penalty b{color:#f0b49e}
+.player-profile-shell .player-profile-back{color:#e7bd69}
