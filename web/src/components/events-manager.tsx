@@ -55,8 +55,8 @@ export default function EventsManager() {
     <p>Registros do mês atual ({month}). Lançamentos manuais continuam desativados.</p>
     {message && <div className="manager-message" role="status">{message}</div>}
     {selected && <article className="event-editor"><div className="manager-player-title"><b>Editar lançamento #{selected.id}</b><button className="text-button" type="button" onClick={() => setSelected(null)}>Fechar</button></div>
-      <label>Jogador<select value={selected.player} onChange={e => change("player", e.target.value)}>{players.map(p => <option key={p.name}>{p.name}</option>)}</select></label>
-      <label>Categoria<select value={selected.category} onChange={e => change("category", e.target.value)}>{categories.map(c => <option key={c}>{c}</option>)}</select></label>
+      <label>Jogador<select value={selected.player} onChange={e => change("player", e.target.value)}>{!players.some(p => p.name === selected.player) && <option value={selected.player}>{selected.player} (fora do clã)</option>}{players.map(p => <option key={p.name} value={p.name}>{p.name}</option>)}</select></label>
+      <label>Categoria<select value={selected.category} onChange={e => change("category", e.target.value)}>{!categories.includes(selected.category) && <option value={selected.category}>{selected.category} (categoria preservada)</option>}{categories.map(c => <option key={c}>{c}</option>)}</select></label>
       <label>Descrição<input value={selected.activity || ""} maxLength={300} onChange={e => change("activity", e.target.value)} /></label>
       <label>Pontos<input type="number" min={-200} max={200} step={1} value={selected.points} onChange={e => change("points", Number(e.target.value))} /></label>
       <button className="manager-save" type="button" disabled={saving} onClick={() => void save()}>{saving ? "Salvando..." : "Salvar alterações"}</button>
@@ -64,7 +64,7 @@ export default function EventsManager() {
     {loading ? <p>Carregando lançamentos...</p> : <div className="manager-list">{events.map(event => <article className="manager-player" key={event.id}>
       <div className="manager-player-title"><b>{event.player}</b><strong>{event.points} pts</strong></div>
       <small className="player-tag">{localDate(event.created_at)} • {event.category}</small><p className="event-activity">{event.activity}</p>
-      <div className="event-actions"><button className="manager-save" type="button" onClick={() => setSelected({ ...event, player: players.some(player => player.name === event.player) ? event.player : (players[0]?.name ?? event.player), category: categories.includes(event.category) ? event.category : "Guerras" })}>Editar</button><button className="manager-delete" type="button" disabled={saving} onClick={() => void remove(event)}>Excluir</button></div>
+      <div className="event-actions"><button className="manager-save" type="button" onClick={() => setSelected({ ...event })}>Editar</button><button className="manager-delete" type="button" disabled={saving} onClick={() => void remove(event)}>Excluir</button></div>
     </article>)}{!events.length && <p>Não há lançamentos neste mês.</p>}</div>}
     <a className="back-link" href="/admin">← Voltar à administração</a>
   </section>;
