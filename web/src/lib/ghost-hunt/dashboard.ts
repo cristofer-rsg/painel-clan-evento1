@@ -110,10 +110,10 @@ export async function getDashboardData(): Promise<DashboardData> {
     const bounds = monthBounds(monthKey);
     const events = await fetchAllEvents(bounds.start, bounds.end);
     // O painel de novos membros é complementar: sua indisponibilidade não derruba o ranking.
-    const recentResult = await supabase.from("clan_member_entries")
-      .select("player_name,player_tag,first_seen_at").eq("is_baseline", false)
-      .order("first_seen_at", { ascending: false }).limit(3);
-    const recentMembers = recentResult.error ? [] : (recentResult.data ?? []) as RecentMember[];
+    const recentResult = await supabase.from("clan_member_entry_history")
+      .select("player_name,player_tag,entered_at").eq("is_baseline", false)
+      .order("entered_at", { ascending: false }).limit(3);
+    const recentMembers = recentResult.error ? [] : (recentResult.data ?? []).map((row) => ({ player_name: row.player_name, player_tag: row.player_tag, first_seen_at: row.entered_at })) as RecentMember[];
     // O ranking operacional considera somente membros atualmente ativos no clã.
     const players = ((playerData ?? []) as Player[]).filter((player) => player.active !== false);
     const totals = new Map<string, {
