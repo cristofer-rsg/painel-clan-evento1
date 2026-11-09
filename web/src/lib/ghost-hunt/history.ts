@@ -1,7 +1,7 @@
 import "server-only";
 import { createSupabaseAdmin } from "@/lib/supabase/admin";
 
-type Player = { name: string; eligible: string | null; whatsapp: string | null };
+type Player = { name: string; player_tag: string | null; eligible: string | null; whatsapp: string | null };
 type EventRow = { id: number; player: string; category: string; activity: string; points: number; created_at: string };
 export type HistoryRanking = { position: number; player: string; eligible: string; whatsapp: string; wars: number; league: number; donations: number; games: number; raid: number; penalties: number; total: number };
 export type HistoryData = { month: string; months: string[]; ranking: HistoryRanking[]; events: EventRow[]; snapshot: boolean; error?: string };
@@ -27,7 +27,7 @@ async function pages<T>(query: any): Promise<T[]> {
   }
   return result;
 }
-function calculate(players: Player[], events: EventRow[]): HistoryRanking[] {
+function calculate(players: Player[], events: EventRow[]): HistoryRanking[] {\n  const excludedLeaderTags = new Set(["#L8GV8C2Y", "#P8CCGYU0", "#QU0GC0VLU", "#9CLLGV8CC"]);\n  players = players.filter(player => !excludedLeaderTags.has((player.player_tag || "").trim().toUpperCase()));
   const totals = new Map<string, { wars: number; league: number; donated: number; games: number; raid: number; capital: number; penalties: number }>();
   for (const event of events) {
     if (!event.player) continue;
@@ -73,7 +73,7 @@ export async function getHistoryData(requestedMonth?: string): Promise<HistoryDa
       }));
       return { month, months, ranking, events, snapshot: true };
     }
-    const { data: players, error: playerError } = await db.from("players").select("name,eligible,whatsapp").order("name", { ascending: true });
+    const { data: players, error: playerError } = await db.from("players").select("name,player_tag,eligible,whatsapp").order("name", { ascending: true });
     if (playerError) throw playerError;
     return { month, months, ranking: calculate((players || []) as Player[], events), events, snapshot: false };
   } catch (error) {
@@ -109,7 +109,7 @@ export async function archivePreviousMonthIfNeeded(): Promise<boolean> {
   if (!events.length) return false;
 
   const players = await pages<Player>(db.from("players")
-    .select("name,eligible,whatsapp").order("name", { ascending: true }));
+    .select("name,player_tag,eligible,whatsapp").order("name", { ascending: true }));
   if (!players.length) return false;
 
   const ranking = calculate(players, events);
