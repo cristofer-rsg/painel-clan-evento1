@@ -1,4 +1,5 @@
 import { getHistoryData } from "@/lib/ghost-hunt/history";
+import PublicNavigation from "@/components/public-navigation";
 
 export const dynamic = "force-dynamic";
 type Props = { searchParams: Promise<{ month?: string }> };
@@ -13,6 +14,7 @@ export default async function HistoryPage({ searchParams }: Props) {
   const data = await getHistoryData(params.month);
   return <main className="admin-shell">
     <header className="admin-header"><a className="brand" href="/"><span className="brand-mark">GH</span><span className="brand-copy"><strong>GHOST <i>HUNT</i></strong><small>CLAN MANAGEMENT</small></span></a><a className="back-link" href="/">← Ranking</a></header>
+    <PublicNavigation />
     <section className="admin-content history-content">
       <span className="auth-kicker">TEMPORADAS DO CLÃ</span><h1>Histórico <em>mensal</em></h1><p>Consulte a classificação final e os lançamentos preservados no Supabase.</p>
       <form className="history-filter" action="/history" method="get"><label htmlFor="month">Mês de referência</label><select id="month" name="month" defaultValue={data.month}>{data.months.map(month => <option value={month} key={month}>{monthLabel(month)}</option>)}</select><button type="submit">Consultar</button></form>
