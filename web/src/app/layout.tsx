@@ -22,7 +22,6 @@ export const metadata: Metadata = {
     siteName: "Ghost Hunt",
     title: "Ghost Hunt | Central do Clã",
     description: "Ranking, pontuação e desempenho dos jogadores. Acompanhe a temporada e fortaleça o clã!",
-    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "Ghost Hunt — Central do Clã" }],
   },
   twitter: {
     card: "summary_large_image",
