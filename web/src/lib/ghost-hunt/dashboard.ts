@@ -117,11 +117,10 @@ export async function getDashboardData(): Promise<DashboardData> {
     // O ranking operacional considera somente membros ativos e participantes da competição.
     // Líder e co-líderes continuam cadastrados e com histórico, mas não concorrem.
     const players = ((playerData ?? []) as Player[]).filter((player) => player.active !== false);
-    const excludedFromCompetition = new Set(
-      ["LILIAS", "MK", "Chama", "General Ninja"].map((name) => name.trim().toLocaleLowerCase("pt-BR")),
-    );
+    // Excluir cargos de liderança por tag permanente: nomes podem conter caracteres decorativos.
+    const excludedLeaderTags = new Set(["#L8GV8C2Y", "#P8CCGYU0", "#QU0GC0VLU", "#9CLLGV8CC"]);
     const competitors = players.filter(
-      (player) => !excludedFromCompetition.has(player.name.trim().toLocaleLowerCase("pt-BR")),
+      (player) => !excludedLeaderTags.has((player.player_tag ?? "").trim().toUpperCase()),
     );
     const totals = new Map<string, {
       wars: number; league: number; donatedTroops: number;
