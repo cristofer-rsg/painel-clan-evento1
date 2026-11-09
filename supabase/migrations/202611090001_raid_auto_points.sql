@@ -93,9 +93,11 @@ begin
                and e.category = 'Raide de Fim de Semana'
                and (
                     e.activity like ('%RAIDE_AUTO:' || v_weekend::text || ':%')
+                    -- Compatibilidade com o identificador antigo de sábado.
+                    or e.activity like ('%RAIDE_AUTO:' || (v_weekend - 6)::text || ':%')
                     or (
                         (e.created_at at time zone 'America/Sao_Paulo')::date
-                        - ((extract(dow from (e.created_at at time zone 'America/Sao_Paulo'))::integer + 1) % 7)
+                        - ((extract(dow from (e.created_at at time zone 'America/Sao_Paulo'))::integer + 2) % 7)
                     ) = v_weekend
                )
         ) then
@@ -120,8 +122,8 @@ begin
            )
            and to_char(
                 (e.created_at at time zone 'America/Sao_Paulo')::date
-                - ((extract(dow from (e.created_at at time zone 'America/Sao_Paulo'))::integer + 1) % 7)
-                + 2,
+                - ((extract(dow from (e.created_at at time zone 'America/Sao_Paulo'))::integer + 2) % 7)
+                + 3,
                 'YYYY-MM'
            ) = v_month;
 
