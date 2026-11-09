@@ -6,6 +6,8 @@ on:
       - vercel-rebuild
     paths:
       - "web/**"
+      - "scripts/raid_points.py"
+      - "tests/test_raid_points.py"
       - ".github/workflows/web-validation.yml"
   workflow_dispatch:
 
@@ -25,6 +27,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Test raid award planning (no database access)
+        run: python -m unittest discover -s ../tests -v
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
