@@ -284,3 +284,61 @@
  .gh-podium-base{height:30px;font-size:17px}
  .gh-podium-heading h2{font-size:19px}
 }
+
+
+/* Ranking page refinements: neutral pearl player names and readable action buttons */
+.ranking-entry .ranking-player .ranking-profile-link,
+.ranking-entry .ranking-player .ranking-profile-link:visited,
+.ranking-entry .ranking-player>span>b{
+ color:#f4e6c8!important;
+ font-weight:850;
+ text-decoration:none;
+}
+.ranking-entry .ranking-player .ranking-profile-link:hover{
+ color:#ffdc96!important;
+}
+.ranking-entry .ranking-player small{color:#c6b797}
+.ranking-entry .ranking-score>strong{
+ color:#f0ca78;
+ font-size:15px;
+ font-weight:900;
+}
+.ranking-entry .ranking-details-button{
+ display:inline-flex;
+ min-height:34px;
+ min-width:104px;
+ align-items:center;
+ justify-content:center;
+ gap:8px;
+ padding:7px 12px;
+ border:1px solid #c49a58;
+ border-radius:9px;
+ background:linear-gradient(120deg,#a9782e,#e3b95f);
+ color:#1b150c;
+ font-size:12px;
+ line-height:1;
+ font-weight:900;
+ box-shadow:0 3px 10px #0005,inset 0 1px #fff5;
+}
+.ranking-entry .ranking-details-button i{
+ color:#1b150c;
+ font-size:16px;
+ font-weight:1000;
+}
+.ranking-entry .ranking-details-button:hover{
+ background:linear-gradient(120deg,#c18b3a,#f2cf7e);
+ transform:translateY(-1px);
+}
+.ranking-entry .ranking-details-button:focus-visible{
+ outline:2px solid #ffe2a0;
+ outline-offset:3px;
+}
+@media(max-width:560px){
+ .ranking-entry .ranking-row{gap:8px}
+ .ranking-entry .ranking-player{gap:9px}
+ .ranking-entry .ranking-player .ranking-profile-link{font-size:15px}
+ .ranking-entry .ranking-score>strong{font-size:14px}
+ .ranking-entry .ranking-details-button{
+  min-width:100px;min-height:36px;padding:8px 10px;font-size:12px;
+ }
+}
