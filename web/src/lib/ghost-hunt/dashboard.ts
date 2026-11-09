@@ -30,6 +30,7 @@ export type RankingRow = {
   games: number;
   raid: number;
   capitalCoins: number;
+  capitalPoints: number;
   penalties: number;
   eligible: boolean;
   eligibilityStatus: string;
@@ -154,6 +155,7 @@ export async function getDashboardData(): Promise<DashboardData> {
       };
       const donations = Math.min(50, Math.floor(bucket.donatedTroops / 100));
       const games = Math.min(25, bucket.games);
+      const capitalPoints = Math.floor(bucket.capitalCoins / 2500);
       const eligible = (player.eligible ?? "Elegível") === "Elegível"
         && (player.whatsapp ?? "Sim") === "Sim";
       const total = eligible
@@ -171,6 +173,7 @@ export async function getDashboardData(): Promise<DashboardData> {
         games,
         raid: bucket.raid,
         capitalCoins: bucket.capitalCoins,
+        capitalPoints,
         penalties: bucket.penalties,
         eligible,
         eligibilityStatus: player.eligible ?? "Elegível",
