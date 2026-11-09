@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 type RankingPlayer = {
   position: number; player: string; tag: string; total: number; eligible: boolean;
   wars: number; league: number; donations: number; games: number;
-  raid: number; capitalCoins: number; penalties: number;
+  raid: number; capitalCoins: number; capitalPoints: number; penalties: number;
 };
 function number(value: number) { return new Intl.NumberFormat("pt-BR").format(value); }
 
@@ -15,7 +15,7 @@ const categories = [
   { key: "donations", label: "Doações", suffix: "pts" },
   { key: "games", label: "Jogos", suffix: "pts" },
   { key: "raid", label: "Raide", suffix: "pts" },
-  { key: "capitalCoins", label: "Capital", suffix: "moedas" },
+  { key: "capitalPoints", label: "Capital", suffix: "pts" },
 ] as const;
 
 export default function RankingList({ players }: { players: RankingPlayer[] }) {
