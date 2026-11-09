@@ -124,6 +124,39 @@ export default async function HomePage() {
             </div> : <p className="recent-members-empty">O pódio aparecerá quando houver jogadores classificados.</p>}
           </section>
 
+          <section className="gh-rewards-banner" aria-labelledby="gh-rewards-title">
+            <div className="gh-rewards-glow" aria-hidden="true" />
+            <div className="gh-rewards-heading">
+              <span className="gh-rewards-crown" aria-hidden="true">♛</span>
+              <p className="overline">PREMIAÇÃO MENSAL</p>
+              <h2 id="gh-rewards-title">2 PASSES DE TEMPORADA</h2>
+              <p>Os dois primeiros colocados do ranking mensal recebem um passe cada!</p>
+            </div>
+            <div className="gh-rewards-prizes">
+              <div className="gh-reward-prize first"><span>🥇</span><b>1º LUGAR</b><strong>1 PASSE</strong></div>
+              <div className="gh-reward-prize second"><span>🥈</span><b>2º LUGAR</b><strong>1 PASSE</strong></div>
+            </div>
+            <div className="gh-rewards-rules">
+              <h3>REGRAS PARA RECEBER O PASSE</h3>
+              <p><span>01</span> Estar entre os dois primeiros colocados do ranking mensal.</p>
+              <p><span>02</span> Fazer parte do grupo oficial do WhatsApp do clã.</p>
+              <p><span>03</span> Adicionar o líder do clã como amigo no Clash of Clans para receber o passe.</p>
+            </div>
+            <div className="gh-rewards-actions">
+              <div className="gh-leader-profile">
+                <div className="gh-leader-qr"><img src="/leader-friend-qr.png" alt="QR Code para adicionar o líder do clã como amigo" /></div>
+                <div className="gh-leader-copy">
+                  <small>ADICIONE O LÍDER AOS AMIGOS</small>
+                  <strong>ˡⁱᵈᵉʳ░L░I░L░I░A░S</strong>
+                  <span>Escaneie o QR Code ou use o botão para abrir o perfil no jogo.</span>
+                  <a className="gh-reward-button gh-clash-button" href="https://link.clashofclans.com/?action=OpenSCID&p=84-546b40e0-6315-4ad3-a43a-34a9cac4bdfb" target="_blank" rel="noopener noreferrer">Adicionar no Clash of Clans <b>↗</b></a>
+                </div>
+              </div>
+              <a className="gh-reward-button gh-whatsapp-button" href="https://chat.whatsapp.com/L8S4ivyohzF8DQQCU0SFUI?s=cl&p=a&iam=2" target="_blank" rel="noopener noreferrer"><span>◉</span> Entrar no grupo do WhatsApp <b>↗</b></a>
+            </div>
+            <p className="gh-rewards-footnote">A participação na premiação exige estar no grupo oficial e ter o líder adicionado como amigo para viabilizar a entrega do passe.</p>
+          </section>
+
           <div className="section-heading" id="ranking-full"><div><p className="overline">TODOS OS JOGADORES</p><h2>Classificação completa</h2></div><span className="period-pill">{data.monthLabel.toUpperCase()}</span></div>
           <section className="ranking-panel">
             <div className="ranking-head"><span>JOGADOR</span><span>PONTUAÇÃO</span></div>
