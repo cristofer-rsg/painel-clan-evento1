@@ -16,7 +16,7 @@ async function fetchAllEvents() {
   const db = createSupabaseAdmin();
   for (let offset = 0; ; offset += 1000) {
     const { data, error } = await db.from("events").select("id,player,category,activity,points,created_at")
-      .order("created_at", { ascending: true }).range(offset, offset + 999);
+      .order("created_at", { ascending: false }).range(offset, offset + 999);
     if (error) throw error;
     const page = data ?? [];
     rows.push(...page);
