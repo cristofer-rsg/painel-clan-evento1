@@ -60,7 +60,7 @@ export default async function HomePage() {
           <section className="gh-v2-hero">
             <div className="gh-v2-hero-art" aria-hidden="true"><span className="gh-v2-sigil">GH</span><span className="gh-v2-orbit orbit-one" /><span className="gh-v2-orbit orbit-two" /></div>
             <div className="gh-v2-hero-copy">
-              <div className="gh-v2-eyebrow"><span className="gh-v2-live-dot" /> CENTRAL DO CLÃ <span>•</span> {data.monthLabel.toUpperCase()}</div>
+              <div className="gh-v2-eyebrow"><span className="gh-v2-live-dot" /> BEM-VINDO, CAÇADOR <span>•</span> {data.monthLabel.toUpperCase()}</div>
               <h1>FORÇA, <em>HONRA</em><br />E CONQUISTAS.</h1>
               <p>O desempenho do Ghost Hunt em um só lugar.</p>
               <a className="gh-v2-hero-link" href="/ranking">ACOMPANHAR RANKING <b>↗</b></a>
@@ -120,10 +120,9 @@ export default async function HomePage() {
                   <small>ADICIONE O LÍDER AOS AMIGOS</small>
                   <strong>ˡⁱᵈᵉʳ░L░I░L░I░A░S</strong>
                   <span>Leia o QR ou toque no botão.</span>
-                  <a className="gh-reward-button gh-clash-button" href="https://link.clashofclans.com/?action=OpenSCID&p=84-546b40e0-6315-4ad3-a43a-34a9cac4bdfb" target="_blank" rel="noopener noreferrer">Adicionar no Clash of Clans <b>↗</b></a>
+                  <div className="gh-leader-buttons"><a className="gh-reward-button gh-clash-button" href="https://link.clashofclans.com/?action=OpenSCID&p=84-546b40e0-6315-4ad3-a43a-34a9cac4bdfb" target="_blank" rel="noopener noreferrer">Adicionar aos amigos <b>↗</b></a><a className="gh-reward-button gh-whatsapp-button" href="https://chat.whatsapp.com/L8S4ivyohzF8DQQCU0SFUI?s=cl&p=a&iam=2" target="_blank" rel="noopener noreferrer"><span>◉</span> WhatsApp <b>↗</b></a></div>
                 </div>
               </div>
-              <a className="gh-reward-button gh-whatsapp-button" href="https://chat.whatsapp.com/L8S4ivyohzF8DQQCU0SFUI?s=cl&p=a&iam=2" target="_blank" rel="noopener noreferrer"><span>◉</span> Entrar no grupo do WhatsApp <b>↗</b></a>
             </div>
             <p className="gh-rewards-footnote">Válido para os dois primeiros do ranking que cumprirem as regras.</p>
           </section>
