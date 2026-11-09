@@ -2,10 +2,12 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { adminSessionCookie, isAdminSessionValid } from "@/lib/ghost-hunt/session";
 import LogoutButton from "@/components/logout-button";
+import { archivePreviousMonthIfNeeded } from "@/lib/ghost-hunt/history";
 export const dynamic = "force-dynamic";
 export default async function AdminPage() {
   const store = await cookies();
   if (!(await isAdminSessionValid(store.get(adminSessionCookie.name)?.value))) redirect("/login");
+  await archivePreviousMonthIfNeeded().catch(() => false);
   return <main className="admin-shell"><header className="admin-header">
     <a className="brand" href="/"><span className="brand-mark">GH</span><span className="brand-copy"><strong>GHOST <i>HUNT</i></strong><small>CLAN MANAGEMENT</small></span></a><LogoutButton />
   </header><section className="admin-content">
