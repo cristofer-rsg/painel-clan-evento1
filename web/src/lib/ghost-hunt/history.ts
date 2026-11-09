@@ -27,7 +27,9 @@ async function pages<T>(query: any): Promise<T[]> {
   }
   return result;
 }
-function calculate(players: Player[], events: EventRow[]): HistoryRanking[] {\n  const excludedLeaderTags = new Set(["#L8GV8C2Y", "#P8CCGYU0", "#QU0GC0VLU", "#9CLLGV8CC"]);\n  players = players.filter(player => !excludedLeaderTags.has((player.player_tag || "").trim().toUpperCase()));
+function calculate(players: Player[], events: EventRow[]): HistoryRanking[] {
+  const excludedLeaderTags = new Set(["#L8GV8C2Y", "#P8CCGYU0", "#QU0GC0VLU", "#9CLLGV8CC"]);
+  players = players.filter(player => !excludedLeaderTags.has((player.player_tag || "").trim().toUpperCase()));
   const totals = new Map<string, { wars: number; league: number; donated: number; games: number; raid: number; capital: number; penalties: number }>();
   for (const event of events) {
     if (!event.player) continue;
