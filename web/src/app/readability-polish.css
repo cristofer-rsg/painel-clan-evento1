@@ -195,3 +195,92 @@
   letter-spacing:-.7px;
  }
 }
+
+
+/* Unified typography: player names and scores follow the black/gold identity */
+.gh-home .ranking-profile-link,
+.gh-home .ranking-player>span>b,
+.gh-home .ranking-player .ranking-profile-link:visited{
+ color:#f4e6c8!important;
+ text-decoration:none;
+}
+.gh-home .ranking-profile-link:hover{color:#ffdc96!important}
+.gh-home .ranking-player small{color:#c6b797}
+.gh-home .gh-metric .metric-value,
+.gh-home .gh-metric.gold .metric-value,
+.gh-home .gh-metric.copper .metric-value{
+ color:#f5d995;
+}
+
+/* Live podium driven by the first three Supabase ranking entries */
+.gh-podium-section{
+ margin:22px 0 24px;
+ padding:18px 15px 16px;
+ border:1px solid #8a6939;
+ border-radius:19px;
+ background:radial-gradient(ellipse at 50% 0%,#76501e35,transparent 58%),linear-gradient(145deg,#211a11,#100e0b);
+ box-shadow:inset 0 1px #ffffff12,0 12px 30px #0006;
+}
+.gh-podium-heading{
+ display:flex;align-items:center;justify-content:center;gap:13px;
+ margin:0 0 18px;color:#f5d995;text-align:center;
+}
+.gh-podium-heading>span{font-size:24px;filter:drop-shadow(0 0 9px #d6a64c66)}
+.gh-podium-heading .overline{margin:0 0 3px;color:#c9b58f;font-size:9px;letter-spacing:1.8px}
+.gh-podium-heading h2{margin:0;color:#fff4dd;font-size:22px;font-weight:900;letter-spacing:.3px}
+.gh-podium{
+ display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:end;gap:9px;
+ max-width:760px;margin:0 auto;
+}
+.gh-podium-card{
+ min-width:0;position:relative;display:flex;flex-direction:column;align-items:center;
+ justify-content:flex-end;text-align:center;padding:10px 5px 0;
+ color:#fff5e1;text-decoration:none;border:1px solid #68502e;border-radius:14px 14px 8px 8px;
+ background:linear-gradient(180deg,#302415,#17120d 72%);
+ box-shadow:inset 0 1px #ffffff14,0 8px 17px #0005;
+}
+.gh-podium-card.podium-1{
+ min-height:195px;border-color:#edbd5d;
+ background:radial-gradient(ellipse at 50% 10%,#d6a64c38,transparent 60%),linear-gradient(180deg,#49351a,#21170c 75%);
+ box-shadow:0 0 22px #d6a64c27,inset 0 1px #fff4;
+}
+.gh-podium-card.podium-2{min-height:164px;border-color:#9c9a91}
+.gh-podium-card.podium-3{min-height:148px;border-color:#a66d43}
+.gh-podium-medal{font-size:25px;line-height:1.1;margin-bottom:5px}
+.gh-podium-avatar{
+ display:grid;place-items:center;width:48px;height:48px;margin-bottom:7px;
+ border:2px solid #d6a64c;border-radius:50%;
+ background:linear-gradient(145deg,#65471f,#1d160d);
+ color:#ffe4a6;font-size:22px;font-weight:900;
+ box-shadow:0 0 14px #d6a64c35;
+}
+.podium-1 .gh-podium-avatar{width:58px;height:58px;border-color:#f4cd7b;font-size:26px}
+.podium-2 .gh-podium-avatar{border-color:#c5c2b9}
+.podium-3 .gh-podium-avatar{border-color:#c18a5b}
+.gh-podium-name{
+ display:block;max-width:100%;overflow:hidden;color:#fff4df;font-size:clamp(10px,2vw,14px);
+ font-weight:900;text-overflow:ellipsis;white-space:nowrap;
+}
+.gh-podium-card>strong{margin:5px 0 10px;color:#ffdc91;font-size:clamp(12px,2.2vw,17px);font-weight:900;white-space:nowrap}
+.gh-podium-base{
+ display:grid;place-items:center;width:calc(100% + 10px);height:35px;margin-top:auto;
+ border-top:1px solid #9c783f;background:linear-gradient(180deg,#63491f,#2a1e0e);
+ color:#ffe3a0;font-size:19px;font-weight:1000;
+}
+.podium-2 .gh-podium-base{background:linear-gradient(180deg,#77766e,#35342f);color:#fff}
+.podium-3 .gh-podium-base{background:linear-gradient(180deg,#885333,#3c2417);color:#ffe1c3}
+@media(max-width:560px){
+ .gh-podium-section{padding:15px 9px 12px;margin:17px 0 20px}
+ .gh-podium{gap:6px}
+ .gh-podium-card{padding:8px 3px 0;border-radius:12px 12px 7px 7px}
+ .gh-podium-card.podium-1{min-height:174px}
+ .gh-podium-card.podium-2{min-height:151px}
+ .gh-podium-card.podium-3{min-height:137px}
+ .gh-podium-medal{font-size:21px}
+ .gh-podium-avatar{width:40px;height:40px;font-size:18px}
+ .podium-1 .gh-podium-avatar{width:49px;height:49px;font-size:22px}
+ .gh-podium-name{font-size:10px}
+ .gh-podium-card>strong{font-size:12px}
+ .gh-podium-base{height:30px;font-size:17px}
+ .gh-podium-heading h2{font-size:19px}
+}
