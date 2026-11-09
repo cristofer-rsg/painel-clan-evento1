@@ -413,3 +413,31 @@
  .gh-home-v2 .gh-leader-buttons .gh-whatsapp-button{min-height:27px;padding:5px 8px;font-size:7px}
  .gh-home-v2 .gh-leader-buttons .gh-whatsapp-button span{font-size:10px}
 }
+
+/* Welcome headline and full-width, better-framed monthly rewards panel */
+.gh-home-v2 .gh-v2-hero-copy h1{max-width:570px;letter-spacing:.4px}
+.gh-home-v2 .gh-rewards-banner{width:100%;box-sizing:border-box;overflow:hidden}
+.gh-home-v2 .gh-rewards-actions{display:block;width:100%;max-width:none;box-sizing:border-box}
+.gh-home-v2 .gh-leader-profile{display:grid;grid-template-columns:64px minmax(0,1fr);align-items:center;width:100%;max-width:none;min-width:0;box-sizing:border-box}
+.gh-home-v2 .gh-leader-qr{width:64px;max-width:64px;min-width:0;box-sizing:border-box}
+.gh-home-v2 .gh-leader-qr img{display:block;width:100%;height:auto;aspect-ratio:1;object-fit:contain}
+.gh-home-v2 .gh-leader-copy{display:flex;flex-direction:column;align-items:stretch;width:100%;min-width:0;max-width:none}
+.gh-home-v2 .gh-leader-buttons{display:flex;width:100%;min-width:0;flex-wrap:nowrap;align-items:stretch;gap:6px}
+.gh-home-v2 .gh-leader-buttons .gh-reward-button{flex:1 1 0;min-width:0;white-space:nowrap;text-align:center}
+.gh-home-v2 .gh-rewards-rules,.gh-home-v2 .gh-rewards-prizes{width:100%;box-sizing:border-box}
+@media(max-width:640px){
+ .gh-home-v2 .gh-v2-hero-copy h1{font-size:38px;line-height:.94;max-width:275px}
+ .gh-home-v2 .gh-rewards-banner{padding:10px 9px;margin-left:0;margin-right:0}
+ .gh-home-v2 .gh-rewards-heading h2{font-size:20px}
+ .gh-home-v2 .gh-rewards-prizes{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .gh-home-v2 .gh-rewards-rules{padding:8px 9px}
+ .gh-home-v2 .gh-rewards-actions{margin-top:7px}
+ .gh-home-v2 .gh-leader-profile{grid-template-columns:58px minmax(0,1fr);gap:7px;padding:7px}
+ .gh-home-v2 .gh-leader-qr{width:58px;max-width:58px}
+ .gh-home-v2 .gh-leader-copy small{font-size:5.5px;letter-spacing:.25px}
+ .gh-home-v2 .gh-leader-copy strong{font-size:8px;white-space:nowrap}
+ .gh-home-v2 .gh-leader-copy>span{font-size:6px}
+ .gh-home-v2 .gh-leader-buttons{gap:5px}
+ .gh-home-v2 .gh-leader-buttons .gh-reward-button{min-height:28px;padding:5px 4px;font-size:6.5px;gap:3px}
+ .gh-home-v2 .gh-leader-buttons .gh-whatsapp-button{font-size:7px}
+}
