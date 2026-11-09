@@ -131,5 +131,18 @@ class RaidPointPlanTests(unittest.TestCase):
         self.assertEqual(plan["actions"], [])
 
 
+    def test_duplicate_rows_for_same_player_schedule_only_one_insert(self):
+        duplicate_preview = {
+            **PREVIEW,
+            "rows": [PREVIEW["rows"][0], dict(PREVIEW["rows"][0])],
+        }
+        plan = build_raid_event_plan(duplicate_preview, PLAYERS, [])
+        self.assertEqual(
+            [action["action"] for action in plan["actions"]],
+            ["insert", "skip"],
+        )
+        self.assertEqual(plan["actions"][1]["reason"], "already_awarded")
+
+
 if __name__ == "__main__":
     unittest.main()
