@@ -1,4 +1,5 @@
 import { getPerformanceData } from "@/lib/ghost-hunt/performance";
+import PublicNavigation from "@/components/public-navigation";
 
 export const dynamic = "force-dynamic";
 type Props = { searchParams: Promise<{ month?: string; q?: string }> };
@@ -31,6 +32,7 @@ export default async function PerformancePage({ searchParams }: Props) {
   }));
   return <main className="admin-shell">
     <header className="admin-header"><a className="brand" href="/"><span className="brand-mark">GH</span><span className="brand-copy"><strong>GHOST <i>HUNT</i></strong><small>CLAN MANAGEMENT</small></span></a><a className="back-link" href="/">← Ranking</a></header>
+    <PublicNavigation />
     <section className="admin-content performance-content">
       <span className="auth-kicker">CONSULTA PÚBLICA • INDICADORES DO CLÃ</span><h1>Desempenho <em>mensal</em></h1>
       <p>Índice de Atividade Ghost Hunt: seis metas fixas, com pontuação equilibrada de 0 a 100. Apenas integrantes ativos aparecem nesta consulta.</p>
