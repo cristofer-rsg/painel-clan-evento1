@@ -57,7 +57,7 @@ def build_raid_event_plan(preview, players_data, month_events):
         for player in (players_data or [])
         if player.get("name") and player.get("active", True) is not False
     }
-    known_events = list(month_events or [])
+    known_events = [dict(event) for event in (month_events or [])]
 
     def same_player_weekend(event, player_name):
         if _name_key(event.get("player")) != _name_key(player_name):
