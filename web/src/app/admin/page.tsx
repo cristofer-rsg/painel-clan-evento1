@@ -14,6 +14,7 @@ export default async function AdminPage() {
     <div className="admin-tools">
       <a href="/admin/players"><span>♟</span><b>Gerenciar jogadores</b><small>Cadastro, elegibilidade e WhatsApp</small><i>→</i></a>
       <a href="/admin/events"><span>✎</span><b>Editar lançamentos</b><small>Corrigir ou excluir registros do mês</small><i>→</i></a>
+      <a href="/admin/performance"><span>◈</span><b>Desempenho administrativo</b><small>Índice dinâmico, inativos e ordenação completa</small><i>→</i></a>
       <a href="/api/admin/export?format=xlsx"><span>▦</span><b>Exportar Excel</b><small>Ranking mensal e histórico completo</small><i>↓</i></a>
       <a href="/api/admin/export?format=csv"><span>▤</span><b>Exportar CSV</b><small>Ranking mensal em planilha simples</small><i>↓</i></a>
     </div>
