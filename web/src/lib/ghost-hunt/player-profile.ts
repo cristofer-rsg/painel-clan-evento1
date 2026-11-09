@@ -5,6 +5,7 @@ type PlayerRow = {
   name: string;
   player_tag: string;
   eligible: string | null;
+  whatsapp: string | null;
   active: boolean | null;
 };
 type EventRow = {
@@ -53,7 +54,7 @@ function monthBounds(key: string) {
 export async function getPlayerProfile(tag: string): Promise<PlayerProfile | null> {
   const db = createSupabaseAdmin();
   const { data: playerData, error: playerError } = await db.from("players")
-    .select("name,player_tag,eligible,active")
+    .select("name,player_tag,eligible,whatsapp,active")
     .eq("player_tag", tag).maybeSingle();
   if (playerError) throw new Error("Não foi possível consultar o jogador.");
   if (!playerData) return null;
@@ -85,13 +86,13 @@ export async function getPlayerProfile(tag: string): Promise<PlayerProfile | nul
   }
   const donations = Math.min(50, Math.floor(donatedTroops / 100));
   games = Math.min(25, games);
-  const eligible = (player.eligible || "Elegível") === "Elegível";
+  const eligible = (player.eligible || "Elegível") === "Elegível" && (player.whatsapp || "Sim") === "Sim";
   const total = eligible ? Math.max(0, wars + league + donations + games + raid + Math.floor(capitalCoins / 2500) - penalties) : 0;
   const monthLabel = new Intl.DateTimeFormat("pt-BR", {
     month: "long", year: "numeric", timeZone: "America/Sao_Paulo",
   }).format(new Date(monthKey + "-15T12:00:00-03:00"));
   return {
-    name: player.name, tag: player.player_tag, eligible, eligibilityLabel: player.eligible || "Elegível",
+    name: player.name, tag: player.player_tag, eligible, eligibilityLabel: eligible ? "Elegível" : "Não elegível",
     monthKey, monthLabel: monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1),
     total, wars, league, donations, games, raid, capitalCoins, penalties, recentEvents,
   };
