@@ -74,12 +74,28 @@ def main():
         db.table("players").select("name,player_tag,active").execute().data or []
     )
 
-    # Fotografia anterior: necessária para detectar entrada e reentrada.
-    tags_ativas_antes = {
-        jogador["player_tag"].strip().upper()
-        for jogador in cadastrados
-        if jogador.get("active") is not False and jogador.get("player_tag")
-    }
+    # A fotografia do último sync vem de uma tabela própria, não do campo
+    # players.active, que também pode ser alterado manualmente pelo painel.
+    estado = (
+        db.table("clan_sync_state")
+        .select("member_tags")
+        .eq("id", "current_roster")
+        .limit(1)
+        .execute()
+        .data or []
+    )
+    if estado:
+        tags_anteriores = {str(tag).strip().upper() for tag in (estado[0].get("member_tags") or [])}
+        primeira_fotografia = False
+    else:
+        # Primeira execução: usa os ativos cadastrados apenas como baseline,
+        # sem gerar falsos positivos para todos os membros.
+        tags_anteriores = {
+            jogador["player_tag"].strip().upper()
+            for jogador in cadastrados
+            if jogador.get("active") is not False and jogador.get("player_tag")
+        }
+        primeira_fotografia = True
 
     por_tag = {}
     por_nome_sem_tag = {}
@@ -97,9 +113,9 @@ def main():
                 raise RuntimeError(f"Nome duplicado sem tag: {nome}. Banco não alterado.")
             por_nome_sem_tag[chave_nome] = jogador
 
-    entradas_detectadas = [
+    entradas_detectadas = [] if primeira_fotografia else [
         membro for membro in membros_api
-        if membro["player_tag"] not in tags_ativas_antes
+        if membro["player_tag"] not in tags_anteriores
     ]
 
     # Mantém registros e lançamentos históricos; apenas altera o estado atual.
@@ -149,7 +165,17 @@ def main():
         }).execute()
         historico_inseridos += 1
 
+    # Atualiza a fotografia somente depois de concluir o processamento.
+    # Isso permite detectar saídas e retornos mesmo se players.active foi
+    # alterado manualmente entre sincronizações.
+    db.table("clan_sync_state").upsert({
+        "id": "current_roster",
+        "member_tags": [membro["player_tag"] for membro in membros_api],
+        "synced_at": "now()",
+    }, on_conflict="id").execute()
+
     print(f"Membros retornados pela API: {len(membros_api)}")
+    print(f"Primeira fotografia do roster: {'sim' if primeira_fotografia else 'não'}")
     print(f"Cadastros atualizados: {atualizados}")
     print(f"Jogadores reativados: {reativados}")
     print(f"Novos jogadores cadastrados: {novos}")
