@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import "./home-community.css";
+import "./gold-theme.css";
 import BottomNavigation from "@/components/bottom-navigation";
 
 export const metadata: Metadata = {
@@ -13,7 +14,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#080f1c",
+  themeColor: "#100f0d",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
