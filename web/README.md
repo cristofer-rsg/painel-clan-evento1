@@ -57,6 +57,7 @@ O arquivo raiz `supabase_schema.sql` não representa mais o schema completo usad
 
 ## Validações ainda pendentes
 
+- Portar a concessão automática dos pontos do Raide para uma rotina independente: o workflow `raid-auto.yml` atualiza `raid_attacks`, mas a inserção/atualização dos eventos `RAIDE_AUTO:` ainda é executada pelo `app.py` quando o administrador abre o Streamlit.
 - Teste ponta a ponta com as variáveis reais do Supabase em um ambiente Preview (não substituído pelo CI).
 - Comparação visual e de dados com o Streamlit original, incluindo meses arquivados, jogadores inativos e exportações.
 - Teste funcional de login, expiração/logout, gestão de jogadores e edição/exclusão de lançamentos.
