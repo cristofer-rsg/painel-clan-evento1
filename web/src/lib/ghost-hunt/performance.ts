@@ -84,13 +84,15 @@ export async function getPerformanceData(requestedMonth?: string): Promise<Perfo
         capital: capitalValue, active: player.active !== false, index: 0, position: 0,
       };
     });
+    // O resumo original soma todos os jogadores cadastrados, mesmo quando
+    // a lista do ranking está filtrada para exibir apenas os ativos.
     const totals = {
-      wars: rows.filter(row => row.active).reduce((sum, row) => sum + row.wars, 0),
-      league: rows.filter(row => row.active).reduce((sum, row) => sum + row.league, 0),
-      raid: rows.filter(row => row.active).reduce((sum, row) => sum + row.raid, 0),
-      donations: rows.filter(row => row.active).reduce((sum, row) => sum + row.donations, 0),
-      games: rows.filter(row => row.active).reduce((sum, row) => sum + row.games, 0),
-      capital: rows.filter(row => row.active).reduce((sum, row) => sum + row.capital, 0),
+      wars: rows.reduce((sum, row) => sum + row.wars, 0),
+      league: rows.reduce((sum, row) => sum + row.league, 0),
+      raid: rows.reduce((sum, row) => sum + row.raid, 0),
+      donations: rows.reduce((sum, row) => sum + row.donations, 0),
+      games: rows.reduce((sum, row) => sum + row.games, 0),
+      capital: rows.reduce((sum, row) => sum + row.capital, 0),
     };
     return { monthKey, monthLabel: label(monthKey), months, rows, totals, connected: true };
   } catch (error) {
