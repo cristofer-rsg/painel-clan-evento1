@@ -527,3 +527,38 @@ body{background:radial-gradient(ellipse at 78% -18%,rgba(201,164,92,.075),transp
  .ranking-breakdown-grid>span{padding:8px}
 }
 @media(prefers-reduced-motion:reduce){.ranking-entry .ranking-row{transition:none}}
+
+
+/* Individual player profile */
+.ranking-profile-link{color:#f0d9a7;font-weight:800;text-decoration:none}
+.ranking-profile-link:hover{color:#ffe7ad;text-decoration:underline;text-underline-offset:3px}
+.ranking-details-button{display:inline-flex;align-items:center;gap:5px;padding:4px 0;border:0;background:transparent;color:#8194aa;font-size:8px;font-weight:800;cursor:pointer}
+.ranking-details-button i{font-style:normal;color:#e8cc91;font-size:12px}
+.player-profile-content{max-width:900px}
+.player-profile-hero{display:flex;align-items:center;gap:16px;margin:22px 0 20px;padding:20px;border:1px solid #3b5068;border-radius:16px;background:linear-gradient(130deg,#1a2d43,#0e1a29)}
+.player-profile-avatar{display:grid;place-items:center;flex:0 0 62px;height:62px;border:2px solid #c9a45c;border-radius:50%;background:linear-gradient(145deg,#5c4a2d,#17283a);color:#f5dca4;font:800 26px 'Barlow Condensed';box-shadow:0 0 0 5px #c9a45c12}
+.player-profile-hero h1{margin:0;font-size:clamp(27px,5vw,38px);overflow-wrap:anywhere}
+.player-profile-hero p{margin:5px 0 8px;color:#9eafc2;font-size:11px}
+.player-profile-status{display:inline-flex;padding:5px 8px;border:1px solid #a36b5c55;border-radius:30px;background:#8e49301c;color:#e2a58f;font-size:8px;font-weight:900;letter-spacing:.7px}
+.player-profile-status.eligible{border-color:#5b956d55;background:#2b6c3a20;color:#9fd2a9}
+.player-profile-total{display:grid;gap:5px;padding:20px;border:1px solid #c9a45c55;border-radius:15px;background:radial-gradient(ellipse at 90% 0%,#c9a45c16,transparent 48%),linear-gradient(145deg,#192b3d,#0d1928)}
+.player-profile-total small{color:#b4c1d0;font-size:9px;font-weight:900;letter-spacing:1.2px}
+.player-profile-total strong{font:800 38px 'Barlow Condensed';color:#f3d99e}
+.player-profile-total strong i{font:700 13px Inter,sans-serif;font-style:normal;color:#b9a477}
+.player-profile-total>span{color:#91a2b6;font-size:10px}
+.player-profile-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.player-profile-metrics article{display:grid;gap:5px;padding:14px;border:1px solid #34465b;border-radius:12px;background:linear-gradient(145deg,#17283d,#101c2b)}
+.player-profile-metrics small{color:#a2b1c2;font-size:9px}
+.player-profile-metrics b{font:800 24px 'Barlow Condensed';color:#f0d9a7}
+.player-profile-metrics span{color:#73869e;font-size:8px}
+.player-profile-penalty{margin:12px 0 0;color:#d6a18b;font-size:10px}
+.player-profile-penalty b{color:#f0b49e}
+.player-profile-events article>strong.negative{color:#f0a38d}
+.player-profile-back{display:inline-block;margin-top:20px}
+@media(max-width:600px){
+ .player-profile-hero{padding:15px;gap:12px}
+ .player-profile-avatar{flex-basis:53px;height:53px;font-size:23px}
+ .player-profile-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .player-profile-metrics article{padding:12px}
+ .player-profile-total{padding:17px}
+}
