@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import "./home-community.css";
 import "./gold-theme.css";
+import "./readability-polish.css";
 import BottomNavigation from "@/components/bottom-navigation";
 
 export const metadata: Metadata = {
