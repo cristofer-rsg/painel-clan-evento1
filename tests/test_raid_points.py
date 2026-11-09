@@ -63,7 +63,8 @@ class RaidPointPlanTests(unittest.TestCase):
         }
         second = {**first, "id": 32}
         plan = build_raid_event_plan(PREVIEW, PLAYERS, [first, second])
-        self.assertEqual([a["action"] for a in plan["actions"]], ["update", "delete"])
+        self.assertEqual([a["action"] for a in plan["actions"]], ["skip", "delete"])
+        self.assertEqual(plan["actions"][0]["reason"], "already_awarded")
         self.assertEqual(plan["actions"][1]["id"], 32)
 
     def test_inactive_player_is_unmatched(self):
