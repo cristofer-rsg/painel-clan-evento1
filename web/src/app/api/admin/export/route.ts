@@ -8,7 +8,13 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 function csvCell(value: unknown) {
-  const text = String(value ?? "");
+  const raw = String(value ?? "");
+  // Evita que nomes controlados por jogadores sejam interpretados como fórmulas
+  // ao abrir o CSV em Excel ou aplicativos semelhantes. Valores numéricos
+  // (inclusive penalidades negativas) permanecem inalterados.
+  const text = typeof value === "string" && /^[\u0000-\u0020]*[=+\-@]/.test(raw)
+    ? "'" + raw
+    : raw;
   return '"' + text.replace(/"/g, '""') + '"';
 }
 async function fetchAllEvents() {
