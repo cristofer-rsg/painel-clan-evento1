@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import BottomNavigation from "@/components/bottom-navigation";
 
 export const metadata: Metadata = {
   title: "Ghost Hunt | Central do Clã",
@@ -11,13 +12,13 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#081426",
+  themeColor: "#080f1c",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="pt-BR">
-      <body>{children}</body>
+      <body>{children}<BottomNavigation /></body>
     </html>
   );
 }
