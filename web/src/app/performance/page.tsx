@@ -43,6 +43,7 @@ export default async function PerformancePage({ searchParams }: Props) {
       <div className="performance-totals">{totals.map(metric => <article key={metric.key}><small>{metric.label}</small><b>{fmt(metric.value)}</b><span>{metric.unit}</span></article>)}</div>
       <div className="performance-list"><p className="performance-result-count">{visibleRows.length} de {rankedRows.length} jogador(es)</p>{visibleRows.map(row => <article className="performance-card" key={row.player}>
         <div className="performance-card-head"><b><span>#{row.position}</span>{row.player}</b><strong>{row.index.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} <small>/ 100</small></strong></div>
+        <div className="performance-progress" role="img" aria-label={`Meta geral: ${row.index.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`}><span style={{ width: `${Math.min(row.index, 100)}%` }} /></div>
         <div className="performance-card-grid">
           <span>Guerras <b>{fmt(row.wars)}</b></span><span>Liga <b>{fmt(row.league)}</b></span><span>Raide <b>{fmt(row.raid)}</b></span>
           <span>Doações <b>{fmt(row.donations)}</b></span><span>Jogos <b>{fmt(row.games)}</b></span><span>Capital <b>{fmt(row.capital)}</b></span>
