@@ -138,3 +138,49 @@ button{font:inherit}
 .recent-members-list article>strong{border:1px solid #28784a;border-radius:16px;padding:4px 8px;color:#9cf0b1;font-size:9px}
 .recent-members-empty{margin:0;padding:15px;border:1px dashed #35516c;border-radius:12px;color:#aebed2;font-size:13px}
 @media(max-width:600px){.recent-members-panel{padding:13px;margin:18px 0 24px}.recent-members-list article{gap:7px;padding:9px}.recent-members-list article time{font-size:10px;white-space:normal;text-align:right}.recent-members-list article>strong{font-size:8px;padding:4px 6px}}
+
+/* Ghost Hunt Premium refresh — subtle gold, deeper navy, refined surfaces */
+:root{
+  --bg:#080f1c;--panel:#101d2d;--panel2:#14243a;--line:#26384d;--muted:#91a0b3;
+  --text:#f4f6f9;--gold:#c9a45c;--gold2:#e8cc91;--blue:#6484a8;
+}
+html,body{background-color:var(--bg)}
+body{background:radial-gradient(ellipse at 78% -18%,rgba(201,164,92,.075),transparent 38%),radial-gradient(ellipse at 8% 10%,rgba(53,84,119,.12),transparent 32%),var(--bg)}
+.topbar{background:rgba(8,15,28,.94);border-bottom-color:rgba(201,164,92,.16)}
+.brand-mark{position:relative;border-color:#b18d4d;border-radius:12px;background:linear-gradient(145deg,#263b52,#101c2b);color:#f1d9a6;box-shadow:inset 0 1px 0 #ffffff18,0 5px 18px #0003;font-size:14px;letter-spacing:0}
+.brand-mark:after{content:"";position:absolute;inset:4px;border:1px solid #d7b87955;border-radius:8px;pointer-events:none}
+.brand-copy strong{letter-spacing:2.2px}
+.nav-item{border-radius:10px}
+.nav-item.active{background:linear-gradient(100deg,#26364a,#17283b);border-color:#c9a45c35}
+.metric-card,.podium-panel,.ranking-panel{background:linear-gradient(145deg,#142338,#0e1a29);border-color:#2b3e54;box-shadow:0 10px 30px #00000018}
+.metric-card{border-radius:13px}
+.metric-icon{background:#c9a45c16;color:#e8cc91}
+.metric-value{letter-spacing:.2px}
+.podium-panel,.ranking-panel{border-radius:14px}
+.podium-place .champion{box-shadow:0 0 0 4px #c9a45c12,0 8px 22px #0004}
+.ranking-row{transition:background .18s ease}
+.ranking-row:hover{background:#ffffff05}
+.ranking-position{border-color:#3b4d61;background:#17283b}
+.ranking-row>strong{color:#e8cc91}
+.period-pill{border-color:#c9a45c45;background:#c9a45c0b}
+.season-chip{border-color:#c9a45c35;background:#c9a45c0a}
+.auth-card,.admin-content{background:linear-gradient(150deg,#142338,#0d1928);border-color:#2b3e54;box-shadow:0 18px 55px #0004}
+.auth-card input{background:#0a1422;border-color:#3a4c61}
+.auth-card form button,.logout-button{background:linear-gradient(115deg,#c9a45c,#e7cb91);border-color:#d7b879;color:#1b2531}
+.admin-tools a{border-radius:12px}
+.mobile-bottom-nav{display:none}
+@media(max-width:900px){
+  .content{padding-bottom:calc(94px + env(safe-area-inset-bottom))}
+  .mobile-bottom-nav{position:fixed;z-index:20;left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:3px;padding:8px 6px;border:1px solid #b9965a3d;border-radius:17px;background:rgba(12,22,35,.94);backdrop-filter:blur(18px);box-shadow:0 12px 35px #0008,inset 0 1px 0 #ffffff0a}
+  .mobile-nav-item{min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:5px 2px;border-radius:11px;color:#8f9eb0;font-size:9px;font-weight:700;letter-spacing:.1px;white-space:nowrap}
+  .mobile-nav-icon{font-size:19px;line-height:1;color:#aab7c6}
+  .mobile-nav-item.active{color:#f0d9a7;background:#c9a45c12}
+  .mobile-nav-item.active .mobile-nav-icon{color:#e8cc91}
+}
+@media(max-width:560px){
+  .topbar{box-shadow:0 5px 20px #0002}
+  .content{padding-bottom:calc(100px + env(safe-area-inset-bottom))}
+  .metrics-grid{gap:10px}.metric-card{border-radius:12px}.podium{padding-left:4%;padding-right:4%}
+  .mobile-bottom-nav{left:10px;right:10px;bottom:calc(8px + env(safe-area-inset-bottom))}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
