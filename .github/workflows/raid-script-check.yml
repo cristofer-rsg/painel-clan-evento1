@@ -1,0 +1,27 @@
+name: Validar automação do Raide
+
+on:
+  pull_request:
+    paths:
+      - "scripts/raid_automation.py"
+      - "tests/test_raid_automation_dates.py"
+      - "supabase/migrations/**"
+      - ".github/workflows/raid-script-check.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Instalar dependência
+        run: python -m pip install requests
+      - name: Verificar sintaxe
+        run: python -m py_compile scripts/raid_automation.py tests/test_raid_automation_dates.py
+      - name: Testar identificação do fim de semana
+        run: python tests/test_raid_automation_dates.py
