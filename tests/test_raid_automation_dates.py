@@ -1,7 +1,7 @@
 import os
 import sys
 import unittest
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 os.environ.setdefault("CLASH_API_TOKEN", "test-token")
@@ -27,7 +27,7 @@ class RaidWeekendDateTests(unittest.TestCase):
 
     def test_month_competence_uses_monday_closing_date(self):
         anchor = raid_weekend_start(date(2026, 10, 30))
-        closing_date = anchor.fromordinal(anchor.toordinal() + 3)
+        closing_date = anchor + timedelta(days=3)
         self.assertEqual(anchor, date(2026, 10, 30))
         self.assertEqual(closing_date.strftime("%Y-%m"), "2026-11")
 
