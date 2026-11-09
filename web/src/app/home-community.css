@@ -155,3 +155,67 @@
  .gh-leader-copy>span{font-size:8px}
  .gh-whatsapp-button{min-height:48px}
 }
+
+
+/* Compact warm-gold reward banner — removes the blue/cyan palette */
+.gh-rewards-banner{
+  margin:16px 0 20px;padding:17px 19px;
+  border-color:rgba(207,164,91,.48);
+  background:radial-gradient(ellipse at 50% 0%,rgba(194,146,66,.12),transparent 52%),linear-gradient(145deg,#211d17 0%,#11100e 58%,#1b1711 100%);
+  box-shadow:0 12px 28px rgba(0,0,0,.25),inset 0 1px rgba(255,255,255,.06)
+}
+.gh-rewards-glow{background:rgba(207,164,91,.09)}
+.gh-rewards-heading{max-width:620px}
+.gh-rewards-crown{display:none}
+.gh-rewards-heading .overline{margin:0 0 3px;color:#d6ad68;font-size:9px}
+.gh-rewards-heading h2{font-size:clamp(22px,3vw,29px);color:#f4dfb7}
+.gh-rewards-heading>p:last-child{margin:3px 0 0;color:#bdb3a2;font-size:10px}
+.gh-rewards-prizes{max-width:520px;gap:9px;margin:12px auto}
+.gh-reward-prize{grid-template-columns:29px 1fr;column-gap:7px;padding:9px 12px;border-color:rgba(207,164,91,.35);background:linear-gradient(130deg,rgba(104,75,35,.28),rgba(27,24,19,.9))}
+.gh-reward-prize.second{border-color:rgba(174,163,142,.25);background:linear-gradient(130deg,rgba(75,69,57,.28),rgba(27,24,19,.9))}
+.gh-reward-prize>span{font-size:21px}
+.gh-reward-prize>b{font-size:9px;color:#e8dcc7}
+.gh-reward-prize>strong{margin-top:1px;color:#e2b96f;font-size:11px}
+.gh-reward-prize.second>strong{color:#d4c9b8}
+.gh-rewards-rules{max-width:760px;margin:10px auto 0;padding:10px 13px;border-color:rgba(207,164,91,.22);border-radius:11px;background:rgba(8,8,7,.42)}
+.gh-rewards-rules h3{margin:0 0 5px;color:#dfbd7d;font-size:10px}
+.gh-rewards-rules p{gap:7px;margin:4px 0;color:#d5cdbf;font-size:9px;line-height:1.4}
+.gh-rewards-rules p span{flex-basis:18px;color:#d6ad68;font-size:10px}
+.gh-rewards-actions{grid-template-columns:minmax(0,1fr) 220px;gap:9px;max-width:760px;margin:10px auto 0}
+.gh-leader-profile{gap:10px;padding:9px;border-color:rgba(207,164,91,.22);border-radius:11px;background:rgba(8,8,7,.45)}
+.gh-leader-qr{flex-basis:70px;padding:4px;border-radius:7px}
+.gh-leader-qr img{width:62px;height:62px}
+.gh-leader-copy{gap:3px}
+.gh-leader-copy small{color:#b8a47f;font-size:7px}
+.gh-leader-copy strong{color:#f0d49b;font-size:11px}
+.gh-leader-copy>span{color:#b9b0a1;font-size:8px}
+.gh-reward-button{min-height:32px;padding:7px 10px;border-radius:8px;font-size:9px}
+.gh-clash-button{margin-top:2px;border-color:rgba(226,185,111,.55);background:linear-gradient(110deg,#a77a35,#76521f);box-shadow:0 5px 12px rgba(117,82,31,.16)}
+.gh-whatsapp-button{min-height:100%;border-color:rgba(80,164,105,.38);background:linear-gradient(120deg,#17633f,#10482f);box-shadow:none;font-size:10px}
+.gh-whatsapp-button>span{font-size:15px}
+.gh-rewards-footnote{margin:7px auto 0;color:#938a7b;font-size:8px}
+@media(max-width:640px){
+ .gh-rewards-banner{margin:13px 0 18px;padding:13px 11px;border-radius:14px}
+ .gh-rewards-heading h2{font-size:23px}
+ .gh-rewards-heading>p:last-child{font-size:9px}
+ .gh-rewards-prizes{gap:6px;margin:9px auto}
+ .gh-reward-prize{grid-template-columns:23px 1fr;gap:5px;padding:8px 7px}
+ .gh-reward-prize>span{font-size:18px}
+ .gh-reward-prize>b{font-size:7px;letter-spacing:.6px}
+ .gh-reward-prize>strong{font-size:10px}
+ .gh-rewards-rules{margin-top:8px;padding:8px 9px}
+ .gh-rewards-rules h3{margin-bottom:4px;font-size:9px}
+ .gh-rewards-rules p{margin:3px 0;font-size:8px;line-height:1.35}
+ .gh-rewards-rules p span{flex-basis:16px;font-size:9px}
+ .gh-rewards-actions{grid-template-columns:1fr;gap:7px;margin-top:8px}
+ .gh-leader-profile{gap:8px;padding:7px}
+ .gh-leader-qr{flex-basis:61px;padding:3px}
+ .gh-leader-qr img{width:55px;height:55px}
+ .gh-leader-copy small{font-size:6px}
+ .gh-leader-copy strong{font-size:10px}
+ .gh-leader-copy>span{font-size:7px}
+ .gh-clash-button{min-height:28px;padding:6px 8px;font-size:8px}
+ .gh-whatsapp-button{min-height:35px;padding:7px 9px;font-size:9px}
+ .gh-whatsapp-button>span{font-size:13px}
+ .gh-rewards-footnote{margin-top:5px;font-size:7px}
+}
