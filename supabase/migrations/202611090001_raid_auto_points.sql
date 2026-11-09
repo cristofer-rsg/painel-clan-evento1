@@ -5,7 +5,7 @@ create table if not exists public.raid_point_awards (
     player_tag text not null,
     player text not null references public.players(name) on update cascade on delete restrict,
     weekend_key date not null,
-    month_key text not null check (month_key ~ '^\\d{4}-\\d{2}$'),
+    month_key text not null check (month_key ~ '^\d{4}-\d{2}$'),
     points integer not null default 5 check (points = 5),
     attacks integer not null check (attacks >= 5),
     event_id bigint not null unique references public.events(id) on delete restrict,
