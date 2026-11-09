@@ -80,3 +80,54 @@ export async function getHistoryData(requestedMonth?: string): Promise<HistoryDa
     return { month: requestedMonth || currentMonth(), months: [currentMonth()], ranking: [], events: [], snapshot: false, error: error instanceof Error ? error.message : "Falha ao carregar histórico." };
   }
 }
+
+/**
+ * Arquiva o mês anterior uma única vez, preservando o estado de elegibilidade
+ * e WhatsApp vigente no fechamento, como fazia o aplicativo Streamlit.
+ * Executado somente após autenticação administrativa.
+ */
+export async function archivePreviousMonthIfNeeded(): Promise<boolean> {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit",
+  }).formatToParts(new Date());
+  let year = Number(parts.find(part => part.type === "year")?.value || "2026");
+  let month = Number(parts.find(part => part.type === "month")?.value || "1");
+  if (month === 1) { year -= 1; month = 12; } else { month -= 1; }
+  const monthKey = year + "-" + String(month).padStart(2, "0");
+
+  const db = createSupabaseAdmin();
+  const { data: existing, error: existingError } = await db.from("monthly_rankings")
+    .select("player").eq("month_key", monthKey).limit(1);
+  if (existingError) throw existingError;
+  if (existing?.length) return false;
+
+  const bounds = rangeFor(monthKey);
+  const events = await pages<EventRow>(db.from("events")
+    .select("id,player,category,activity,points,created_at")
+    .gte("created_at", bounds.start).lt("created_at", bounds.end)
+    .order("created_at", { ascending: false }));
+  if (!events.length) return false;
+
+  const players = await pages<Player>(db.from("players")
+    .select("name,eligible,whatsapp").order("name", { ascending: true }));
+  if (!players.length) return false;
+
+  const ranking = calculate(players, events);
+  const snapshot = ranking.map(row => ({
+    month_key: monthKey,
+    player: row.player,
+    position: row.position,
+    eligible: row.eligible,
+    whatsapp: row.whatsapp,
+    wars: row.wars,
+    league: row.league,
+    donations: row.donations,
+    games: row.games,
+    raid: row.raid,
+    penalties: row.penalties,
+    total: row.total,
+  }));
+  const { error } = await db.from("monthly_rankings").upsert(snapshot, { onConflict: "month_key,player" });
+  if (error) throw error;
+  return true;
+}
