@@ -36,7 +36,7 @@ As credenciais de Clash of Clans permanecem nos GitHub Secrets utilizados pelos 
 - Consulta pública de desempenho com seis metas fixas (20 guerras, 7 ligas, 24 raides, 5.000 doações, 10.000 pontos de jogos e 250.000 moedas de capital), índice de 0 a 100 e somente jogadores ativos, conforme o acesso de jogador original.
 - Visão administrativa separada e protegida, com índice proporcional ao maior resultado de cada categoria (até 100 por categoria, total máximo de 600), filtro de inativos e ordenação completa, conforme a aba administrativa original.
 - Painel dos três membros mais recentes, a partir de `clan_member_entries`.
-- Histórico mensal, com preferência pelos snapshots arquivados e cálculo alternativo quando não há snapshot.
+- Histórico mensal, com preferência pelos snapshots arquivados, cálculo alternativo quando não há snapshot e arquivamento automático do mês anterior na entrada administrativa (somente se ainda não houver snapshot e existirem lançamentos).
 - Área administrativa protegida por senha server-side e cookie HttpOnly; gestão de jogadores, visão administrativa de desempenho, edição/exclusão de lançamentos e exportação Excel/CSV.
 - Operações administrativas de escrita validam a origem da requisição.
 - Workflow de validação executa auditoria das dependências de produção, teste de geração/leitura XLSX com ExcelJS e build Next.js.
