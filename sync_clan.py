@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, timezone
 import os
 import sys
 import urllib.error
@@ -171,7 +172,7 @@ def main():
     db.table("clan_sync_state").upsert({
         "id": "current_roster",
         "member_tags": [membro["player_tag"] for membro in membros_api],
-        "synced_at": "now()",
+        "synced_at": datetime.now(timezone.utc).isoformat(),
     }, on_conflict="id").execute()
 
     print(f"Membros retornados pela API: {len(membros_api)}")
