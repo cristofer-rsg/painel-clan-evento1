@@ -41,7 +41,7 @@ As credenciais de Clash of Clans permanecem nos GitHub Secrets utilizados pelos 
 - Operações administrativas de escrita validam a origem da requisição.
 - Workflow de validação executa testes unitários do planejador do Raide, auditoria das dependências de produção, teste de geração/leitura XLSX com ExcelJS e build Next.js.
 - Os workflows de sincronização existentes permanecem independentes e intocados.
-- A lógica pura de planejamento dos pontos automáticos do Raide foi isolada em `scripts/raid_points.py`, sem acesso ao banco, com testes de idempotência para inserção, atualização de ataques, precedência de lançamentos manuais e consolidação de duplicatas.
+- A lógica pura de planejamento dos pontos automáticos do Raide foi isolada em `scripts/raid_points.py`, sem acesso ao banco, com testes de idempotência para inserção, atualização de ataques, precedência de lançamentos manuais, consolidação de duplicatas, associação já resolvida pela TAG na prévia, fuso de Brasília e linhas repetidas no mesmo lote. O planejador deve receber o histórico completo de `events`, não apenas o mês atual, pois o fim de semana pode atravessar a virada mensal.
 - A branch `main` permanece preservada; desenvolvimento e validação ocorrem em `vercel-rebuild`.
 
 ## Preparação de implantação (ainda não executada)
