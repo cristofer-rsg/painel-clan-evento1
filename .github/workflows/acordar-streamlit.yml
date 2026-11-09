@@ -1,4 +1,4 @@
-name: Despertar Ghost Hunt
+name: Monitorar Ghost Hunt
 
 on:
   schedule:
@@ -6,47 +6,44 @@ on:
   workflow_dispatch:
 
 jobs:
-  wake-up:
+  health-check:
     runs-on: ubuntu-latest
+    timeout-minutes: 3
 
     steps:
-      - name: Preparar navegador
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Instalar Playwright
-        run: |
-          pip install playwright
-          playwright install --with-deps chromium
-
-      - name: Acessar e despertar aplicativo
+      - name: Verificar site oficial
+        env:
+          SITE_URL: https://ghosthunt.com.br/
         run: |
           python - <<'PY'
-          from playwright.sync_api import sync_playwright
-          import time
+          import os
+          import sys
+          import urllib.request
+          import urllib.error
 
-          url = "https://painel-clan-evento1-mtrmtcx7kokl9dczeqtr5w.streamlit.app/"
+          url = os.environ["SITE_URL"]
+          request = urllib.request.Request(
+              url,
+              headers={"User-Agent": "GhostHunt-Uptime-Monitor/1.0"},
+              method="GET",
+          )
 
-          with sync_playwright() as p:
-              browser = p.chromium.launch(headless=True)
-              page = browser.new_page()
-              page.goto(url, wait_until="domcontentloaded", timeout=120000)
-              time.sleep(10)
+          try:
+              with urllib.request.urlopen(request, timeout=25) as response:
+                  status = response.status
+                  body = response.read(500_000).decode("utf-8", errors="replace")
 
-              botao = page.get_by_role(
-                  "button",
-                  name="Yes, get this app back up!",
-                  exact=True
-              )
+              if status != 200:
+                  print(f"FALHA: {url} respondeu HTTP {status}.")
+                  sys.exit(1)
 
-              if botao.count() > 0:
-                  print("Aplicativo em repouso. Tentando despertar...")
-                  botao.click()
-                  page.wait_for_timeout(90000)
-              else:
-                  print("Tela de repouso não encontrada. Aplicativo aparentemente acessível.")
+              if "ghost hunt" not in body.lower():
+                  print("FALHA: o site respondeu, mas o conteúdo esperado do Ghost Hunt não foi encontrado.")
+                  sys.exit(1)
 
-              print("Endereço acessado:", page.url)
-              browser.close()
+              print(f"OK: {url} respondeu HTTP {status} e o conteúdo Ghost Hunt foi localizado.")
+
+          except (urllib.error.URLError, TimeoutError) as error:
+              print(f"FALHA ao acessar {url}: {error}")
+              sys.exit(1)
           PY
