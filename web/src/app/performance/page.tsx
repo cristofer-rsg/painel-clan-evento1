@@ -54,7 +54,7 @@ export default async function PerformancePage({ searchParams }: Props) {
       <div className="performance-list">
         <div className="performance-section-heading"><h2>Desempenho dos jogadores</h2><span>{visibleRows.length} JOGADORES</span></div>
         <p className="performance-result-count">{visibleRows.length} de {rankedRows.length} jogador(es)</p>
-        {visibleRows.map(row => <article className={row.role ? "performance-card performance-leader-card" : "performance-card"} key={row.player}>
+        {visibleRows.map(row => <article className="performance-card" key={row.player}>
           <div className="performance-card-head">
             <b><span>#{row.position}</span>{row.player}{row.role && <small className="performance-leader-role">{row.role}</small>}</b>
             <strong>{row.index.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} <small>/ 100</small></strong>
