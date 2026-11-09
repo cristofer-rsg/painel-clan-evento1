@@ -53,7 +53,7 @@ export async function PATCH(request: NextRequest) {
   const category = typeof body.category === "string" ? body.category : "";
   const activity = typeof body.activity === "string" ? body.activity.trim() : "";
   const points = Number(body.points);
-  if (!Number.isSafeInteger(id) || id <= 0 || !player || !categories.includes(category) || !activity || activity.length > 300 || !Number.isInteger(points) || points < -200 || points > 200) {
+  if (!Number.isSafeInteger(id) || id <= 0 || !player || !categories.includes(category) || activity.length > 300 || !Number.isInteger(points) || points < -200 || points > 200) {
     return NextResponse.json({ error: "Confira jogador, categoria, descrição e pontuação (-200 a 200)." }, { status: 400 });
   }
   try {
