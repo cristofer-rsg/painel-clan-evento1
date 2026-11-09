@@ -163,3 +163,35 @@
   letter-spacing:-.45px;
  }
 }
+
+
+/* Remove the headline box; preserve separation with typography and soft shadow only */
+.gh-home .gh-hero-copy h1{
+ display:block;
+ width:auto;
+ max-width:100%;
+ padding:0;
+ margin:8px 0 7px;
+ border:0;
+ border-radius:0;
+ background:transparent;
+ box-shadow:none;
+ -webkit-backdrop-filter:none;
+ backdrop-filter:none;
+ color:#fffaf0;
+ text-shadow:0 3px 5px rgba(0,0,0,.98),0 0 16px rgba(0,0,0,.95),0 0 30px rgba(0,0,0,.75);
+}
+.gh-home .gh-hero-copy h1 em{
+ color:#ffe0a0;
+ text-shadow:0 3px 5px rgba(0,0,0,.98),0 0 15px rgba(0,0,0,.95),0 0 24px rgba(0,0,0,.65);
+}
+@media(max-width:560px){
+ .gh-home .gh-hero-copy h1{
+  padding:0;
+  margin:8px 0 7px;
+  border:0;
+  border-radius:0;
+  font-size:40px;
+  letter-spacing:-.7px;
+ }
+}
