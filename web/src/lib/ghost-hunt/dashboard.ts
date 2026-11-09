@@ -179,7 +179,7 @@ export async function getDashboardData(): Promise<DashboardData> {
         eligibilityStatus: player.eligible ?? "Elegível",
         whatsapp: player.whatsapp ?? "Sim",
       };
-    }).sort((a, b) => b.total - a.total || a.player.localeCompare(b.player, "pt-BR"))
+    }).sort((a, b) => b.total - a.total || b.wars - a.wars || b.league - a.league || b.raid - a.raid || b.capitalPoints - a.capitalPoints || b.donations - a.donations || b.games - a.games || a.player.localeCompare(b.player, "pt-BR"))
       .map((row, index) => ({ ...row, position: index + 1 }));
 
     return {
