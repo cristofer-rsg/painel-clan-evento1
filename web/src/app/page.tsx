@@ -108,13 +108,20 @@ export default async function HomePage() {
           </section>
 
           <div className="section-heading ranking-heading" id="ranking"><div><p className="overline">CLASSIFICAÇÃO</p><h2>Ranking do mês</h2></div><a className="gh-view-all" href="/performance">Ver desempenho completo ›</a></div>
-          <section className="gh-top-ranking">
-            {topThree.length ? topThree.map((player, index) => <a className={`gh-top-player place-${index + 1}`} href={player.tag ? `/player/${encodeURIComponent(player.tag)}` : "#ranking"} key={player.player}>
-              <span className="gh-place">{index === 0 ? "🥇" : index === 1 ? "🥈" : "🥉"}</span>
-              <span className="gh-player-avatar">{player.player.slice(0, 1).toUpperCase()}</span>
-              <b>{player.player}</b><strong>{number(player.total)} pts</strong>
-            </a>) : <p className="recent-members-empty">A classificação aparecerá quando houver jogadores cadastrados.</p>}
-            <a href="#ranking" className="gh-full-ranking">Ver classificação completa <span>›</span></a>
+          <section className="gh-podium-section" aria-label="Pódio dos três primeiros colocados">
+            <div className="gh-podium-heading"><span>🏆</span><div><p className="overline">DESTAQUES DO MÊS</p><h2>Pódio do mês</h2></div><span>🏆</span></div>
+            {topThree.length ? <div className="gh-podium">
+              {[topThree[1], topThree[0], topThree[2]].filter(Boolean).map((player) => {
+                const place = data.ranking.findIndex(item => item.player === player.player) + 1;
+                return <a className={`gh-podium-card podium-${place}`} href={player.tag ? `/player/${encodeURIComponent(player.tag)}` : "#ranking"} key={player.player}>
+                  <span className="gh-podium-medal">{place === 1 ? "👑" : place === 2 ? "🥈" : "🥉"}</span>
+                  <span className="gh-podium-avatar">{player.player.slice(0,1).toUpperCase()}</span>
+                  <b className="gh-podium-name">{player.player}</b>
+                  <strong>{number(player.total)} pts</strong>
+                  <span className="gh-podium-base"><b>{place}º</b></span>
+                </a>;
+              })}
+            </div> : <p className="recent-members-empty">O pódio aparecerá quando houver jogadores classificados.</p>}
           </section>
 
           <div className="section-heading" id="ranking-full"><div><p className="overline">TODOS OS JOGADORES</p><h2>Classificação completa</h2></div><span className="period-pill">{data.monthLabel.toUpperCase()}</span></div>
