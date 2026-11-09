@@ -4,6 +4,7 @@ import { createSupabaseAdmin } from "@/lib/supabase/admin";
 
 type Player = {
   name: string;
+  player_tag?: string | null;
   eligible?: string | null;
   whatsapp?: string | null;
   active?: boolean | null;
