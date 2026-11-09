@@ -61,7 +61,7 @@ export default async function HomePage() {
             <div className="gh-v2-hero-art" aria-hidden="true"><span className="gh-v2-sigil">GH</span><span className="gh-v2-orbit orbit-one" /><span className="gh-v2-orbit orbit-two" /></div>
             <div className="gh-v2-hero-copy">
               <div className="gh-v2-eyebrow"><span className="gh-v2-live-dot" /> BEM-VINDO, CAÇADOR <span>•</span> {data.monthLabel.toUpperCase()}</div>
-              <h1>FORÇA, <em>HONRA</em><br />E CONQUISTAS.</h1>
+              <h1>BEM-VINDO,<br /><em>CAÇADOR.</em></h1>
               <p>O desempenho do Ghost Hunt em um só lugar.</p>
               <a className="gh-v2-hero-link" href="/ranking">ACOMPANHAR RANKING <b>↗</b></a>
             </div>
