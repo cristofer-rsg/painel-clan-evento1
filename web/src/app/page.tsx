@@ -7,8 +7,6 @@ const navigation = [
   { icon: "⌂", label: "Início", href: "/" },
   { icon: "♛", label: "Ranking", href: "#ranking" },
   { icon: "◈", label: "Desempenho", href: "/performance" },
-  { icon: "⚔", label: "Pontos", href: "#ranking" },
-  { icon: "♟", label: "Clã", href: "#ranking" },
   { icon: "▤", label: "Histórico", href: "/history" },
 ];
 
@@ -53,7 +51,7 @@ export default async function HomePage() {
           ))}
           <div className="side-divider" />
           <div className="side-label">ADMINISTRAÇÃO</div>
-          <a className="nav-item" href="#ranking"><span className="nav-icon">⚙</span><span>Gerenciar aplicativo</span></a>
+          <a className="nav-item" href="/admin"><span className="nav-icon">⚙</span><span>Gerenciar aplicativo</span></a>
           <div className="sidebar-foot"><span className="shield">◆</span><span><b>GHOST HUNT</b><small>Temporada do clã</small></span></div>
         </aside>
 
