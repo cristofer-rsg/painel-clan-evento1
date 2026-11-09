@@ -3,12 +3,24 @@ import { useMemo, useState } from "react";
 
 type RankingPlayer = {
   position: number; player: string; tag: string; total: number; eligible: boolean;
+  wars: number; league: number; donations: number; games: number;
+  raid: number; capitalCoins: number; penalties: number;
 };
 function number(value: number) { return new Intl.NumberFormat("pt-BR").format(value); }
+
+const categories = [
+  { key: "wars", label: "Guerras", suffix: "pts" },
+  { key: "league", label: "Liga", suffix: "pts" },
+  { key: "donations", label: "Doações", suffix: "pts" },
+  { key: "games", label: "Jogos", suffix: "pts" },
+  { key: "raid", label: "Raide", suffix: "pts" },
+  { key: "capitalCoins", label: "Capital", suffix: "moedas" },
+] as const;
 
 export default function RankingList({ players }: { players: RankingPlayer[] }) {
   const [search, setSearch] = useState("");
   const [showAll, setShowAll] = useState(false);
+  const [expanded, setExpanded] = useState<string | null>(null);
   const filtered = useMemo(() => {
     const term = search.trim().toLocaleLowerCase("pt-BR");
     if (!term) return players;
@@ -21,10 +33,24 @@ export default function RankingList({ players }: { players: RankingPlayer[] }) {
       <input aria-label="Buscar jogador" placeholder="Buscar por nome ou tag..." value={search} onChange={event => setSearch(event.target.value)} />
       <small>{filtered.length} de {players.length} jogador(es)</small>
     </div>
-    {visible.map(player => <div className={`ranking-row${player.position <= 3 ? ` ranking-top-${player.position}` : ""}`} key={player.player}>
-      <span className="ranking-player"><b className="ranking-position">{player.position}</b><span>{player.player}<small>{player.eligible ? "Elegível" : "Não elegível"}{player.tag ? " · " + player.tag : ""}</small></span></span>
-      <strong>{number(player.total)} pts</strong>
-    </div>)}
+    {visible.map(player => {
+      const isExpanded = expanded === player.player;
+      return <article className={`ranking-entry${player.position <= 3 ? ` ranking-top-${player.position}` : ""}`} key={player.player}>
+        <button className="ranking-row ranking-row-toggle" type="button" aria-expanded={isExpanded}
+          aria-label={`${isExpanded ? "Ocultar" : "Ver"} pontuação por categoria de ${player.player}`}
+          onClick={() => setExpanded(isExpanded ? null : player.player)}>
+          <span className="ranking-player"><b className="ranking-position">{player.position}</b><span>{player.player}<small>{player.eligible ? "Elegível" : "Não elegível"}{player.tag ? " · " + player.tag : ""}</small></span></span>
+          <span className="ranking-score"><strong>{number(player.total)} pts</strong><small>{isExpanded ? "Recolher" : "Detalhes"} <i>{isExpanded ? "−" : "+"}</i></small></span>
+        </button>
+        {isExpanded && <div className="ranking-breakdown">
+          <div className="ranking-breakdown-heading">PONTUAÇÃO POR CATEGORIA</div>
+          <div className="ranking-breakdown-grid">{categories.map(category => <span key={category.key}>
+            <small>{category.label}</small><b>{number(player[category.key])} <i>{category.suffix}</i></b>
+          </span>)}</div>
+          {player.penalties > 0 && <div className="ranking-penalty">Penalidades aplicadas: <b>−{number(player.penalties)} pts</b></div>}
+        </div>}
+      </article>;
+    })}
     {!visible.length && <div className="empty-state"><b>Nenhum jogador encontrado</b><p>Confira o nome ou a tag pesquisada.</p></div>}
     {!search.trim() && filtered.length > 5 && <div className="ranking-actions">
       <button className="outline-button" type="button" onClick={() => setShowAll(value => !value)}>
