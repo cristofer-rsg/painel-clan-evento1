@@ -134,3 +134,32 @@
  .gh-home .gh-top-player strong{font-size:10px}
  .gh-home .mobile-bottom-nav{backdrop-filter:blur(16px)}
 }
+
+/* Strong headline separation from the castle artwork */
+.gh-home .gh-hero-copy h1{
+ display:table;
+ position:relative;
+ max-width:100%;
+ padding:5px 13px 8px;
+ margin-left:-13px;
+ border:1px solid rgba(214,166,76,.42);
+ border-radius:12px;
+ background:linear-gradient(90deg,rgba(8,8,8,.94),rgba(8,8,8,.88) 78%,rgba(8,8,8,.68));
+ box-shadow:0 8px 24px rgba(0,0,0,.48),inset 0 1px rgba(255,255,255,.08);
+ -webkit-backdrop-filter:blur(7px);
+ backdrop-filter:blur(7px);
+ text-shadow:0 2px 5px #000,0 0 18px #000;
+}
+.gh-home .gh-hero-copy h1 em{
+ color:#ffe2a0;
+ text-shadow:0 2px 6px #000,0 0 14px rgba(214,166,76,.25);
+}
+@media(max-width:560px){
+ .gh-home .gh-hero-copy h1{
+  padding:5px 11px 7px;
+  margin-left:-11px;
+  border-radius:10px;
+  font-size:39px;
+  letter-spacing:-.45px;
+ }
+}
