@@ -219,3 +219,54 @@
  .gh-whatsapp-button>span{font-size:13px}
  .gh-rewards-footnote{margin-top:5px;font-size:7px}
 }
+
+
+/* Extra-compact rewards layout: both actions side by side on mobile */
+.gh-rewards-banner{margin:10px 0 15px;padding:12px 15px;border-radius:13px}
+.gh-rewards-heading .overline{font-size:8px}
+.gh-rewards-heading h2{font-size:24px}
+.gh-rewards-heading>p:last-child{font-size:9px}
+.gh-rewards-prizes{margin:8px auto;gap:7px}
+.gh-reward-prize{padding:7px 10px}
+.gh-rewards-rules{margin-top:7px;padding:8px 11px}
+.gh-rewards-rules h3{font-size:9px;margin-bottom:3px}
+.gh-rewards-rules p{margin:2px 0;font-size:8px;line-height:1.3}
+.gh-rewards-actions{grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;align-items:stretch}
+.gh-leader-profile{height:100%;padding:7px;gap:7px}
+.gh-leader-qr{flex-basis:54px;padding:3px}
+.gh-leader-qr img{width:48px;height:48px}
+.gh-leader-copy small{font-size:6px}
+.gh-leader-copy strong{font-size:9px}
+.gh-leader-copy>span{font-size:7px}
+.gh-clash-button{font-size:7px;min-height:28px;padding:5px 6px}
+.gh-whatsapp-button{min-height:100%;height:100%;padding:7px 6px;font-size:8px;gap:5px}
+.gh-whatsapp-button>span{font-size:12px}
+.gh-whatsapp-button b{font-size:12px}
+.gh-rewards-footnote{font-size:7px;margin-top:5px}
+@media(max-width:640px){
+ .gh-rewards-banner{margin:9px 0 14px;padding:10px 9px;border-radius:12px}
+ .gh-rewards-heading h2{font-size:21px}
+ .gh-rewards-heading>p:last-child{font-size:8px}
+ .gh-rewards-prizes{margin:7px auto;gap:5px}
+ .gh-reward-prize{grid-template-columns:20px 1fr;gap:4px;padding:6px}
+ .gh-reward-prize>span{font-size:16px}
+ .gh-reward-prize>b{font-size:6px}
+ .gh-reward-prize>strong{font-size:9px}
+ .gh-rewards-rules{margin-top:6px;padding:7px 8px}
+ .gh-rewards-rules h3{font-size:8px}
+ .gh-rewards-rules p{font-size:7px;line-height:1.28}
+ .gh-rewards-actions{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px;margin-top:7px}
+ .gh-leader-profile{min-width:0;padding:6px;gap:5px}
+ .gh-leader-qr{flex:0 0 43px;padding:2px}
+ .gh-leader-qr img{width:39px;height:39px}
+ .gh-leader-copy{gap:2px}
+ .gh-leader-copy small{font-size:5px;letter-spacing:.25px}
+ .gh-leader-copy strong{font-size:8px;line-height:1.2}
+ .gh-leader-copy>span{font-size:6px;line-height:1.2}
+ .gh-clash-button{margin-top:2px;min-height:26px;padding:5px 4px;font-size:6px;gap:3px}
+ .gh-clash-button b{font-size:10px}
+ .gh-whatsapp-button{min-height:100%;height:100%;padding:5px 4px;font-size:7px;gap:4px;line-height:1.2}
+ .gh-whatsapp-button>span{font-size:10px}
+ .gh-whatsapp-button b{font-size:10px}
+ .gh-rewards-footnote{font-size:6px;line-height:1.25;margin-top:4px}
+}
