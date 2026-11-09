@@ -21,7 +21,7 @@ export default function RankingList({ players }: { players: RankingPlayer[] }) {
       <input aria-label="Buscar jogador" placeholder="Buscar por nome ou tag..." value={search} onChange={event => setSearch(event.target.value)} />
       <small>{filtered.length} de {players.length} jogador(es)</small>
     </div>
-    {visible.map(player => <div className="ranking-row" key={player.player}>
+    {visible.map(player => <div className={`ranking-row${player.position <= 3 ? ` ranking-top-${player.position}` : ""}`} key={player.player}>
       <span className="ranking-player"><b className="ranking-position">{player.position}</b><span>{player.player}<small>{player.eligible ? "Elegível" : "Não elegível"}{player.tag ? " · " + player.tag : ""}</small></span></span>
       <strong>{number(player.total)} pts</strong>
     </div>)}
