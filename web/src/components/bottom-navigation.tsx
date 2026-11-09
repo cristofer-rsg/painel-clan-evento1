@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 
 const items = [
   { href: "/", icon: "⌂", label: "Início" },
-  { href: "/#ranking", icon: "♛", label: "Ranking" },
+  { href: "/ranking", icon: "♛", label: "Ranking" },
   { href: "/performance", icon: "◈", label: "Desempenho" },
   { href: "/history", icon: "▤", label: "Histórico" },
 ];
@@ -16,7 +16,7 @@ export default function BottomNavigation() {
   return (
     <nav className="mobile-bottom-nav" aria-label="Navegação principal">
       {items.map((item) => {
-        const active = item.href === "/" ? pathname === "/" : item.href.includes("#") ? false : pathname === item.href;
+        const active = item.href === "/" ? pathname === "/" : pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href + "/"));
         return (
           <a className={active ? "mobile-nav-item active" : "mobile-nav-item"} href={item.href} key={item.label} aria-current={active ? "page" : undefined}>
             <span className="mobile-nav-icon" aria-hidden="true">{item.icon}</span>
