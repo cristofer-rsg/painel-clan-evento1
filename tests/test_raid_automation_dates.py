@@ -25,6 +25,12 @@ class RaidWeekendDateTests(unittest.TestCase):
             date(2026, 11, 13),
         )
 
+    def test_month_competence_uses_monday_closing_date(self):
+        anchor = raid_weekend_start(date(2026, 10, 30))
+        closing_date = anchor.fromordinal(anchor.toordinal() + 3)
+        self.assertEqual(anchor, date(2026, 10, 30))
+        self.assertEqual(closing_date.strftime("%Y-%m"), "2026-11")
+
     def test_legacy_monthly_source_key_is_preserved(self):
         friday = datetime(2026, 11, 6, 4, 0, tzinfo=ZoneInfo("America/Sao_Paulo"))
         self.assertEqual(legacy_stats_anchor(friday), date(2026, 10, 31))
