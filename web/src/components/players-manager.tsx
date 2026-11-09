@@ -5,6 +5,13 @@ function playerKey(player: Player) { return player.player_tag || player.name; }
 export default function PlayersManager() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [name, setName] = useState("");
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("todos");
+  const filteredPlayers = players.filter(player => {
+    const term = search.trim().toLocaleLowerCase("pt-BR");
+    const matchesText = !term || player.name.toLocaleLowerCase("pt-BR").includes(term) || (player.player_tag || "").toLocaleLowerCase("pt-BR").includes(term);
+    return matchesText && (statusFilter === "todos" || (statusFilter === "ativos" ? player.active : !player.active));
+  });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -44,7 +51,8 @@ export default function PlayersManager() {
     <p>Novos cadastros entram inativos e serão ativados pela sincronização do clã.</p>
     <form className="manager-add" onSubmit={add}><input value={name} onChange={e => setName(e.target.value)} placeholder="Nome exatamente como aparece no jogo" maxLength={80} required /><button disabled={saving || !name.trim()}>{saving ? "Salvando..." : "Adicionar"}</button></form>
     {message && <div className="manager-message" role="status">{message}</div>}
-    {loading ? <p>Carregando jogadores...</p> : <div className="manager-list">{players.map(player => <article className="manager-player" key={playerKey(player)}>
+    {!loading && <div className="manager-toolbar"><label className="manager-search-label">Buscar jogador<input value={search} onChange={e => setSearch(e.target.value)} placeholder="Nome ou tag do jogador..." /></label><label className="manager-filter-label">Situação<select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}><option value="todos">Todos</option><option value="ativos">Ativos</option><option value="inativos">Inativos</option></select></label><span className="manager-count">{filteredPlayers.length} de {players.length}</span></div>}
+    {loading ? <p>Carregando jogadores...</p> : <div className="manager-list">{filteredPlayers.map(player => <article className="manager-player" key={playerKey(player)}>
       <div className="manager-player-title"><b>{player.name}</b><span className={player.active ? "member-status active" : "member-status"}>{player.active ? "ATIVO" : "INATIVO"}</span></div>
       {player.player_tag && <small className="player-tag">{player.player_tag}</small>}
       <div className="manager-fields">
@@ -52,7 +60,7 @@ export default function PlayersManager() {
         <label>Grupo WhatsApp<select value={player.whatsapp || "Sim"} onChange={e => setPlayers(rows => rows.map(row => playerKey(row) === playerKey(player) ? { ...row, whatsapp: e.target.value } : row))}><option>Sim</option><option>Não</option></select></label>
       </div>
       <button className="manager-save" type="button" disabled={saving} onClick={() => void save(player)}>Salvar alterações</button>
-    </article>)}{!players.length && <p>Nenhum jogador cadastrado.</p>}</div>}
+    </article>)}{!filteredPlayers.length && <p className="manager-empty">Nenhum jogador encontrado com esses filtros.</p>}</div>}
     <a className="back-link" href="/admin">← Voltar à administração</a>
   </section>;
 }
