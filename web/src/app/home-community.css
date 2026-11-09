@@ -1,0 +1,102 @@
+
+/* Ghost Hunt Community Home — visual layer only */
+.gh-home{--gh-cyan:#35ded2;--gh-cyan-light:#a4fff5;--gh-orange:#ff9c43;--gh-gold:#ffc36f}
+.gh-home .topbar{border-bottom-color:rgba(53,222,210,.2);background:rgba(4,14,26,.96)}
+.gh-home .brand-mark{border-color:#35ded2;color:#9cfff5;box-shadow:0 0 22px #35ded233}
+.gh-home .brand-copy i{color:#62eee4}
+.gh-home .status-dot{background:#35ded2;box-shadow:0 0 12px #35ded2}
+.gh-home .avatar{display:grid;place-items:center;border-color:#35ded2;color:#a4fff5;background:#0b2938;box-shadow:0 0 18px #35ded222}
+.gh-content{padding-top:25px}
+.gh-hero{position:relative;overflow:hidden;min-height:270px;margin:0 0 19px;border:1px solid rgba(53,222,210,.3);border-radius:20px;background:linear-gradient(110deg,#071827 0%,#0a2639 48%,#071725 100%);box-shadow:0 15px 42px #0005,inset 0 1px #ffffff12}
+.gh-hero:after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,rgba(4,15,27,.95) 0%,rgba(4,15,27,.82) 39%,rgba(4,15,27,.12) 100%)}
+.gh-hero-art{position:absolute;inset:0;overflow:hidden;background:radial-gradient(ellipse at 52% 78%,#f28b31aa 0,transparent 23%),radial-gradient(ellipse at 52% 45%,#125e8b 0,transparent 42%),linear-gradient(180deg,#07182c,#0a2940 65%,#061522)}
+.gh-hero-art:before{content:"";position:absolute;left:-4%;right:-4%;bottom:0;height:42%;background:linear-gradient(180deg,#142d42,#06101b);clip-path:polygon(0 55%,12% 42%,21% 54%,31% 24%,42% 44%,50% 4%,60% 42%,72% 25%,83% 50%,92% 31%,100% 50%,100% 100%,0 100%);border-top:1px solid #ffae5b88}
+.gh-moon{position:absolute;right:9%;top:15%;width:52px;height:52px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#d8f6ff,#55b8d5 65%,#1b5b85);box-shadow:0 0 38px #52bde888}
+.gh-castle{position:absolute;z-index:1;left:43%;bottom:20%;width:150px;height:122px;transform:translateX(-50%);background:linear-gradient(90deg,#10283b,#35516a 48%,#10283b);clip-path:polygon(0 100%,0 38%,15% 38%,15% 14%,29% 14%,29% 35%,38% 35%,38% 0,62% 0,62% 35%,72% 35%,72% 14%,87% 14%,87% 38%,100% 38%,100% 100%);filter:drop-shadow(0 0 18px #ff8e35)}
+.gh-castle:before{content:"";position:absolute;inset:36% 39% 0;background:linear-gradient(#ffb44d,#6e371c);box-shadow:0 0 25px #ff9b36}
+.gh-castle i{position:absolute;top:28%;width:8px;height:19px;background:#ffb75c;box-shadow:0 0 12px #ff9b36}
+.gh-castle i:nth-child(1){left:22%}.gh-castle i:nth-child(2){left:48%;top:13%}.gh-castle i:nth-child(3){right:20%}
+.gh-castle b{position:absolute;z-index:2;left:43%;top:52%;font:900 18px 'Barlow Condensed';color:#f8d49b;text-shadow:0 2px 8px #000}
+.gh-hero-figure{position:absolute;z-index:2;bottom:17%;font-size:76px;filter:drop-shadow(0 0 12px #000);opacity:.8}
+.gh-figure-left{left:3%;color:#f2b46a;transform:rotate(-13deg)}
+.gh-figure-right{right:5%;color:#8b8ef0;transform:rotate(12deg)}
+.gh-banner-flag{position:absolute;z-index:2;bottom:31%;padding:9px 7px;border:1px solid #e9a84e;background:#091a2a;color:#ffc36f;font:900 13px 'Barlow Condensed';box-shadow:0 0 15px #ff9c4355}
+.gh-flag-left{left:30%;transform:rotate(-7deg)}.gh-flag-right{right:28%;transform:rotate(8deg)}
+.gh-hero-copy{position:relative;z-index:3;padding:30px 27px;max-width:620px}
+.gh-hero-copy .overline{color:#8bdedb}
+.gh-hero-copy h1{font:800 clamp(37px,5vw,53px) 'Barlow Condensed';margin:8px 0 4px;text-shadow:0 3px 16px #000}
+.gh-hero-copy h1 em{font-style:normal;color:#52e6dc}
+.gh-hero-copy .muted{font-size:13px;color:#d0e0e8;text-shadow:0 2px 8px #000}
+.gh-hero-copy .season-chip{margin-top:19px;width:max-content;border-color:#ff9c4388;background:rgba(8,21,33,.86);box-shadow:0 0 22px #ff9c4322}
+.gh-hero-copy .season-chip>span{color:#ffb65e}
+.gh-hero-copy .season-chip b{color:#ffc078}
+.gh-metrics{gap:12px}
+.gh-metric{border-color:rgba(53,222,210,.35);border-radius:16px;background:linear-gradient(145deg,#0d2c3e,#071827);box-shadow:inset 0 1px #ffffff0c,0 8px 26px #0003}
+.gh-metric .metric-icon{width:39px;height:39px;border:1px solid #35ded255;border-radius:12px;background:#0b3945;color:#5cebe0;font-size:20px;box-shadow:0 0 16px #35ded222}
+.gh-metric.gold .metric-icon,.gh-metric.copper .metric-icon{border-color:#ff9c4366;background:#422b1c;color:#ffb35f}
+.gh-metric .metric-kicker{color:#a8c3d0;font-size:9px}
+.gh-metric .metric-value{font:800 36px 'Barlow Condensed';color:#f5fbff}
+.gh-metric.gold .metric-value{color:#ffc36f}
+.gh-metric .metric-note{font-size:10px;color:#91aaba}
+.gh-shortcuts{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:9px;margin:17px 0 20px}
+.gh-shortcut{min-height:105px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:11px 5px;border:1px solid rgba(53,222,210,.35);border-radius:15px;background:linear-gradient(145deg,#0d2c3e,#071827);box-shadow:inset 0 1px #ffffff0c,0 8px 22px #0003;transition:.2s}
+.gh-shortcut:hover{transform:translateY(-3px);border-color:#ff9c43;box-shadow:0 0 20px #35ded222}
+.gh-shortcut>span{font-size:27px;filter:drop-shadow(0 0 8px #35ded266)}
+.gh-shortcut>b{font-size:10px;color:#d8eaf1;text-align:center}
+.gh-season-banner{position:relative;display:flex;align-items:center;justify-content:space-between;overflow:hidden;min-height:142px;margin:0 0 20px;padding:19px 24px;border:1px solid #35ded277;border-radius:18px;background:radial-gradient(ellipse at 75% 50%,#f28a2e66,transparent 35%),linear-gradient(105deg,#09283a,#071625 70%);box-shadow:inset 0 1px #ffffff14,0 10px 28px #0004}
+.gh-season-banner>div:first-child{position:relative;z-index:2;max-width:60%}
+.gh-season-banner p{margin:0;color:#e7f4f7;font-size:15px;font-weight:900;letter-spacing:1px}
+.gh-season-banner h2{margin:0;color:#ffad4f;font:900 clamp(27px,4vw,38px) 'Barlow Condensed';text-shadow:0 0 20px #ff8b2c66}
+.gh-season-banner span{display:block;margin-top:5px;color:#c6d9e2;font-size:11px;line-height:1.5}
+.gh-season-art{position:absolute;right:8%;bottom:-13px;display:flex;align-items:center;gap:3px}
+.gh-season-art span{font-size:92px;filter:drop-shadow(0 0 20px #ff8c37)}
+.gh-season-art b{align-self:center;padding:13px 9px;border:1px solid #ffb65c;background:#091a2a;color:#ffc36f;font:900 20px 'Barlow Condensed';transform:rotate(7deg);box-shadow:0 0 16px #ff9c4355}
+.gh-recent{margin:0 0 22px;border-color:rgba(53,222,210,.32);border-radius:18px;background:linear-gradient(145deg,#102b40,#071827);box-shadow:inset 0 1px #ffffff0b}
+.gh-recent .recent-members-heading>span{border-color:#ff9c4377;background:#3b281d;color:#ffc078}
+.gh-recent .recent-members-empty{border-color:#35ded244;background:#061827;color:#a9c0cd}
+.gh-top-ranking{overflow:hidden;border:1px solid rgba(53,222,210,.3);border-radius:16px;background:linear-gradient(145deg,#102b40,#071827)}
+.gh-top-player{display:grid;grid-template-columns:34px 38px minmax(0,1fr) auto;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid rgba(53,222,210,.12)}
+.gh-top-player:last-of-type{border-bottom:0}
+.gh-place{font-size:23px}
+.gh-player-avatar{width:37px;height:37px;display:grid;place-items:center;border:1px solid #35ded277;border-radius:50%;background:linear-gradient(145deg,#174b5c,#0b2030);color:#9dfff5;font:800 18px 'Barlow Condensed'}
+.gh-top-player b{overflow:hidden;color:#eef8fc;font-size:12px;text-overflow:ellipsis;white-space:nowrap}
+.gh-top-player strong{padding:7px 10px;border:1px solid #35ded244;border-radius:20px;color:#a4fff5;font-size:10px;white-space:nowrap}
+.gh-top-player.place-1 strong{border-color:#ff9c4388;color:#ffc078;background:#432b1b}
+.gh-full-ranking{display:flex;justify-content:space-between;padding:13px 16px;border-top:1px solid rgba(53,222,210,.16);color:#8ff5eb;font-size:10px;font-weight:800}
+.gh-view-all{color:#83eee5;font-size:10px;font-weight:800}
+@media(max-width:900px){.gh-content{padding-top:20px}.gh-shortcuts{grid-template-columns:repeat(6,minmax(0,1fr))}}
+@media(max-width:560px){
+ .gh-content{padding:15px 12px calc(112px + env(safe-area-inset-bottom))}
+ .gh-hero{min-height:275px;border-radius:18px;margin-bottom:14px}
+ .gh-hero-art:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(4,15,27,.7),rgba(4,15,27,.1) 75%),linear-gradient(0deg,rgba(4,15,27,.96),transparent 65%)}
+ .gh-castle{left:53%;width:125px;height:105px;bottom:24%}
+ .gh-hero-figure{font-size:57px;bottom:25%}
+ .gh-figure-left{left:-2%}.gh-figure-right{right:0}
+ .gh-banner-flag{bottom:40%;font-size:10px}.gh-flag-left{left:27%}.gh-flag-right{right:23%}
+ .gh-moon{right:7%;top:12%;width:35px;height:35px}
+ .gh-hero-copy{padding:18px 15px;min-height:275px;display:flex;flex-direction:column;justify-content:flex-end}
+ .gh-hero-copy .overline{font-size:8px;margin-bottom:4px}
+ .gh-hero-copy h1{font-size:39px}
+ .gh-hero-copy .muted{font-size:11px;max-width:290px}
+ .gh-hero-copy .season-chip{margin-top:13px;padding:8px 10px}
+ .gh-metrics{gap:9px}
+ .gh-metric{min-height:120px;padding:11px;border-radius:15px}
+ .gh-metric .metric-icon{width:34px;height:34px;font-size:17px}
+ .gh-metric .metric-kicker{font-size:7px;letter-spacing:.25px}
+ .gh-metric .metric-value{font-size:31px;margin:9px 0 1px}
+ .gh-metric .metric-note{font-size:9px}
+ .gh-shortcuts{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:13px 0 16px}
+ .gh-shortcut{min-height:82px;border-radius:13px;gap:5px}
+ .gh-shortcut>span{font-size:23px}.gh-shortcut>b{font-size:9px}
+ .gh-season-banner{min-height:132px;padding:14px;border-radius:15px}
+ .gh-season-banner>div:first-child{max-width:68%}
+ .gh-season-banner p{font-size:11px}.gh-season-banner h2{font-size:30px}
+ .gh-season-banner span{font-size:9px}
+ .gh-season-art{right:-4%;bottom:-13px}.gh-season-art span{font-size:72px}.gh-season-art b{font-size:15px}
+ .gh-recent{padding:13px;margin:0 0 20px}
+ .gh-recent .recent-members-heading h2{font-size:19px}
+ .gh-top-player{grid-template-columns:28px 34px minmax(0,1fr) auto;gap:7px;padding:10px}
+ .gh-player-avatar{width:33px;height:33px}
+ .gh-top-player b{font-size:11px}.gh-top-player strong{font-size:9px;padding:6px 7px}
+}
+@media(prefers-reduced-motion:reduce){.gh-shortcut{transition:none}.gh-shortcut:hover{transform:none}}
