@@ -106,13 +106,7 @@ button{font:inherit}
 .history-events article{justify-content:space-between;align-items:flex-start}.history-events article>div{min-width:0;flex:1}.history-events p{margin:5px 0 0;color:#bdc9d8;font-size:9px;line-height:1.5;overflow-wrap:anywhere}
 @media(max-width:560px){.history-content{margin:24px auto;padding:20px 14px}.history-filter{align-items:stretch;flex-direction:column}.history-filter button{width:100%}.history-section-title h2{font-size:18px}.history-player small{font-size:7px}}
 
-@media(max-width:900px){
-  .sidebar{display:flex;flex-direction:row;align-items:center;overflow-x:auto;white-space:nowrap;gap:4px;padding:8px 12px;position:sticky;top:64px;z-index:4;background:rgba(7,18,34,.97);border-right:0;border-bottom:1px solid rgba(118,151,190,.18)}
-  .side-label,.side-divider,.sidebar-foot{display:none}
-  .nav-item{flex:0 0 auto;padding:8px 10px;gap:7px;font-size:10px}
-  .active-bar{top:auto;left:10px;right:10px;bottom:-1px;width:auto;height:2px}
-}
-@media(max-width:560px){.sidebar{top:64px;padding:7px 9px}.nav-item{font-size:9px;padding:8px 9px}}
+/* On mobile, the fixed bottom navigation replaces the horizontal sidebar. */
 
 .ranking-search{display:flex;align-items:center;gap:10px;padding:12px 17px;border-bottom:1px solid #1c3552}
 .ranking-search input{min-width:0;flex:1;border:1px solid #314966;border-radius:8px;background:#091827;color:#eef3f9;padding:10px 11px;font:inherit;font-size:11px;outline:none}
