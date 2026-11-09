@@ -158,5 +158,13 @@ def build_raid_event_plan(preview, players_data, month_events):
             "action": "insert", "player": player_name, "category": CATEGORY,
             "activity": activity, "points": points,
         })
+        # Mirror the legacy writer: subsequent rows in this same preview see
+        # the newly planned award and cannot schedule a second insert.
+        known_events.append({
+            "player": player_name,
+            "category": CATEGORY,
+            "activity": activity,
+            "points": points,
+        })
 
     return plan
