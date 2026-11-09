@@ -1,9 +1,14 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import PublicNavigation from "@/components/public-navigation";
 import { getPlayerProfile } from "@/lib/ghost-hunt/player-profile";
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = {
+  title: "Perfil do jogador | Ghost Hunt",
+  description: "Pontuação mensal e histórico de atividade do jogador no Ghost Hunt.",
+};
 type Props = { params: Promise<{ tag: string }> };
 function fmt(value: number) { return new Intl.NumberFormat("pt-BR").format(value); }
 function date(value: string) {
