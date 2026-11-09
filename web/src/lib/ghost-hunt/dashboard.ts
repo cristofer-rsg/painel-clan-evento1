@@ -160,7 +160,7 @@ export async function getDashboardData(): Promise<DashboardData> {
         && (player.whatsapp ?? "Sim") === "Sim";
       const total = eligible
         ? Math.max(0, bucket.wars + bucket.league + donations + games + bucket.raid
-          + Math.floor(bucket.capitalCoins / 2500) - bucket.penalties)
+          + capitalPoints - bucket.penalties)
         : 0;
       return {
         position: 0,
