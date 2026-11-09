@@ -18,17 +18,22 @@ export default async function PerformancePage({ searchParams }: Props) {
   const data = await getPerformanceData(params.month, true);
   const activeRows = data.rows.filter(row => row.active);
   const searchTerm = (params.q || "").trim().toLocaleLowerCase("pt-BR");
-  const leadershipNames = new Map([
-    ["lilias", "LÍDER"],
-    ["mk", "CO-LÍDER"],
-    ["chama", "CO-LÍDER"],
-    ["generalninja", "CO-LÍDER"],
-  ]);
-  const normalizePlayerName = (name: string) => name.normalize("NFKD").replace(/[\\u0300-\\u036f]/g, "").toLocaleLowerCase("pt-BR").replace(/[^a-z0-9]/g, "");
+  const normalizePlayerName = (name: string) => name
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase("pt-BR")
+    .replace(/[^a-z0-9]/g, "");
+  const getLeadershipRole = (name: string) => {
+    const normalized = normalizePlayerName(name);
+    if (normalized.includes("lilias")) return "LÍDER";
+    if (normalized === "mk" || normalized.startsWith("mk")) return "CO-LÍDER";
+    if (normalized === "chama" || normalized.startsWith("chama")) return "CO-LÍDER";
+    if (normalized.includes("generalninja")) return "CO-LÍDER";
+    return undefined;
+  };
   const rankedRows = activeRows.map(row => {
     const score = metrics.reduce((sum, metric) => sum + Math.min(row[metric.key] / metric.target, 1), 0) / metrics.length * 100;
-    const normalizedName = normalizePlayerName(row.player);
-    const role = normalizedName.includes("lilias") ? "LÍDER" : leadershipNames.get(normalizedName);
+    const role = getLeadershipRole(row.player);
     return { ...row, index: Number(score.toFixed(1)), role };
   }).sort((a, b) => b.index - a.index || a.player.localeCompare(b.player, "pt-BR"))
     .map((row, index) => ({ ...row, position: index + 1 }));
