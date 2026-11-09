@@ -22,11 +22,13 @@ export default async function PerformancePage({ searchParams }: Props) {
     ["lilias", "LÍDER"],
     ["mk", "CO-LÍDER"],
     ["chama", "CO-LÍDER"],
-    ["general ninja", "CO-LÍDER"],
+    ["generalninja", "CO-LÍDER"],
   ]);
+  const normalizePlayerName = (name: string) => name.normalize("NFKD").replace(/[\\u0300-\\u036f]/g, "").toLocaleLowerCase("pt-BR").replace(/[^a-z0-9]/g, "");
   const rankedRows = activeRows.map(row => {
     const score = metrics.reduce((sum, metric) => sum + Math.min(row[metric.key] / metric.target, 1), 0) / metrics.length * 100;
-    const role = leadershipNames.get(row.player.trim().toLocaleLowerCase("pt-BR"));
+    const normalizedName = normalizePlayerName(row.player);
+    const role = normalizedName.includes("lilias") ? "LÍDER" : leadershipNames.get(normalizedName);
     return { ...row, index: Number(score.toFixed(1)), role };
   }).sort((a, b) => b.index - a.index || a.player.localeCompare(b.player, "pt-BR"))
     .map((row, index) => ({ ...row, position: index + 1 }));
