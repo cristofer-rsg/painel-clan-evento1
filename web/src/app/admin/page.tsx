@@ -31,7 +31,6 @@ export default async function AdminPage() {
       </div>
       <p className="export-footnote">Os arquivos são gerados no momento da solicitação e exigem sessão administrativa válida.</p>
     </section>
-    </div>
     <div className="admin-notice"><b>Recursos preservados</b><span>Lançamentos manuais continuam desativados. As sincronizações automáticas do clã seguem pelos workflows existentes.</span></div>
     <a className="back-link" href="/">← Abrir ranking público</a>
   </section></main>;
