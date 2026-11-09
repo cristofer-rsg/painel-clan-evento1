@@ -2,7 +2,7 @@ name: Sincronizar membros do clã
 
 on:
   schedule:
-    - cron: "0 */6 * * *"
+    - cron: "13 * * * *"
   workflow_dispatch:
 
 permissions:
