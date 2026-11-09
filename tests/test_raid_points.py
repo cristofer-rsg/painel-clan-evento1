@@ -82,5 +82,54 @@ class RaidPointPlanTests(unittest.TestCase):
         self.assertEqual(build_raid_event_plan(preview, PLAYERS, [])["actions"], [])
 
 
+    def test_tag_matched_preview_awards_registered_player_not_api_name(self):
+        preview = {
+            **PREVIEW,
+            "rows": [{
+                "Jogador na API": "Old Clash Name",
+                "Tag": "#AAA",
+                "Cadastro no Ghost Hunt": "Lilias",
+                "Vínculo": "TAG",
+                "Ataques": 5,
+            }],
+        }
+        plan = build_raid_event_plan(preview, PLAYERS, [])
+        self.assertEqual(plan["actions"][0]["player"], "Lilias")
+        self.assertEqual(plan["actions"][0]["action"], "insert")
+
+    def test_weekend_anchor_uses_brazil_local_time(self):
+        from scripts.raid_points import _weekend_start
+        from datetime import date
+
+        # 02:00 UTC on Sunday is 23:00 Saturday in Sao Paulo.
+        self.assertEqual(
+            _weekend_start("2026-11-08T02:00:00Z"),
+            date(2026, 11, 7),
+        )
+
+    def test_event_input_is_not_mutated(self):
+        existing = {
+            "id": 41, "player": "Lilias", "category": "Raide de Fim de Semana",
+            "activity": "RAIDE_AUTO:2026-11-07:ATAQUES_5 | antigo", "points": 6,
+            "created_at": "2026-11-07T12:00:00-03:00",
+        }
+        original = dict(existing)
+        build_raid_event_plan(PREVIEW, PLAYERS, [existing])
+        self.assertEqual(existing, original)
+
+    def test_rows_without_registered_match_are_not_awarded(self):
+        preview = {
+            **PREVIEW,
+            "rows": [{
+                "Jogador na API": "Unknown",
+                "Cadastro no Ghost Hunt": "NÃO ENCONTRADO",
+                "Ataques": 6,
+            }],
+        }
+        plan = build_raid_event_plan(preview, PLAYERS, [])
+        self.assertEqual(plan["unmatched"], ["Unknown"])
+        self.assertEqual(plan["actions"], [])
+
+
 if __name__ == "__main__":
     unittest.main()
