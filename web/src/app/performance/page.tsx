@@ -14,7 +14,7 @@ const metrics = [
 
 export default async function PerformancePage({ searchParams }: Props) {
   const params = await searchParams;
-  const data = await getPerformanceData(params.month);
+  const data = await getPerformanceData(params.month, true);
   const activeRows = data.rows.filter(row => row.active);
   const searchTerm = (params.q || "").trim().toLocaleLowerCase("pt-BR");
   const rankedRows = activeRows.map(row => {
