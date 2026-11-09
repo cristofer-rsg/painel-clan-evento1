@@ -24,4 +24,4 @@ jobs:
       - name: Verificar sintaxe
         run: python -m py_compile scripts/raid_automation.py tests/test_raid_automation_dates.py
       - name: Testar identificação do fim de semana
-        run: python -m unittest tests/test_raid_automation_dates.py
+        run: python tests/test_raid_automation_dates.py
