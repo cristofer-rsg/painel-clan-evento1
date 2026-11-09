@@ -68,7 +68,7 @@ export default async function HomePage() {
             </div>
             <div className="gh-hero-copy">
               <p className="overline">CENTRAL DO CLÃ · BEM-VINDO DE VOLTA</p>
-              <h1>Olá, <em>Caçador!</em></h1>
+              <h1>Olá, <em>Jogador!</em></h1>
               <p className="muted">Acompanhe a atividade e o desempenho do seu clã.</p>
               <div className="season-chip"><span>▣</span><div><small>TEMPORADA ATUAL</small><b>{data.monthLabel}</b></div></div>
             </div>
