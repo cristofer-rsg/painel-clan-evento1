@@ -58,7 +58,23 @@ export default async function HomePage() {
 
         <section className="content gh-content gh-home-content">
           <section className="gh-v2-hero">
-            <div className="gh-v2-hero-art" aria-hidden="true"><span className="gh-v2-sigil">GH</span><span className="gh-v2-orbit orbit-one" /><span className="gh-v2-orbit orbit-two" /></div>
+            <div className="gh-v2-hero-art gh-v2-castle-art" aria-hidden="true">
+              <svg className="gh-v2-castle" viewBox="0 0 420 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs><linearGradient id="ghCastleGold" x1="210" y1="18" x2="210" y2="282" gradientUnits="userSpaceOnUse"><stop stopColor="#F2D99C"/><stop offset=".48" stopColor="#C49A4D"/><stop offset="1" stopColor="#765326"/></linearGradient><linearGradient id="ghCastleGlow" x1="210" y1="40" x2="210" y2="270" gradientUnits="userSpaceOnUse"><stop stopColor="#E7C77F" stopOpacity=".34"/><stop offset="1" stopColor="#A87932" stopOpacity=".02"/></linearGradient></defs>
+                <path d="M45 263H375" stroke="#D9B56E" strokeOpacity=".42" strokeWidth="2"/>
+                <path d="M73 263V157H116V112H151V157H177V92H243V157H269V112H304V157H347V263H73Z" fill="url(#ghCastleGlow)" stroke="url(#ghCastleGold)" strokeWidth="2.4"/>
+                <path d="M62 157V126H78V112H94V126H110V157M139 157V91H155V75H171V91H187V157M233 157V91H249V75H265V91H281V157M310 157V126H326V112H342V126H358V157" fill="#241B10" stroke="url(#ghCastleGold)" strokeWidth="2.2" strokeLinejoin="round"/>
+                <path d="M177 92V53H194V36H210V53H227V92" fill="#302314" stroke="url(#ghCastleGold)" strokeWidth="2.4" strokeLinejoin="round"/>
+                <path d="M210 36V13L239 23L210 31" fill="#D8B36C" fillOpacity=".85"/>
+                <path d="M151 75V39L167 48L151 54M265 75V39L281 48L265 54" stroke="#D8B36C" strokeWidth="2" strokeLinejoin="round"/>
+                <path d="M193 263V220C193 205 201 194 210 194C219 194 227 205 227 220V263" fill="#17120D" stroke="#D8B36C" strokeWidth="2"/>
+                <path d="M91 180H110V205H91V180ZM145 180H164V205H145V180ZM256 180H275V205H256V180ZM310 180H329V205H310V180Z" fill="#E0BE79" fillOpacity=".32" stroke="#D8B36C" strokeOpacity=".72" strokeWidth="1.5"/>
+                <path d="M102 180V205M155 180V205M266 180V205M320 180V205" stroke="#D8B36C" strokeOpacity=".5"/>
+                <path d="M49 263L73 243H347L371 263" stroke="#D8B36C" strokeOpacity=".55" strokeWidth="1.5"/>
+                <circle cx="210" cy="143" r="5" fill="#E9CB87" fillOpacity=".7"/>
+              </svg>
+              <span className="gh-v2-castle-halo" />
+            </div>
             <div className="gh-v2-hero-copy">
               <div className="gh-v2-eyebrow"><span className="gh-v2-live-dot" /> BEM-VINDO, CAÇADOR <span>•</span> {data.monthLabel.toUpperCase()}</div>
               <h1>BEM-VINDO,<br /><em>CAÇADOR.</em></h1>
