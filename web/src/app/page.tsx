@@ -9,26 +9,26 @@ function number(value: number) {
 }
 
 const shortcuts = [
-  { icon: "⚔", label: "Guerras", href: "/history" },
-  { icon: "🛡", label: "Liga do Clã", href: "/history" },
-  { icon: "🏰", label: "Capital do Clã", href: "/history" },
-  { icon: "📋", label: "Jogos do Clã", href: "/history" },
-  { icon: "🤝", label: "Doações", href: "/performance" },
-  { icon: "🏆", label: "Ranking", href: "/ranking" },
+  { icon: "⚔", label: "Guerras", detail: "Confrontos do clã", href: "/history" },
+  { icon: "🛡", label: "Liga do Clã", detail: "Temporada competitiva", href: "/history" },
+  { icon: "🏰", label: "Capital", detail: "Raides e melhorias", href: "/history" },
+  { icon: "📋", label: "Jogos do Clã", detail: "Desafios coletivos", href: "/history" },
+  { icon: "🤝", label: "Doações", detail: "Ajude seus aliados", href: "/performance" },
+  { icon: "🏆", label: "Ranking", detail: "Ver classificação", href: "/ranking" },
 ];
 
 export default async function HomePage() {
   const data = await getDashboardData();
   const topThree = data.ranking.slice(0, 3);
   const metrics = [
-    { icon: "♛", label: "PONTOS DO LÍDER", value: number(data.leaderPoints), note: "Ranking do mês", tone: "gold" },
-    { icon: "♟", label: "JOGADORES ATIVOS", value: number(data.activePlayers), note: "Membros do clã", tone: "cyan" },
-    { icon: "⚔", label: "REGISTROS DE GUERRA", value: number(data.warRecords), note: "Lançamentos no mês", tone: "cyan" },
-    { icon: "▤", label: "LANÇAMENTOS", value: number(data.eventCount), note: "Eventos do mês", tone: "copper" },
+    { icon: "♛", label: "PONTOS DO LÍDER", value: number(data.leaderPoints), note: "No mês atual", tone: "gold" },
+    { icon: "♟", label: "JOGADORES ATIVOS", value: number(data.activePlayers), note: "Membros do clã", tone: "neutral" },
+    { icon: "⚔", label: "GUERRAS", value: number(data.warRecords), note: "Registros no mês", tone: "neutral" },
+    { icon: "▤", label: "ATIVIDADES", value: number(data.eventCount), note: "Eventos registrados", tone: "neutral" },
   ];
 
   return (
-    <main className="app-shell gh-home">
+    <main className="app-shell gh-home gh-home-v2">
       <RankingAutoRefresh />
       <header className="topbar gh-topbar">
         <a className="brand" href="/" aria-label="Ghost Hunt início">
@@ -37,7 +37,7 @@ export default async function HomePage() {
         </a>
         <div className="topbar-right">
           <span className={data.connected ? "status" : "status status-offline"}>
-            <span className="status-dot" /> {data.connected ? "SUPABASE CONECTADO" : "AGUARDANDO CONEXÃO"}
+            <span className="status-dot" /> {data.connected ? "CLÃ CONECTADO" : "AGUARDANDO CONEXÃO"}
           </span>
           <a className="avatar" href="/login" aria-label="Acesso administrativo">GH</a>
         </div>
@@ -56,78 +56,49 @@ export default async function HomePage() {
           <div className="sidebar-foot"><span className="shield">◆</span><span><b>GHOST HUNT</b><small>Temporada do clã</small></span></div>
         </aside>
 
-        <section className="content gh-content">
-          <div className="gh-hero">
-            <div className="gh-hero-art" aria-hidden="true">
-              <div className="gh-moon" />
-              <div className="gh-castle"><i /><i /><i /><b>GH</b></div>
-              <div className="gh-hero-figure gh-figure-left">⚔</div>
-              <div className="gh-hero-figure gh-figure-right">♛</div>
-              <div className="gh-banner-flag gh-flag-left">GH</div>
-              <div className="gh-banner-flag gh-flag-right">GH</div>
+        <section className="content gh-content gh-home-content">
+          <section className="gh-v2-hero">
+            <div className="gh-v2-hero-art" aria-hidden="true"><span className="gh-v2-sigil">GH</span><span className="gh-v2-orbit orbit-one" /><span className="gh-v2-orbit orbit-two" /></div>
+            <div className="gh-v2-hero-copy">
+              <div className="gh-v2-eyebrow"><span className="gh-v2-live-dot" /> CENTRAL DO CLÃ <span>•</span> {data.monthLabel.toUpperCase()}</div>
+              <h1>FORÇA, <em>HONRA</em><br />E CONQUISTAS.</h1>
+              <p>O desempenho do Ghost Hunt em um só lugar.</p>
+              <a className="gh-v2-hero-link" href="/ranking">ACOMPANHAR RANKING <b>↗</b></a>
             </div>
-            <div className="gh-hero-copy">
-              <p className="overline">CENTRAL DO CLÃ · BEM-VINDO DE VOLTA</p>
-              <h1>Olá, <em>Jogador!</em></h1>
-              <p className="muted">Acompanhe a atividade e o desempenho do seu clã.</p>
-              <div className="season-chip"><span>▣</span><div><small>TEMPORADA ATUAL</small><b>{data.monthLabel}</b></div></div>
-            </div>
-          </div>
+            <div className="gh-v2-season-stamp"><small>TEMPORADA</small><strong>{data.monthLabel.split(" de ")[0].slice(0,3).toUpperCase()}</strong><span>2026</span></div>
+          </section>
 
           {!data.connected && <div className="connection-alert">
-            <b>Não foi possível carregar os dados reais.</b>
-            <span>O painel continua protegido; confira as variáveis do Supabase no ambiente de hospedagem.</span>
+            <b>Dados do clã temporariamente indisponíveis.</b>
+            <span>O painel continua protegido; confira a conexão com o Supabase.</span>
             {data.error && <small>{data.error}</small>}
           </div>}
 
-          <div className="metrics-grid gh-metrics">
-            {metrics.map((metric) => <article className={`metric-card gh-metric ${metric.tone}`} key={metric.label}>
-              <div className="metric-top"><span className="metric-icon">{metric.icon}</span><span className="metric-kicker">{metric.label}</span></div>
-              <strong className="metric-value">{metric.value}</strong><span className="metric-note">{metric.note}</span>
+          <section className="gh-v2-stats" aria-label="Resumo do clã">
+            {metrics.map((metric) => <article className={`gh-v2-stat ${metric.tone}`} key={metric.label}>
+              <span className="gh-v2-stat-icon">{metric.icon}</span>
+              <div><small>{metric.label}</small><strong>{metric.value}</strong><span>{metric.note}</span></div>
             </article>)}
-          </div>
-
-          <nav className="gh-shortcuts" aria-label="Atalhos das atividades do clã">
-            {shortcuts.map(item => <a href={item.href} className="gh-shortcut" key={item.label}>
-              <span>{item.icon}</span><b>{item.label}</b>
-            </a>)}
-          </nav>
-
-          <section className="gh-season-banner">
-            <div><p>TEMPORADA DE</p><h2>{data.monthLabel.split(" de ")[0].toUpperCase()}</h2>
-              <span>Participe dos eventos, acumule pontos e fortaleça o clã!</span></div>
-            <div className="gh-season-art" aria-hidden="true"><span>🏰</span><b>GH</b></div>
           </section>
 
-          <section className="recent-members-panel gh-recent">
-            <div className="recent-members-heading"><div><p className="overline">CHEGARAM RECENTEMENTE</p><h2>Novos membros do clã</h2></div><span>3 RECENTES</span></div>
-            {data.recentMembers.length ? <div className="recent-members-list">{data.recentMembers.map(member => <article key={member.player_tag || member.player_name}>
-              <span className="recent-member-shield">♜</span><div><b>{member.player_name}</b><small>{member.player_tag || "Tag não informada"}</small></div>
-              <time>{new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(member.first_seen_at))}</time><strong>NOVO</strong>
-            </article>)}</div> : <p className="recent-members-empty">Aguardando novos integrantes identificados pela sincronização.</p>}
+          <section className="gh-v2-section">
+            <div className="gh-v2-section-head"><div><small>NAVEGUE PELO CLÃ</small><h2>Central de atividades</h2></div><span>ATALHOS</span></div>
+            <nav className="gh-v2-activity-grid" aria-label="Atividades do clã">
+              {shortcuts.map(item => <a href={item.href} className="gh-v2-activity" key={item.label}>
+                <span className="gh-v2-activity-icon">{item.icon}</span><b>{item.label}</b><small>{item.detail}</small><i>↗</i>
+              </a>)}
+            </nav>
           </section>
 
-          <div className="section-heading ranking-heading" id="ranking"><div><p className="overline">CLASSIFICAÇÃO</p><h2>Ranking do mês</h2></div><a className="gh-view-all" href="/performance">Ver desempenho completo ›</a></div>
-          <section className="gh-podium-section" aria-label="Pódio dos três primeiros colocados">
-            <div className="gh-podium-heading"><span>🏆</span><div><p className="overline">DESTAQUES DO MÊS</p><h2>Pódio do mês</h2></div><span>🏆</span></div>
-            {topThree.length ? <div className="gh-podium">
-              {[topThree[1], topThree[0], topThree[2]].filter(Boolean).map((player) => {
-                const place = data.ranking.findIndex(item => item.player === player.player) + 1;
-                return <a className={`gh-podium-card podium-${place}`} href={player.tag ? `/player/${encodeURIComponent(player.tag)}` : "#ranking"} key={player.player}>
-                  <span className="gh-podium-medal">{place === 1 ? "👑" : place === 2 ? "🥈" : "🥉"}</span>
-                  <span className="gh-podium-avatar">{player.player.slice(0,1).toUpperCase()}</span>
-                  <b className="gh-podium-name">{player.player}</b>
-                  <strong>{number(player.total)} pts</strong>
-                  <span className="gh-podium-base"><b>{place}º</b></span>
-                </a>;
-              })}
-            </div> : <p className="recent-members-empty">O pódio aparecerá quando houver jogadores classificados.</p>}
+          <section className="gh-v2-season-strip">
+            <div className="gh-v2-season-emblem">♜</div>
+            <div><small>TEMPORADA EM ANDAMENTO</small><strong>{data.monthLabel}</strong><span>Participe, some pontos e dispute o topo.</span></div>
+            <a href="/rules">VER REGRAS <b>›</b></a>
           </section>
 
           <section className="gh-rewards-banner" aria-labelledby="gh-rewards-title">
             <div className="gh-rewards-glow" aria-hidden="true" />
             <div className="gh-rewards-heading">
-              <span className="gh-rewards-crown" aria-hidden="true">♛</span>
               <p className="overline">PREMIAÇÃO MENSAL</p>
               <h2 id="gh-rewards-title">2 PASSES PARA OS TOP 2</h2>
               <p>1º e 2º lugar ganham 1 passe cada.</p>
@@ -157,10 +128,31 @@ export default async function HomePage() {
             <p className="gh-rewards-footnote">Válido para os dois primeiros do ranking que cumprirem as regras.</p>
           </section>
 
-          <div className="section-heading" id="ranking-full"><div><p className="overline">TODOS OS JOGADORES</p><h2>Classificação completa</h2></div><span className="period-pill">{data.monthLabel.toUpperCase()}</span></div>
-          <section className="ranking-panel">
-            <div className="ranking-head"><span>JOGADOR</span><span>PONTUAÇÃO</span></div>
-            {data.ranking.length ? <RankingList players={data.ranking} /> : <div className="empty-state"><span className="empty-icon">♜</span><b>{data.connected ? "Ainda não há jogadores cadastrados" : "Conectando os dados do clã"}</b><p>{data.connected ? "Os jogadores aparecerão aqui assim que estiverem cadastrados." : "O ranking será exibido quando a conexão com o Supabase estiver configurada."}</p></div>}
+          <section className="gh-v2-section gh-v2-ranking-section" id="ranking">
+            <div className="gh-v2-section-head"><div><small>DISPUTA DO MÊS</small><h2>Ranking em destaque</h2></div><a href="/ranking">VER TUDO ↗</a></div>
+            <div className="gh-v2-podium">
+              {topThree.length ? [topThree[1], topThree[0], topThree[2]].filter(Boolean).map((player) => {
+                const place = data.ranking.findIndex(item => item.player === player.player) + 1;
+                return <a className={`gh-v2-podium-card rank-${place}`} href={player.tag ? `/player/${encodeURIComponent(player.tag)}` : "/ranking"} key={player.player}>
+                  <span className="gh-v2-medal">{place === 1 ? "👑" : place === 2 ? "🥈" : "🥉"}</span>
+                  <span className="gh-v2-player-avatar">{player.player.slice(0,1).toUpperCase()}</span>
+                  <b>{player.player}</b><strong>{number(player.total)} <small>PTS</small></strong><span className="gh-v2-rank-label">{place}º LUGAR</span>
+                </a>;
+              }) : <p className="recent-members-empty">{data.connected ? "O pódio aparecerá quando houver jogadores classificados." : "Aguardando conexão para carregar o ranking."}</p>}
+            </div>
+            <div className="gh-v2-full-ranking-head" id="ranking-full"><div><small>CLASSIFICAÇÃO GERAL</small><h3>Todos os jogadores</h3></div><span>{data.monthLabel.toUpperCase()}</span></div>
+            <section className="ranking-panel">
+              <div className="ranking-head"><span>JOGADOR</span><span>PONTUAÇÃO</span></div>
+              {data.ranking.length ? <RankingList players={data.ranking} /> : <div className="empty-state"><span className="empty-icon">♜</span><b>{data.connected ? "Ainda não há jogadores cadastrados" : "Conectando os dados do clã"}</b><p>{data.connected ? "Os jogadores aparecerão aqui assim que estiverem cadastrados." : "O ranking será exibido quando a conexão com o Supabase estiver configurada."}</p></div>}
+            </section>
+          </section>
+
+          <section className="recent-members-panel gh-recent gh-v2-recent">
+            <div className="recent-members-heading"><div><p className="overline">CHEGARAM RECENTEMENTE</p><h2>Novos membros</h2></div><span>3 RECENTES</span></div>
+            {data.recentMembers.length ? <div className="recent-members-list">{data.recentMembers.map(member => <article key={member.player_tag || member.player_name}>
+              <span className="recent-member-shield">♜</span><div><b>{member.player_name}</b><small>{member.player_tag || "Tag não informada"}</small></div>
+              <time>{new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(member.first_seen_at))}</time><strong>NOVO</strong>
+            </article>)}</div> : <p className="recent-members-empty">Os novos integrantes aparecerão aqui após a sincronização.</p>}
           </section>
           <footer className="footer"><span>GHOST HUNT <b>•</b> CENTRAL DO CLÃ</span><span>Dados do Supabase • Atualizado ao abrir</span></footer>
         </section>
