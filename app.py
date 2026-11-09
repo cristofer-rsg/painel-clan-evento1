@@ -1614,6 +1614,15 @@ if aba == "📊 Desempenho":
             "Jogadores sem registros aparecem com zero; dados anteriores à implantação não são reconstruídos automaticamente."
         )
 
+# A tela consulta a API apenas para exibir a conferência; não lança pontos.
+raid_api_preview = build_raid_api_preview(players)
+raid_auto_result = {
+    "awarded": [],
+    "already_awarded": [],
+    "unmatched": [],
+    "errors": [],
+}
+
 if aba == "🏆 Ranking do mês":
     if raid_api_preview.get("status") == "ok":
         with st.expander("🔎 Conferência automática do Raide da Capital", expanded=False):
@@ -1653,7 +1662,7 @@ if aba == "➕ Lançar pontos":
     st.subheader("➕ Lançamentos de pontuação")
     st.info(
         "Os lançamentos manuais foram desativados. "
-        "A pontuação será registrada pelas sincronizações automáticas do aplicativo."
+        "A pontuação do Raide será registrada pelo workflow automático do GitHub Actions."
     )
     st.caption(
         "Guerras, Liga dos Clãs, Doações, Jogos do Clã e Raide "
