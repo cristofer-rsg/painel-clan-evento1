@@ -44,6 +44,10 @@ jobs:
           (async () => {
             const workbook = new ExcelJS.Workbook();
             const sheet = workbook.addWorksheet("Teste");
+            sheet.columns = [
+              { header: "ID", key: "id" },
+              { header: "Jogador", key: "player" },
+            ];
             sheet.addRow({ id: 1, player: "Ghost Hunt" });
             const buffer = await workbook.xlsx.writeBuffer();
             const reopened = new ExcelJS.Workbook();
