@@ -58,7 +58,7 @@ export async function PATCH(request: NextRequest) {
   }
   try {
     const supabase = createSupabaseAdmin();
-    const { data: current, error: currentError } = await supabase.from("events").select("category").eq("id", id).maybeSingle();
+    const { data: current, error: currentError } = await supabase.from("events").select("category,player").eq("id", id).maybeSingle();
     if (currentError) throw currentError;
     if (!current) return NextResponse.json({ error: "Lançamento não encontrado." }, { status: 404 });
     // Categorias legadas e não editáveis (como Capital do Clã) podem ser mantidas,
