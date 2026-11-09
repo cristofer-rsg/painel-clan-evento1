@@ -33,7 +33,7 @@ As credenciais de Clash of Clans permanecem nos GitHub Secrets utilizados pelos 
 ## Estado da reconstrução
 
 - Painel público com pódio, ranking, pesquisa por nome/tag e expansão da classificação.
-- Indicadores mensais com metas originais do Índice de Atividade Ghost Hunt (20 guerras, 7 liga, 24 raide, 5.000 doações, 10.000 jogos e 250.000 moedas de capital), com resultado máximo de 100%.
+- Indicadores mensais com Índice de Atividade proporcional ao maior resultado de cada uma das seis categorias no mês selecionado; cada categoria vale até 100 pontos, total máximo de 600, com desempate pelas métricas individuais.
 - Painel dos três membros mais recentes, a partir de `clan_member_entries`.
 - Histórico mensal, com preferência pelos snapshots arquivados e cálculo alternativo quando não há snapshot.
 - Área administrativa protegida por senha server-side e cookie HttpOnly; gestão de jogadores, edição/exclusão de lançamentos e exportação Excel/CSV.
