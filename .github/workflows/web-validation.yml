@@ -28,13 +28,32 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
       - name: Install dependencies
         run: npm install
       - name: Dependency security summary
         run: |
           npm audit --json > /tmp/npm-audit.json || true
           node -e 'const a=require("/tmp/npm-audit.json"); for (const [name,v] of Object.entries(a.vulnerabilities || {})) console.log(name + " | " + v.severity + " | fix: " + JSON.stringify(v.fixAvailable) + " | via: " + v.via.map(x => typeof x === "string" ? x : x.name).join(", ")); console.log("Total:", JSON.stringify(a.metadata?.vulnerabilities || {}));'
+      - name: Production dependency audit
+        run: npm audit --omit=dev
+      - name: ExcelJS runtime round-trip
+        run: |
+          node <<'NODE'
+          const ExcelJS = require("exceljs");
+          (async () => {
+            const workbook = new ExcelJS.Workbook();
+            const sheet = workbook.addWorksheet("Teste");
+            sheet.addRow({ id: 1, player: "Ghost Hunt" });
+            const buffer = await workbook.xlsx.writeBuffer();
+            const reopened = new ExcelJS.Workbook();
+            await reopened.xlsx.load(buffer);
+            if (reopened.getWorksheet("Teste")?.getCell("B2").value !== "Ghost Hunt") {
+              throw new Error("Falha na leitura do arquivo Excel gerado.");
+            }
+            console.log("ExcelJS gerou e reabriu um XLSX com sucesso.");
+          })().catch(error => { console.error(error); process.exit(1); });
+          NODE
       - name: Build Next.js
         env:
           NEXT_TELEMETRY_DISABLED: 1
