@@ -419,3 +419,67 @@ body{background:radial-gradient(ellipse at 78% -18%,rgba(201,164,92,.075),transp
   .export-option{padding:13px;gap:11px}
   .export-file-icon{flex-basis:41px;height:44px}
 }
+
+
+/* History and performance reading experience */
+.history-content,.performance-content{max-width:960px}
+.history-content>p,.performance-content>p{max-width:720px}
+.history-filter{gap:10px 12px;padding:15px;margin:22px 0 25px}
+.history-filter label{color:#b9c6d5;font-size:10px;font-weight:800}
+.history-filter select,.history-filter input{min-height:43px;padding:0 12px}
+.history-filter button{min-height:43px;padding:0 19px;font-weight:800}
+.history-section-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:27px 0 13px}
+.history-section-title h2{margin:0;font:700 23px 'Barlow Condensed';letter-spacing:.2px}
+.history-section-title>span{flex:0 0 auto;padding:6px 9px;border:1px solid #c9a45c35;border-radius:30px;background:#c9a45c0b;color:#e8cc91;font-size:8px;font-weight:900;letter-spacing:.8px}
+.history-ranking{display:grid;gap:8px}
+.history-ranking article{display:grid;grid-template-columns:38px minmax(0,1fr) auto;align-items:center;gap:12px;padding:13px 15px;transition:border-color .18s,transform .18s}
+.history-ranking article:hover,.history-events article:hover{border-color:#c9a45c70;transform:translateY(-1px)}
+.history-position{width:34px;height:34px;display:grid;place-items:center;font-size:11px;font-weight:900}
+.history-player{display:grid;gap:5px;min-width:0}
+.history-player>strong{font-size:12px;overflow-wrap:anywhere}
+.history-player small{color:#93a3b6;font-size:9px;line-height:1.55;overflow-wrap:anywhere}
+.history-total{font-size:12px;white-space:nowrap}
+.history-events{display:grid;gap:8px}
+.history-events article{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 15px;transition:border-color .18s,transform .18s}
+.history-events article>div{min-width:0}
+.history-events article>div>b{font-size:11px}
+.history-events article small{display:block;margin-top:4px;color:#8fa0b5;font-size:9px}
+.history-events article p{margin:8px 0 0;color:#c2ccda;font-size:10px;line-height:1.55;overflow-wrap:anywhere}
+.history-events article>strong{flex:0 0 auto;font-size:11px;white-space:nowrap}
+.performance-period{display:inline-flex;margin:3px 0 16px;padding:7px 11px;border:1px solid #c9a45c45;border-radius:30px;background:#c9a45c0d;color:#e8cc91;font-size:9px;font-weight:900;letter-spacing:.8px}
+.performance-totals{gap:10px}
+.performance-totals article{padding:15px}
+.performance-totals article>b{font:700 27px 'Barlow Condensed';letter-spacing:.2px}
+.performance-totals article>small{font-size:9px;letter-spacing:.8px}
+.performance-totals article>span{font-size:9px}
+.performance-result-count{margin:0 0 12px;color:#aab8c9;font-size:10px}
+.performance-list{display:grid;gap:11px}
+.performance-card{padding:16px}
+.performance-card-head{gap:10px}
+.performance-card-head>b{min-width:0;display:flex;align-items:center;gap:9px;font-size:12px;overflow-wrap:anywhere}
+.performance-card-head>b>span{flex:0 0 auto;display:grid;place-items:center;width:27px;height:27px;border:1px solid #c9a45c35;border-radius:8px;background:#c9a45c12;color:#e8cc91;font-size:9px}
+.performance-card-head>strong{flex:0 0 auto;font:800 20px 'Barlow Condensed'}
+.performance-card-head>strong small{font:600 9px Inter,sans-serif;color:#8394a8}
+.performance-card-grid{gap:7px}
+.performance-card-grid span{display:flex;align-items:center;justify-content:space-between;gap:7px;padding:9px 10px;color:#9eafc2;font-size:9px}
+.performance-card-grid span b{color:#f0d9a7;font-size:10px}
+.performance-status{display:inline-flex;margin-top:12px;padding:5px 8px;border:1px solid #5b956d55;border-radius:30px;background:#2b6c3a20;color:#9fd2a9;font-size:8px;font-weight:900;letter-spacing:.7px}
+@media(max-width:600px){
+  .history-filter{grid-template-columns:1fr}
+  .history-filter button{grid-column:auto}
+  .history-section-title{align-items:flex-start}
+  .history-section-title h2{font-size:21px}
+  .history-ranking article{grid-template-columns:32px minmax(0,1fr);gap:9px;padding:12px}
+  .history-position{width:30px;height:30px}
+  .history-total{grid-column:2;justify-self:start;margin-top:-2px;font-size:11px}
+  .history-player small{font-size:8px}
+  .history-events article{align-items:flex-start;padding:12px}
+  .history-events article p{font-size:9px}
+  .performance-totals{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .performance-totals article{min-height:88px;padding:12px}
+  .performance-card{padding:13px}
+  .performance-card-head>strong{font-size:18px}
+}
+@media(prefers-reduced-motion:reduce){
+  .history-ranking article,.history-events article{transition:none}
+}
