@@ -59,17 +59,28 @@ export async function getPlayerProfile(tag: string): Promise<PlayerProfile | nul
   if (playerError) throw new Error("Não foi possível consultar o jogador.");
   if (!playerData) return null;
   const player = playerData as PlayerRow;
+  if (player.active === false) return null;
   const monthKey = currentMonth();
   const bounds = monthBounds(monthKey);
-  const [monthResult, recentResult] = await Promise.all([
-    db.from("events").select("id,player,category,activity,points,created_at")
-      .eq("player", player.name).gte("created_at", bounds.start).lt("created_at", bounds.end)
-      .order("created_at", { ascending: false }),
+  const [recentResult, events] = await Promise.all([
     db.from("events").select("id,player,category,activity,points,created_at")
       .eq("player", player.name).order("created_at", { ascending: false }).limit(30),
+    (async () => {
+      const rows: EventRow[] = [];
+      for (let offset = 0; ; offset += 1000) {
+        const { data, error } = await db.from("events")
+          .select("id,player,category,activity,points,created_at")
+          .eq("player", player.name).gte("created_at", bounds.start).lt("created_at", bounds.end)
+          .order("created_at", { ascending: false }).range(offset, offset + 999);
+        if (error) throw error;
+        const page = (data || []) as EventRow[];
+        rows.push(...page);
+        if (page.length < 1000) break;
+      }
+      return rows;
+    })(),
   ]);
-  if (monthResult.error || recentResult.error) throw new Error("Não foi possível carregar o histórico de pontuação.");
-  const events = (monthResult.data || []) as EventRow[];
+  if (recentResult.error) throw new Error("Não foi possível carregar o histórico de pontuação.");
   const recentEvents = (recentResult.data || []) as EventRow[];
   let wars = 0, league = 0, donatedTroops = 0, games = 0, raid = 0, capitalCoins = 0, penalties = 0;
   for (const event of events) {
