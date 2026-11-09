@@ -1,3 +1,4 @@
+import AdminNavigation from "@/components/admin-navigation";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getPerformanceData } from "@/lib/ghost-hunt/performance";
@@ -50,7 +51,7 @@ export default async function AdminPerformancePage({ searchParams }: Props) {
     ["Capital", data.totals.capital, "moedas"],
   ] as const;
   return <main className="admin-shell">
-    <header className="admin-header"><a className="brand" href="/"><span className="brand-mark">GH</span><span className="brand-copy"><strong>GHOST <i>HUNT</i></strong><small>CLAN MANAGEMENT</small></span></a><a className="back-link" href="/admin">← Administração</a></header>
+    <header className="admin-header"><a className="brand" href="/"><span className="brand-mark">GH</span><span className="brand-copy"><strong>GHOST <i>HUNT</i></strong><small>CLAN MANAGEMENT</small></span></a><a className="back-link" href="/admin">← Administração</a></header><AdminNavigation current="/admin/performance" />
     <section className="admin-content performance-content">
       <span className="auth-kicker">VISÃO ADMINISTRATIVA • INDICADORES DO CLÃ</span><h1>Desempenho administrativo <em>mensal</em></h1><p>Índice equilibrado: cada uma das seis categorias vale até 100 pontos, com máximo de 600.</p>
       <form className="history-filter" action="/admin/performance" method="get"><label htmlFor="month">Mês de referência</label><select id="month" name="month" defaultValue={data.monthKey}>{data.months.map(month => <option value={month} key={month}>{new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric", timeZone: "America/Sao_Paulo" }).format(new Date(month + "-15T12:00:00-03:00"))}</option>)}</select><label htmlFor="active">Jogadores</label><select id="active" name="active" defaultValue={showInactive ? "0" : "1"}><option value="0">Incluir inativos</option><option value="1">Somente ativos</option></select><label htmlFor="direction">Ordenação</label><select id="direction" name="direction" defaultValue={descending ? "desc" : "asc"}><option value="desc">Mais ativos primeiro</option><option value="asc">Menos ativos primeiro</option></select><label htmlFor="q">Buscar jogador</label><input id="q" name="q" type="search" placeholder="Nome ou tag" defaultValue={params.q || ""}/><button type="submit">Consultar</button></form>
