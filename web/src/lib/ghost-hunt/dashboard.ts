@@ -114,8 +114,15 @@ export async function getDashboardData(): Promise<DashboardData> {
       .select("player_name,player_tag,entered_at").eq("is_baseline", false)
       .order("entered_at", { ascending: false }).limit(3);
     const recentMembers = recentResult.error ? [] : (recentResult.data ?? []).map((row) => ({ player_name: row.player_name, player_tag: row.player_tag, first_seen_at: row.entered_at })) as RecentMember[];
-    // O ranking operacional considera somente membros atualmente ativos no clã.
+    // O ranking operacional considera somente membros ativos e participantes da competição.
+    // Líder e co-líderes continuam cadastrados e com histórico, mas não concorrem.
     const players = ((playerData ?? []) as Player[]).filter((player) => player.active !== false);
+    const excludedFromCompetition = new Set(
+      ["LILIAS", "MK", "Chama", "General Ninja"].map((name) => name.trim().toLocaleLowerCase("pt-BR")),
+    );
+    const competitors = players.filter(
+      (player) => !excludedFromCompetition.has(player.name.trim().toLocaleLowerCase("pt-BR")),
+    );
     const totals = new Map<string, {
       wars: number; league: number; donatedTroops: number;
       games: number; raid: number; capitalCoins: number; penalties: number;
@@ -140,7 +147,7 @@ export async function getDashboardData(): Promise<DashboardData> {
       totals.set(event.player, bucket);
     }
 
-    const ranking = players.map((player) => {
+    const ranking = competitors.map((player) => {
       const bucket = totals.get(player.name) ?? {
         wars: 0, league: 0, donatedTroops: 0, games: 0,
         raid: 0, capitalCoins: 0, penalties: 0,
