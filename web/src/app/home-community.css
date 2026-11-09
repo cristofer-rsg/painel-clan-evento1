@@ -100,3 +100,58 @@
  .gh-top-player b{font-size:11px}.gh-top-player strong{font-size:9px;padding:6px 7px}
 }
 @media(prefers-reduced-motion:reduce){.gh-shortcut{transition:none}.gh-shortcut:hover{transform:none}}
+
+
+/* Monthly season-pass reward banner — independent of the existing podium */
+.gh-rewards-banner{position:relative;isolation:isolate;overflow:hidden;margin:26px 0 30px;padding:25px;border:1px solid rgba(240,177,91,.55);border-radius:20px;background:radial-gradient(ellipse at 50% 0%,rgba(240,177,91,.17),transparent 48%),linear-gradient(145deg,#182536 0%,#0a1727 62%,#101c2b 100%);box-shadow:0 16px 38px rgba(0,0,0,.28),inset 0 1px rgba(255,255,255,.07)}
+.gh-rewards-glow{position:absolute;z-index:-1;width:270px;height:270px;right:-90px;top:-150px;border-radius:50%;background:rgba(240,177,91,.12);filter:blur(28px);pointer-events:none}
+.gh-rewards-heading{text-align:center;max-width:680px;margin:0 auto}
+.gh-rewards-crown{display:inline-grid;place-items:center;width:43px;height:43px;border:1px solid rgba(255,195,111,.45);border-radius:14px;background:rgba(255,195,111,.1);color:#ffc36f;font-size:26px;box-shadow:0 0 22px rgba(255,175,86,.14)}
+.gh-rewards-heading .overline{margin:11px 0 5px;color:#ffc36f}
+.gh-rewards-heading h2{margin:0;color:#fff1d8;font:800 clamp(25px,4vw,35px) 'Barlow Condensed';letter-spacing:.7px}
+.gh-rewards-heading>p:last-child{margin:8px 0 0;color:#c2d0dc;font-size:12px;line-height:1.6}
+.gh-rewards-prizes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;max-width:600px;margin:20px auto}
+.gh-reward-prize{display:grid;grid-template-columns:38px 1fr;align-items:center;column-gap:10px;padding:13px 16px;border:1px solid rgba(255,195,111,.32);border-radius:14px;background:linear-gradient(130deg,rgba(116,79,35,.42),rgba(17,30,44,.9))}
+.gh-reward-prize.second{border-color:rgba(190,199,214,.25);background:linear-gradient(130deg,rgba(74,79,91,.45),rgba(17,30,44,.9))}
+.gh-reward-prize>span{grid-row:span 2;font-size:27px}
+.gh-reward-prize>b{font-size:10px;letter-spacing:1px;color:#e7edf3}
+.gh-reward-prize>strong{margin-top:3px;color:#ffc36f;font-size:13px;letter-spacing:.7px}
+.gh-reward-prize.second>strong{color:#d9e0e8}
+.gh-rewards-rules{max-width:760px;margin:20px auto 0;padding:17px 19px;border:1px solid rgba(83,161,185,.24);border-radius:14px;background:rgba(3,15,27,.48)}
+.gh-rewards-rules h3{margin:0 0 12px;color:#a4fff5;font:800 12px 'Inter';letter-spacing:1px}
+.gh-rewards-rules p{display:flex;align-items:flex-start;gap:11px;margin:9px 0;color:#d5e0e8;font-size:11px;line-height:1.55}
+.gh-rewards-rules p span{flex:0 0 24px;color:#ffc36f;font:800 12px 'Barlow Condensed'}
+.gh-rewards-actions{display:grid;grid-template-columns:minmax(0,1fr) minmax(250px,.72fr);gap:13px;max-width:850px;margin:17px auto 0}
+.gh-leader-profile{display:flex;align-items:center;gap:15px;min-width:0;padding:14px;border:1px solid rgba(83,161,185,.25);border-radius:15px;background:rgba(5,18,31,.62)}
+.gh-leader-qr{flex:0 0 116px;padding:6px;border-radius:10px;background:#fff}
+.gh-leader-qr img{display:block;width:104px;height:104px;object-fit:contain}
+.gh-leader-copy{display:flex;flex-direction:column;align-items:flex-start;min-width:0;gap:6px}
+.gh-leader-copy small{color:#8ea8bd;font-size:8px;font-weight:800;letter-spacing:.8px}
+.gh-leader-copy strong{color:#ffe0a6;font-size:14px;overflow-wrap:anywhere}
+.gh-leader-copy>span{color:#a9bdcc;font-size:9px;line-height:1.45}
+.gh-reward-button{display:flex;align-items:center;justify-content:center;gap:9px;min-height:43px;padding:11px 14px;border:1px solid transparent;border-radius:11px;color:#fff;font-size:10px;font-weight:800;text-align:center;line-height:1.35;transition:transform .18s,filter .18s,box-shadow .18s}
+.gh-reward-button:hover{transform:translateY(-2px);filter:brightness(1.1)}
+.gh-reward-button b{font-size:15px}
+.gh-clash-button{margin-top:4px;border-color:rgba(99,177,255,.42);background:linear-gradient(110deg,#1769a5,#17477a);box-shadow:0 7px 18px rgba(23,105,165,.2)}
+.gh-whatsapp-button{align-self:stretch;min-height:100%;border-color:rgba(69,211,132,.42);background:linear-gradient(120deg,#147b4c,#0c583b);box-shadow:0 7px 20px rgba(20,123,76,.2);font-size:12px}
+.gh-whatsapp-button>span{font-size:20px}
+.gh-rewards-footnote{max-width:850px;margin:12px auto 0;color:#8198aa;font-size:9px;line-height:1.55;text-align:center}
+@media(max-width:640px){
+ .gh-rewards-banner{margin:20px 0 25px;padding:17px 13px;border-radius:17px}
+ .gh-rewards-heading h2{font-size:29px}
+ .gh-rewards-heading>p:last-child{font-size:11px}
+ .gh-rewards-prizes{gap:8px;margin:16px auto}
+ .gh-reward-prize{grid-template-columns:27px 1fr;gap:7px;padding:11px 9px}
+ .gh-reward-prize>span{font-size:22px}
+ .gh-reward-prize>b{font-size:8px}
+ .gh-reward-prize>strong{font-size:11px}
+ .gh-rewards-rules{padding:14px 12px}
+ .gh-rewards-rules p{font-size:10px;gap:7px}
+ .gh-rewards-actions{grid-template-columns:1fr}
+ .gh-leader-profile{gap:11px;padding:11px}
+ .gh-leader-qr{flex-basis:94px;padding:5px}
+ .gh-leader-qr img{width:84px;height:84px}
+ .gh-leader-copy strong{font-size:12px}
+ .gh-leader-copy>span{font-size:8px}
+ .gh-whatsapp-button{min-height:48px}
+}
