@@ -7,6 +7,7 @@ const items = [
   { href: "/", icon: "⌂", label: "Início" },
   { href: "/#ranking", icon: "♛", label: "Ranking" },
   { href: "/performance", icon: "◈", label: "Desempenho" },
+  { href: "/rules", icon: "⚖", label: "Regras" },
   { href: "/history", icon: "▤", label: "Histórico" },
 ];
 
@@ -15,6 +16,7 @@ export default function PublicNavigation() {
   return <nav className="public-page-navigation" aria-label="Navegação pública">
     {items.map(item => {
       const active = item.href === "/history" ? pathname === "/history"
+        : item.href === "/rules" ? pathname === "/rules"
         : item.href === "/performance" ? pathname === "/performance"
         : item.href === "/#ranking" ? pathname.startsWith("/player/")
         : item.href === "/" ? pathname === "/" : false;
