@@ -14,7 +14,7 @@ const shortcuts = [
   { icon: "🏰", label: "Capital do Clã", href: "/history" },
   { icon: "📋", label: "Jogos do Clã", href: "/history" },
   { icon: "🤝", label: "Doações", href: "/performance" },
-  { icon: "🏆", label: "Ranking", href: "#ranking" },
+  { icon: "🏆", label: "Ranking", href: "/ranking" },
 ];
 
 export default async function HomePage() {
@@ -47,7 +47,7 @@ export default async function HomePage() {
         <aside className="sidebar">
           <div className="side-label">MENU PRINCIPAL</div>
           <a className="nav-item active" href="/"><span className="nav-icon">⌂</span><span>Início</span><span className="active-bar" /></a>
-          <a className="nav-item" href="#ranking"><span className="nav-icon">♛</span><span>Ranking</span></a>
+          <a className="nav-item" href="/ranking"><span className="nav-icon">♛</span><span>Ranking</span></a>
           <a className="nav-item" href="/performance"><span className="nav-icon">◈</span><span>Desempenho</span></a>
           <a className="nav-item" href="/history"><span className="nav-icon">▤</span><span>Histórico</span></a>
           <div className="side-divider" />
