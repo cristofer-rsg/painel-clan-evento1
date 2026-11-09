@@ -47,17 +47,29 @@ export async function PATCH(request: NextRequest) {
   let body: Record<string, unknown>;
   try { body = await request.json(); } catch { return NextResponse.json({ error: "Requisição inválida." }, { status: 400 }); }
   const name = typeof body.name === "string" ? body.name.trim() : "";
+  const playerTag = typeof body.player_tag === "string" ? body.player_tag.trim() : "";
   const eligible = body.eligible;
   const whatsapp = body.whatsapp;
-  if (!name || !["Elegível", "Inelegível"].includes(String(eligible)) || !["Sim", "Não"].includes(String(whatsapp))) {
+  if (!name || name.length > 80 || !["Elegível", "Inelegível"].includes(String(eligible)) || !["Sim", "Não"].includes(String(whatsapp))) {
     return NextResponse.json({ error: "Dados de jogador inválidos." }, { status: 400 });
   }
   try {
-    const { data, error } = await createSupabaseAdmin().from("players")
-      .update({ eligible, whatsapp }).eq("name", name)
-      .select("name,player_tag,eligible,whatsapp,active,created_at").maybeSingle();
-    if (error) throw error;
-    if (!data) return NextResponse.json({ error: "Jogador não encontrado." }, { status: 404 });
+    const supabase = createSupabaseAdmin();
+    let query = supabase.from("players").update({ eligible, whatsapp }).select("name,player_tag,eligible,whatsapp,active,created_at");
+    if (playerTag) {
+      query = query.eq("player_tag", playerTag);
+    } else {
+      // Compatibilidade com registros antigos sem TAG: o nome só pode identificar
+      // o jogador quando for único; nomes repetidos exigem a TAG.
+      query = query.eq("name", name).is("player_tag", null);
+    }
+    const { data, error } = await query.maybeSingle();
+    if (error) {
+      if (error.code === "PGRST116") return NextResponse.json({ error: "Nome duplicado: atualize o jogador pela TAG." }, { status: 409 });
+      throw error;
+    }
+    if (!data) return NextResponse.json({ error: "Jogador não encontrado para a TAG informada." }, { status: 404 });
+    if (data.name !== name) return NextResponse.json({ error: "A TAG não corresponde ao nome informado." }, { status: 409 });
     return NextResponse.json({ player: data });
   } catch {
     return NextResponse.json({ error: "Não foi possível atualizar o jogador." }, { status: 500 });
