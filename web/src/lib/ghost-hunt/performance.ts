@@ -77,8 +77,8 @@ export async function getPerformanceData(requestedMonth?: string): Promise<Perfo
       const raid = Number(stat?.raid_attacks || 0);
       const games = Number(stat?.clan_games_points || 0);
       const capitalValue = capital.get(player.name.trim().toLocaleLowerCase("pt-BR")) || 0;
-      // Índice original: seis metas fixas, com o mesmo peso e máximo de 100% por categoria.
-      // O total final varia de 0 a 100, não de 0 a 600.
+      // O índice é calculado na apresentação: consulta pública usa metas fixas (0–100);
+      // administração usa máximos dinâmicos por categoria (0–600).
       return {
         player: player.name, tag: player.player_tag || "", wars, league, raid, donations, games,
         capital: capitalValue, active: player.active !== false, index: 0, position: 0,
