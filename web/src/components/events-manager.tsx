@@ -18,6 +18,13 @@ export default function EventsManager() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("todas");
+  const filteredEvents = events.filter(event => {
+    const term = search.trim().toLocaleLowerCase("pt-BR");
+    const matchesText = !term || event.player.toLocaleLowerCase("pt-BR").includes(term) || event.activity.toLocaleLowerCase("pt-BR").includes(term) || String(event.id).includes(term);
+    return matchesText && (categoryFilter === "todas" || event.category === categoryFilter);
+  });
   async function load() {
     setLoading(true);
     try {
@@ -61,11 +68,12 @@ export default function EventsManager() {
       <label>Pontos<input type="number" min={-200} max={200} step={1} value={selected.points} onChange={e => change("points", Number(e.target.value))} /></label>
       <button className="manager-save" type="button" disabled={saving} onClick={() => void save()}>{saving ? "Salvando..." : "Salvar alterações"}</button>
     </article>}
-    {loading ? <p>Carregando lançamentos...</p> : <div className="manager-list">{events.map(event => <article className="manager-player" key={event.id}>
+    {!loading && <div className="manager-toolbar event-toolbar"><label className="manager-search-label">Buscar lançamento<input value={search} onChange={e => setSearch(e.target.value)} placeholder="Jogador, descrição ou número..." /></label><label className="manager-filter-label">Categoria<select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)}><option value="todas">Todas</option>{Array.from(new Set(events.map(event => event.category))).map(category => <option key={category} value={category}>{category}</option>)}</select></label><span className="manager-count">{filteredEvents.length} de {events.length}</span></div>}
+    {loading ? <p>Carregando lançamentos...</p> : <div className="manager-list">{filteredEvents.map(event => <article className="manager-player" key={event.id}>
       <div className="manager-player-title"><b>{event.player}</b><strong>{event.points} pts</strong></div>
       <small className="player-tag">{localDate(event.created_at)} • {event.category}</small><p className="event-activity">{event.activity}</p>
       <div className="event-actions"><button className="manager-save" type="button" onClick={() => setSelected({ ...event })}>Editar</button><button className="manager-delete" type="button" disabled={saving} onClick={() => void remove(event)}>Excluir</button></div>
-    </article>)}{!events.length && <p>Não há lançamentos neste mês.</p>}</div>}
+    </article>)}{!filteredEvents.length && <p className="manager-empty">{events.length ? "Nenhum lançamento corresponde aos filtros." : "Não há lançamentos neste mês."}</p>}</div>}
     <a className="back-link" href="/admin">← Voltar à administração</a>
   </section>;
 }
