@@ -22,8 +22,7 @@ export default async function PerformancePage({ searchParams }: Props) {
       Math.min(row.capital / 250000, 1),
     ].reduce((sum, value) => sum + value, 0) / 6 * 100).toFixed(1)),
   })).sort((a, b) => (descending ? b.index - a.index : a.index - b.index)
-    || b.wars - a.wars || b.league - a.league || b.raid - a.raid || b.donations - a.donations
-    || b.games - a.games || b.capital - a.capital || a.player.localeCompare(b.player, "pt-BR"))
+    || a.player.localeCompare(b.player, "pt-BR"))
     .map((row, index) => ({ ...row, position: index + 1 }));
   const visibleRows = searchTerm ? rankedRows.filter(row => row.player.toLocaleLowerCase("pt-BR").includes(searchTerm) || row.tag.toLocaleLowerCase("pt-BR").includes(searchTerm)) : rankedRows;
   const metrics = [
