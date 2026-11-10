@@ -58,7 +58,7 @@ export default async function PerformancePage({ searchParams }: Props) {
         {visibleRows.map(row => <article className="performance-card" key={row.player}>
           <div className="performance-card-head">
             <b><span>#{row.position}</span>{row.player}{row.role && <small className="performance-leader-role">{row.role}</small>}</b>
-            <strong>{row.index.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} <small>/ 100</small></strong>
+            <strong>{row.index.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%</strong>
           </div>
           <div className="performance-progress" role="img" aria-label={`Meta geral: ${row.index.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`}><span style={{ width: `${Math.min(row.index, 100)}%` }} /></div>
           <div className="performance-card-grid">
