@@ -1042,3 +1042,21 @@ body{
   }
   .mobile-nav-item{min-width:0}
 }
+
+
+/* Lightweight category comparison in public clan ranking */
+.ranking-breakdown-grid>span>b{display:flex;align-items:center;justify-content:space-between;gap:5px}
+.ranking-breakdown-grid>span>b>span{white-space:nowrap}
+.ranking-breakdown-grid>span>b>strong{font-size:10px;font-weight:900;white-space:nowrap}
+.ranking-breakdown-grid>span.is-above>b>strong,.ranking-comparison-legend .legend-up{color:#35d58a}
+.ranking-breakdown-grid>span.is-below>b>strong,.ranking-comparison-legend .legend-down{color:#ff6868}
+.ranking-breakdown-grid>span.is-equal>b>strong,.ranking-comparison-legend .legend-equal{color:#aab3bd}
+.ranking-breakdown-grid>span.is-best{border-color:#c9a45c;background:linear-gradient(135deg,#c9a45c20,#0a1726 75%);box-shadow:inset 0 0 0 1px #c9a45c20}
+.ranking-best-star,.ranking-comparison-legend .legend-star{color:#f2c14e;font-style:normal}
+.ranking-comparison-legend{display:flex;flex-wrap:wrap;gap:5px 11px;margin-top:9px;color:#9eafc2;font-size:9px}
+.ranking-comparison-legend span{white-space:nowrap}
+.ranking-comparison-legend i{font-style:normal;font-weight:900;font-size:11px}
+@media(max-width:560px){
+ .ranking-breakdown-grid>span>b>strong{font-size:9px}
+ .ranking-comparison-legend{gap:5px 8px;font-size:8px}
+}
