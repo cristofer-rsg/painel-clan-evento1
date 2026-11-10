@@ -182,7 +182,7 @@ export async function getDashboardData(): Promise<DashboardData> {
       monthKey,
       monthLabel: monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1),
       leaderPoints: ranking[0]?.total ?? 0,
-      activePlayers: players.filter((player) => player.active !== false).length,
+      activePlayers: ((playerData ?? []) as Player[]).filter((player) => player.active !== false).length,
       warRecords: events.filter((event) => (event.category ?? "").trim().toLocaleLowerCase("pt-BR") === "guerras").length,
       eventCount: events.length,
       ranking,
