@@ -207,7 +207,10 @@ def main():
         attacks_by_player[tag] = attacks_by_player.get(tag, 0) + int(
             source.get("league_attacks") or 0
         )
-    season = str(group.get("season") or "temporada-desconhecida")
+    season = str(group.get("season") or (
+        all_stat_sources[0]["month_key"].replace("-", "")
+        if all_stat_sources else "temporada-desconhecida"
+    ))
     completion_bonus_events = []
     for tag, total_attacks in attacks_by_player.items():
         if total_attacks >= 7:
