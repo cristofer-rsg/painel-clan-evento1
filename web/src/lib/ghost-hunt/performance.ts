@@ -79,8 +79,8 @@ export async function getPerformanceData(requestedMonth?: string, useManualDonat
         if (activity.toLocaleLowerCase("pt-BR").includes("fora do espelho")) bucket.penalties += 50;
       } else if (category === "guerras") {
         bucket.wars += points;
-        if (activity === "Participou da guerra (+5)") bucket.warAttacks += 1;
-        else if (activity === "Fez os dois ataques (+10)") bucket.warAttacks += 1;
+        if (/^Fez [1-3] estrela/i.test(activity)) bucket.warAttacks += 1;
+        else if (activity === "Fez os dois ataques (+10)") bucket.warAttacks = Math.max(bucket.warAttacks, 2);
       }
       else if (category === "liga dos clãs") {
         bucket.league += points;
@@ -113,7 +113,7 @@ export async function getPerformanceData(requestedMonth?: string, useManualDonat
       const totalPoints = Math.max(0, warsPoints + leaguePoints + raidPoints + donationsPoints + gamesPoints + capitalPoints - raw.penalties);
       const index = Math.round(totalPoints / 10);
       return {
-        player: player.name, tag: player.player_tag || "", wars: raw.warAttacks, league: raw.league, raid: raw.raidAttacks,
+        player: player.name, tag: player.player_tag || "", wars: raw.warAttacks, league: raw.leagueAttacks, raid: raw.raidAttacks,
         donations, games, capital: raw.capital,
         warsPoints, leaguePoints, raidPoints, donationsPoints, gamesPoints, capitalPoints,
         warsPercent: Math.round(warsPoints / 200 * 100), leaguePercent: Math.round(leaguePoints / 200 * 100),
