@@ -2,61 +2,13 @@ import PublicNavigation from "@/components/public-navigation";
 
 export const metadata = { title: "Regras da pontuação | Ghost Hunt" };
 
-const rules = [
-  {
-    icon: "⚔️", title: "Guerras do Clã", subtitle: "Pontuação por desempenho em cada guerra",
-    items: [
-      ["Participar da guerra", "+5 pontos"],
-      ["Realizar os dois ataques", "+10 pontos"],
-      ["Acertar o espelho", "+5 pontos por ataque no espelho"],
-      ["Conquistar estrelas", "+1, +2 ou +3 pontos por ataque, conforme as estrelas"],
-    ],
-    note: "Não existe limite máximo de pontos por guerra. Os pontos de participação, ataques, espelho e estrelas são acumulados conforme as ações realizadas."
-  },
-  {
-    icon: "🛡️", title: "Liga dos Clãs", subtitle: "Cada ataque válido pode somar diferentes critérios",
-    items: [
-      ["Realizar um ataque", "+5 pontos por ataque"],
-      ["Conquistar estrelas", "+1, +2 ou +3 pontos, conforme o resultado"],
-      ["Acertar o espelho", "+5 pontos por ataque no espelho"],
-      ["Completar os 7 ataques da Liga", "+10 pontos de bônus, uma vez por temporada"],
-    ],
-    note: "A pontuação é acumulada pelos ataques registrados durante as batalhas da Liga. O bônus de +10 é concedido uma única vez ao jogador que completar os 7 ataques disponíveis na temporada."
-  },
-  {
-    icon: "🤝", title: "Doações de tropas", subtitle: "Conversão das tropas doadas em pontos",
-    items: [
-      ["A cada 100 tropas doadas", "+1 ponto"],
-      ["Limite mensal", "50 pontos por jogador"],
-      ["Máximo considerado", "5.000 tropas doadas no cálculo da pontuação"],
-    ],
-    note: "A contagem é sincronizada com os dados do clã. Registros antigos de doação que não representam tropas efetivamente doadas não entram no cálculo."
-  },
-  {
-    icon: "🎮", title: "Jogos do Clã", subtitle: "Participação nos Jogos do Clã",
-    items: [
-      ["Pontuação", "Conforme o progresso individual sincronizado"],
-      ["Limite mensal", "25 pontos por jogador"],
-    ],
-    note: "O sistema acompanha a conquista individual dos Jogos do Clã e considera no ranking no máximo 25 pontos por mês."
-  },
-  {
-    icon: "🏰", title: "Raide de Fim de Semana", subtitle: "Pontos pelos ataques utilizados na Capital",
-    items: [
-      ["Cada ataque utilizado", "+1 ponto"],
-      ["Utilizar 5 ou 6 ataques", "+2 pontos de bônus"],
-      ["Máximo por fim de semana", "8 pontos (6 ataques + bônus)"],
-    ],
-    note: "A sincronização considera até 6 ataques. O mesmo fim de semana não gera pontos duplicados; se houver um lançamento manual para o jogador naquele período, ele tem prioridade sobre o automático."
-  },
-  {
-    icon: "🪙", title: "Capital do Clã", subtitle: "Conversão das contribuições em moedas",
-    items: [
-      ["A cada 2.500 moedas contribuídas", "+1 ponto no cálculo do ranking"],
-      ["Referência inicial", "A primeira leitura cria uma base e não gera pontos retroativos"],
-    ],
-    note: "A sincronização registra somente o aumento positivo desde a última leitura. O total de moedas também aparece nos indicadores de desempenho."
-  },
+const categories = [
+  { icon: "⚔️", title: "Guerras normais", weight: "200 pontos", target: "20 pontos brutos", note: "Os pontos válidos registrados nas guerras são somados até atingir a meta de 20 pontos brutos. O limite desta categoria é 200 pontos no ranking." },
+  { icon: "🏆", title: "Liga dos Clãs", weight: "200 pontos", target: "140 pontos brutos", note: "Os pontos dos ataques e o bônus de conclusão dos 7 ataques são contabilizados. A categoria tem limite de 200 pontos no mês." },
+  { icon: "🛡️", title: "Raide de Fim de Semana", weight: "150 pontos", target: "16 pontos brutos", note: "São considerados os pontos registrados pelos ataques utilizados nos raides. A categoria tem limite mensal de 150 pontos." },
+  { icon: "🤝", title: "Doações de tropas", weight: "150 pontos", target: "10.000 tropas", note: "Conta somente a quantidade de tropas efetivamente doadas pelo jogador durante o mês. Doar 10.000 tropas atinge o limite de 150 pontos." },
+  { icon: "🎮", title: "Jogos do Clã", weight: "100 pontos", target: "10.000 pontos pessoais", note: "Conta a pontuação individual registrada nos Jogos do Clã. Ao atingir 10.000 pontos, o jogador recebe os 100 pontos da categoria." },
+  { icon: "🏰", title: "Ouro doado à Capital", weight: "200 pontos", target: "250.000 de ouro doado", note: "Conta somente o ouro efetivamente doado pelo jogador à Capital. Ouro recebido ou conquistado nos raides não entra nessa contagem." },
 ];
 
 export default function RulesPage() {
@@ -67,31 +19,43 @@ export default function RulesPage() {
     </header>
     <PublicNavigation />
     <section className="admin-content rules-content">
-      <span className="auth-kicker">REGULAMENTO OFICIAL • PONTUAÇÃO</span>
+      <span className="auth-kicker">REGULAMENTO OFICIAL • NOVA PONTUAÇÃO</span>
       <h1>Regras <em>dos pontos</em></h1>
-      <p>Consulte como cada atividade soma pontos no ranking mensal do Ghost Hunt, quais são os limites por categoria e como as penalidades afetam o resultado.</p>
+      <p>O ranking mensal soma pontos de seis atividades. A referência é de 1.000 pontos por mês, e cada categoria tem sua própria meta e limite.</p>
 
       <article className="rules-highlight">
-        <span>⚖️</span><div><b>Importante sobre as guerras</b><p>As guerras não têm limite de pontuação. Todos os pontos válidos são somados, inclusive estrelas e bônus por espelho.</p></div>
+        <span>📊</span><div><b>Como funciona a pontuação</b><p>Os pontos de cada atividade são calculados proporcionalmente à meta, arredondados para números inteiros e somados. A pontuação de cada categoria não ultrapassa seu limite.</p></div>
       </article>
 
       <div className="rules-grid">
-        {rules.map((rule, index) => <article className="rules-card" key={rule.title}>
-          <div className="rules-card-heading"><span className="rules-icon">{rule.icon}</span><div><h2>{rule.title}</h2><p>{rule.subtitle}</p></div></div>
-          <div className="rules-points">{rule.items.map(([label, value]) => <div className="rules-point-row" key={label}><span>{label}</span><b>{value}</b></div>)}</div>
-          <p className="rules-note">{rule.note}</p>
+        {categories.map((category) => <article className="rules-card" key={category.title}>
+          <div className="rules-card-heading"><span className="rules-icon">{category.icon}</span><div><h2>{category.title}</h2><p>Meta: {category.target}</p></div></div>
+          <div className="rules-points"><div className="rules-point-row"><span>Máximo no ranking</span><b>{category.weight}</b></div></div>
+          <p className="rules-note">{category.note}</p>
         </article>)}
       </div>
 
       <section className="rules-card rules-final">
-        <div className="rules-card-heading"><span className="rules-icon">🚫</span><div><h2>Penalidades e elegibilidade</h2><p>Regras gerais aplicadas ao fechamento do ranking</p></div></div>
+        <div className="rules-card-heading"><span className="rules-icon">⚔️</span><div><h2>Regras obrigatórias das guerras</h2><p>Prazo dos ataques e única penalidade</p></div></div>
         <div className="rules-points">
-          <div className="rules-point-row"><span>Lançamento negativo</span><b>Desconta pontos do total</b></div>
-          <div className="rules-point-row"><span>Pontuação final negativa</span><b>O total mínimo é 0</b></div>
-          <div className="rules-point-row"><span>Jogador inelegível ou sem WhatsApp confirmado</span><b>Não pontua no ranking</b></div>
-          <div className="rules-point-row"><span>Liderança do clã</span><b>Não participa da classificação de premiação</b></div>
+          <div className="rules-point-row"><span>Primeiro ataque</span><b>Respeitar o espelho definido</b></div>
+          <div className="rules-point-row"><span>Segundo ataque</span><b>Até 12 horas antes do fim da guerra</b></div>
+          <div className="rules-point-row"><span>Atacar fora do espelho sem autorização</span><b>−50 pontos</b></div>
+          <div className="rules-point-row"><span>Deixar de realizar ataques</span><b>Sem multa adicional</b></div>
+          <div className="rules-point-row"><span>Pontuação final</span><b>Nunca fica abaixo de zero</b></div>
         </div>
-        <p className="rules-note">A elegibilidade é conferida no cadastro do jogador. Líder e co-líderes permanecem fora da disputa do ranking de premiação.</p>
+        <p className="rules-note">Deixar de realizar um ou os dois ataques não gera desconto. O jogador apenas deixa de receber os pontos correspondentes. Atacar fora do espelho sem autorização é a única infração com desconto de pontos. Não há penalidades duplicadas.</p>
+      </section>
+
+      <section className="rules-card rules-final">
+        <div className="rules-card-heading"><span className="rules-icon">📈</span><div><h2>Ranking e desempenho</h2><p>Entenda a diferença entre os dois indicadores</p></div></div>
+        <div className="rules-points">
+          <div className="rules-point-row"><span>Ranking mensal</span><b>Mostra somente os pontos acumulados</b></div>
+          <div className="rules-point-row"><span>Desempenho geral</span><b>Mostra somente a porcentagem</b></div>
+          <div className="rules-point-row"><span>Detalhamento por atividade</span><b>Mostra pontos e percentual</b></div>
+          <div className="rules-point-row"><span>Referência geral</span><b>1.000 pontos = 100%</b></div>
+        </div>
+        <p className="rules-note">A porcentagem geral corresponde à pontuação líquida dividida por 10. Exemplo: 790 pontos representam 79% de desempenho.</p>
       </section>
 
       <section className="rules-card rules-final">
