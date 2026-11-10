@@ -1061,6 +1061,6 @@ body{
  .ranking-comparison-legend{gap:5px 8px;font-size:8px}
 }
 
-.performance-card-head>strong.performance-capital-value{display:flex;flex-direction:column;align-items:flex-end;gap:0;line-height:1.02}
-.performance-card-head>strong.performance-capital-value small{font:600 9px Inter,sans-serif;color:#e8cc91;line-height:1.15;text-align:right}
-@media(max-width:560px){.performance-card-head>strong.performance-capital-value{font-size:18px}.performance-card-head>strong.performance-capital-value small{font-size:9px}}
+.performance-card-head>strong.performance-capital-value{display:flex;flex-direction:row;align-items:center;justify-content:flex-end;gap:7px;line-height:1;white-space:nowrap}
+.performance-card-head>strong.performance-capital-value small{font:600 11px Inter,sans-serif;color:#e8cc91;line-height:1.2;text-align:left;white-space:normal}
+@media(max-width:560px){.performance-card-head>strong.performance-capital-value{font-size:21px}.performance-card-head>strong.performance-capital-value small{font-size:11px}}
