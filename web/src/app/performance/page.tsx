@@ -61,18 +61,6 @@ export default async function PerformancePage({ searchParams }: Props) {
       <div className="performance-period">{data.monthLabel}</div>
       <div className="performance-section-heading"><h2>Desempenho do clã</h2><span>{activeRows.length} JOGADORES</span></div>
       <div className="performance-totals">{totals.map(metric => <article key={metric.key}><small>{metric.label}</small><b>{fmt(metric.value)}</b><span>{metric.unit}</span></article>)}</div>
-      <section className="performance-list">
-        <div className="performance-section-heading"><h2>Ranking por categoria</h2><span>{selectedMetric.label.toUpperCase()}</span></div>
-        <p className="performance-result-count">Jogadores ordenados por {selectedMetric.label.toLocaleLowerCase("pt-BR")} • {sortOrder === "desc" ? "maior para menor" : "menor para maior"}</p>
-        {categoryRows.map((row, index) => <article className="performance-card" key={`category-${row.player}`}>
-          <div className="performance-card-head">
-            <b><span>#{index + 1}</span>{row.player}{row.role && <small className="performance-leader-role">{row.role}</small>}</b>
-            <strong>{fmt(row[selectedMetric.key])}</strong>
-          </div>
-          <small className="performance-status active">ATIVO {row.tag}</small>
-        </article>)}
-        {!categoryRows.length && data.connected && <p>Nenhum jogador encontrado para esta consulta.</p>}
-      </section>
       <div className="performance-list">
         <div className="performance-section-heading"><h2>Desempenho dos jogadores</h2><span>{visibleRows.length} JOGADORES</span></div>
         <p className="performance-result-count">{visibleRows.length} de {rankedRows.length} jogador(es)</p>
@@ -90,6 +78,18 @@ export default async function PerformancePage({ searchParams }: Props) {
         </article>)}
         {!visibleRows.length && data.connected && <p>Nenhum jogador cadastrado neste mês.</p>}
       </div>
+      <section className="performance-list">
+        <div className="performance-section-heading"><h2>Ranking por categoria</h2><span>{selectedMetric.label.toUpperCase()}</span></div>
+        <p className="performance-result-count">Jogadores ordenados por {selectedMetric.label.toLocaleLowerCase("pt-BR")} • {sortOrder === "desc" ? "maior para menor" : "menor para maior"}</p>
+        {categoryRows.map((row, index) => <article className="performance-card" key={`category-${row.player}`}>
+          <div className="performance-card-head">
+            <b><span>#{index + 1}</span>{row.player}{row.role && <small className="performance-leader-role">{row.role}</small>}</b>
+            <strong>{fmt(row[selectedMetric.key])}</strong>
+          </div>
+          <small className="performance-status active">ATIVO {row.tag}</small>
+        </article>)}
+        {!categoryRows.length && data.connected && <p>Nenhum jogador encontrado para esta consulta.</p>}
+      </section>
       <a className="back-link" href="/">← Voltar ao ranking</a>
     </section>
   </main>;
