@@ -10,12 +10,12 @@ type RankingPlayer = {
 function number(value: number) { return new Intl.NumberFormat("pt-BR").format(value); }
 
 const categories = [
-  { key: "wars", label: "Guerras", suffix: "pts" },
-  { key: "league", label: "Liga", suffix: "pts" },
-  { key: "donations", label: "Doações", suffix: "pts" },
-  { key: "games", label: "Jogos", suffix: "pts" },
-  { key: "raid", label: "Raide", suffix: "pts" },
-  { key: "capitalPoints", label: "Capital", suffix: "pts" },
+  { key: "wars", label: "Guerras", max: 200 },
+  { key: "league", label: "Liga", max: 200 },
+  { key: "donations", label: "Doações", max: 150 },
+  { key: "games", label: "Jogos", max: 100 },
+  { key: "raid", label: "Raide", max: 150 },
+  { key: "capitalPoints", label: "Capital", max: 200 },
 ] as const;
 
 export default function RankingList({ players }: { players: RankingPlayer[] }) {
@@ -58,9 +58,10 @@ export default function RankingList({ players }: { players: RankingPlayer[] }) {
             const delta = value - (leader?.[category.key] ?? value);
             const bestValue = Math.max(...categories.map(item => player[item.key]));
             const isBest = value > 0 && value === bestValue;
+            const percent = Math.round(value / category.max * 100);
             return <span className={(delta > 0 ? "is-above" : delta < 0 ? "is-below" : "is-equal") + (isBest ? " is-best" : "")} key={category.key}>
               <small>{category.label}{isBest && <i className="ranking-best-star" aria-label="Melhor categoria"> ★</i>}</small>
-              <b><span>{number(value)} <i>{category.suffix}</i></span><strong>{delta > 0 ? "↑ +" + number(delta) : delta < 0 ? "↓ −" + number(Math.abs(delta)) : "= 0"}</strong></b>
+              <b><span>{number(value)}/{category.max} pts · {percent}%</span><strong>{delta > 0 ? "↑ +" + number(delta) : delta < 0 ? "↓ −" + number(Math.abs(delta)) : "= 0"}</strong></b>
             </span>;
           })}</div>
           <div className="ranking-comparison-legend"><span><i className="legend-up">↑</i> Acima do líder</span><span><i className="legend-down">↓</i> Abaixo do líder</span><span><i className="legend-equal">=</i> Empatado</span><span><i className="legend-star">★</i> Melhor categoria</span></div>
