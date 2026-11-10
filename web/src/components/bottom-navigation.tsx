@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -17,6 +18,9 @@ export default function BottomNavigation() {
   const touchStart = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
+    // Preload the five destinations so a swipe can change tabs without a full reload.
+    items.forEach((item) => router.prefetch(item.href));
+
     const onTouchStart = (event: TouchEvent) => {
       if (event.touches.length !== 1) {
         touchStart.current = null;
@@ -45,26 +49,27 @@ export default function BottomNavigation() {
       const deltaX = touch.clientX - start.x;
       const deltaY = touch.clientY - start.y;
 
-      // Ignore vertical scrolling and small/accidental movements.
       if (Math.abs(deltaX) < 75 || Math.abs(deltaX) < Math.abs(deltaY) * 1.35) return;
 
       const currentIndex = items.findIndex((item) =>
         item.href === "/" ? pathname === "/" : pathname === item.href || pathname.startsWith(item.href + "/")
       );
-      const fallbackIndex = pathname.startsWith("/player/") ? 1 : 0;
-      const index = currentIndex >= 0 ? currentIndex : fallbackIndex;
+      const index = currentIndex >= 0 ? currentIndex : pathname.startsWith("/player/") ? 1 : 0;
       const nextIndex = deltaX < 0 ? Math.min(items.length - 1, index + 1) : Math.max(0, index - 1);
 
-      if (nextIndex !== index) router.push(items[nextIndex].href);
+      if (nextIndex !== index) router.push(items[nextIndex].href, { scroll: false });
     };
+
+    const onTouchCancel = () => { touchStart.current = null; };
 
     window.addEventListener("touchstart", onTouchStart, { passive: true });
     window.addEventListener("touchend", onTouchEnd, { passive: true });
-    window.addEventListener("touchcancel", () => { touchStart.current = null; }, { passive: true });
+    window.addEventListener("touchcancel", onTouchCancel, { passive: true });
 
     return () => {
       window.removeEventListener("touchstart", onTouchStart);
       window.removeEventListener("touchend", onTouchEnd);
+      window.removeEventListener("touchcancel", onTouchCancel);
     };
   }, [pathname, router]);
 
@@ -72,15 +77,17 @@ export default function BottomNavigation() {
 
   return (
     <nav className="mobile-bottom-nav" aria-label="Navegação principal">
+      <span className="mobile-nav-swipe-arrow" aria-hidden="true">‹</span>
       {items.map((item) => {
         const active = item.href === "/" ? pathname === "/" : pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href + "/"));
         return (
-          <a className={active ? "mobile-nav-item active" : "mobile-nav-item"} href={item.href} key={item.label} aria-current={active ? "page" : undefined}>
+          <Link className={active ? "mobile-nav-item active" : "mobile-nav-item"} href={item.href} key={item.label} aria-current={active ? "page" : undefined} prefetch>
             <span className="mobile-nav-icon" aria-hidden="true">{item.icon}</span>
             <span>{item.label}</span>
-          </a>
+          </Link>
         );
       })}
+      <span className="mobile-nav-swipe-arrow" aria-hidden="true">›</span>
     </nav>
   );
 }
