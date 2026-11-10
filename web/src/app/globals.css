@@ -1073,3 +1073,24 @@ body{
  .performance-card-head>strong.performance-category-value>span{font-size:25px}
  .performance-card-head>strong.performance-category-value>small{font-size:13px}
 }
+
+
+/* Stat tile inside category player cards */
+.performance-card-head>.performance-stat-tile{
+  display:flex;align-items:center;justify-content:center;gap:12px;
+  flex:0 0 auto;min-width:154px;min-height:88px;padding:10px 13px;
+  border:1px solid #d8aa43;border-radius:15px;
+  background:linear-gradient(145deg,rgba(83,57,17,.72),rgba(24,20,13,.96));
+  box-shadow:0 0 0 1px rgba(255,205,77,.12),0 0 18px rgba(255,190,55,.13),inset 0 1px rgba(255,255,255,.12);
+}
+.performance-stat-icon{font-size:30px;line-height:1;filter:drop-shadow(0 0 7px rgba(255,193,48,.35))}
+.performance-card-head>strong.performance-category-value{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:5px;white-space:nowrap;line-height:1}
+.performance-card-head>strong.performance-category-value>span{font:800 31px 'Barlow Condensed';color:#ffd45f}
+.performance-card-head>strong.performance-category-value>small{font:700 13px Inter,sans-serif;color:#f1dfb0;line-height:1.08;text-align:right;white-space:normal}
+@media(max-width:560px){
+ .performance-card-head>.performance-stat-tile{min-width:132px;min-height:78px;padding:8px 10px;gap:8px;border-radius:13px}
+ .performance-stat-icon{font-size:25px}
+ .performance-card-head>strong.performance-category-value>span{font-size:27px}
+ .performance-card-head>strong.performance-category-value>small{font-size:11px}
+ .performance-card-head>b{max-width:calc(100% - 140px)}
+}
