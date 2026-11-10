@@ -984,3 +984,38 @@ body{
   pointer-events:none;
 }
 .metric-top,.metric-value,.metric-note{position:relative;z-index:1}
+
+
+/* Mobile readability pass: slightly larger text and more comfortable line spacing */
+@media(max-width:640px){
+  .performance-content>p{font-size:15px;line-height:1.65}
+  .performance-result-count{font-size:13px}
+  .performance-card-head>b{font-size:15px}
+  .performance-card-head>strong{font-size:21px}
+  .performance-card-grid span{font-size:12px;line-height:1.35;padding:10px 9px}
+  .performance-card-grid span b{font-size:13px}
+  .performance-status{font-size:10px;letter-spacing:.55px}
+  .recent-members-list article b{font-size:15px}
+  .recent-members-list article small,.recent-members-list time{font-size:13px}
+  .recent-members-list article>strong{font-size:10px}
+  .rules-content>p,.rules-note{font-size:15px;line-height:1.65}
+  .rules-card-heading h2{font-size:21px}
+  .rules-card-heading p{font-size:13px;line-height:1.5}
+  .rules-point-row>span,.rules-point-row>b{font-size:14px;line-height:1.5}
+  .gh-home-v2 .gh-v2-hero-copy p{font-size:12px;line-height:1.55}
+  .gh-home-v2 .gh-v2-section-head h2{font-size:23px}
+  .gh-home-v2 .gh-v2-section-head small{font-size:9px}
+  .gh-home-v2 .gh-v2-activity b{font-size:11px}
+  .gh-home-v2 .gh-v2-activity small{font-size:9px;line-height:1.4}
+  .gh-home-v2 .gh-v2-season-strip small{font-size:8px}
+  .gh-home-v2 .gh-v2-season-strip strong{font-size:13px}
+  .gh-home-v2 .gh-v2-season-strip span{font-size:10px;line-height:1.4}
+  .gh-home-v2 .gh-v2-season-strip>a{font-size:8px}
+  .gh-home-v2 .gh-v2-podium-card>b{font-size:10px}
+  .gh-home-v2 .gh-v2-rank-label{font-size:8px}
+  .gh-home-v2 .gh-v2-full-ranking-head>span{font-size:8px}
+  .gh-home-v2 .gh-v2-recent .recent-members-list article b{font-size:15px}
+  .gh-home-v2 .gh-v2-recent .recent-members-list article small,
+  .gh-home-v2 .gh-v2-recent .recent-members-list time{font-size:13px}
+  .gh-home-v2 .gh-v2-recent .recent-members-list article>strong{font-size:10px}
+}
