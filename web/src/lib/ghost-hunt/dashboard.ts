@@ -23,7 +23,7 @@ type EventRow = {
 const WEIGHTS = {
   wars: { target: 200, max: 200 },
   league: { target: 140, max: 200 },
-  raid: { target: 16, max: 150 },
+  raid: { target: 32, max: 150 },
   donations: { target: 10000, max: 150 },
   games: { target: 10000, max: 100 },
   capital: { target: 250000, max: 200 },
