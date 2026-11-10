@@ -197,6 +197,32 @@ def main():
                               {"p_sources": all_stat_sources}).execute()
         print(f"Registros de ataques da Liga sincronizados: {len(all_stat_sources)}")
         print(f"Resposta da estatística: {stats_result.data}")
+
+    # Bônus único da temporada: completar os 7 ataques disponíveis na CWL.
+    # A source_key inclui a temporada e a tag do jogador, tornando o lançamento
+    # idempotente mesmo com a rotina automática executada a cada 15 minutos.
+    attacks_by_player = {}
+    for source in all_stat_sources:
+        tag = source["player_tag"]
+        attacks_by_player[tag] = attacks_by_player.get(tag, 0) + int(
+            source.get("league_attacks") or 0
+        )
+    season = str(group.get("season") or "temporada-desconhecida")
+    completion_bonus_events = []
+    for tag, total_attacks in attacks_by_player.items():
+        if total_attacks >= 7:
+            player = players_by_tag[tag]
+            completion_bonus_events.append({
+                "source_key": f"league-completion:{season}:{tag}",
+                "war_key": f"league:{season}",
+                "player_tag": tag,
+                "player": player["name"],
+                "activity": "Completou os 7 ataques da Liga dos Clãs (+10 bônus)",
+                "points": 10,
+            })
+    all_events.extend(completion_bonus_events)
+    print(f"Bônus por completar os 7 ataques: {len(completion_bonus_events)} jogador(es) elegível(is).")
+
     if not all_events:
         print("Nenhum evento de pontuação da Liga encontrado.")
         return
