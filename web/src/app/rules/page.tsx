@@ -19,8 +19,9 @@ const rules = [
       ["Realizar um ataque", "+5 pontos por ataque"],
       ["Conquistar estrelas", "+1, +2 ou +3 pontos, conforme o resultado"],
       ["Acertar o espelho", "+5 pontos por ataque no espelho"],
+      ["Completar os 7 ataques da Liga", "+10 pontos de bônus, uma vez por temporada"],
     ],
-    note: "A pontuação é acumulada pelos ataques registrados durante as batalhas da Liga. Não há teto mensal configurado para esta categoria."
+    note: "A pontuação é acumulada pelos ataques registrados durante as batalhas da Liga. O bônus de +10 é concedido uma única vez ao jogador que completar os 7 ataques disponíveis na temporada."
   },
   {
     icon: "🤝", title: "Doações de tropas", subtitle: "Conversão das tropas doadas em pontos",
