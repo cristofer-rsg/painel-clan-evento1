@@ -37,19 +37,19 @@ export default async function PerformancePage({ searchParams }: Props) {
   const sortOrder = params.order === "asc" ? "asc" : "desc";
   const categoryRows = [...visibleRows].sort((a, b) =>
     sortOrder === "asc"
-      ? a[selectedMetric.pointsKey] - b[selectedMetric.pointsKey] || a.player.localeCompare(b.player, "pt-BR")
-      : b[selectedMetric.pointsKey] - a[selectedMetric.pointsKey] || a.player.localeCompare(b.player, "pt-BR")
+      ? a[selectedMetric.key] - b[selectedMetric.key] || a.player.localeCompare(b.player, "pt-BR")
+      : b[selectedMetric.key] - a[selectedMetric.key] || a.player.localeCompare(b.player, "pt-BR")
   );
   const totals = metrics.map(metric => ({
     ...metric,
-    value: activeRows.reduce((sum, row) => sum + row[metric.pointsKey], 0),
+    value: activeRows.reduce((sum, row) => sum + row[metric.key], 0),
   }));
   return <main className="admin-shell">
     <header className="admin-header"><a className="brand" href="/"><span className="brand-mark">GH</span><span className="brand-copy"><strong>GHOST <i>HUNT</i></strong><small>CLAN MANAGEMENT</small></span></a><a className="back-link" href="/">← Ranking</a></header>
     <PublicNavigation />
     <section className="admin-content performance-content">
       <span className="auth-kicker">CONSULTA PÚBLICA • INDICADORES DO CLÃ</span><h1>Desempenho <em>mensal</em></h1>
-      <p>O desempenho geral é exibido em porcentagem. Cada atividade mostra os pontos conquistados e o percentual da respectiva meta.</p>
+      <p>Consulte os números reais de participação: ataques, pontos, doações e moedas. A pontuação de balanceamento é usada somente no ranking.</p>
       <form className="history-filter" action="/performance" method="get">
         <label htmlFor="month">Mês de referência</label><select id="month" name="month" defaultValue={data.monthKey}>{data.months.map(month => <option value={month} key={month}>{new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric", timeZone: "America/Sao_Paulo" }).format(new Date(month + "-15T12:00:00-03:00"))}</option>)}</select>
         <label htmlFor="q">Buscar jogador</label><input id="q" name="q" type="search" placeholder="Nome ou tag" defaultValue={params.q || ""}/>
@@ -72,7 +72,7 @@ export default async function PerformancePage({ searchParams }: Props) {
           </div>
           <div className="performance-progress" role="img" aria-label={`Desempenho geral: ${row.index}%`}><span style={{ width: `${Math.min(row.index, 100)}%` }} /></div>
           <div className="performance-card-grid">
-            {metrics.map(metric => <span key={metric.key}>{metric.label} <b>{fmt(row[metric.pointsKey])}/{metric.max} pts · {fmt(row[metric.percentKey])}%</b></span>)}
+            {metrics.map(metric => <span key={metric.key}>{metric.label} <b>{fmt(row[metric.key])} {metric.key === "donations" ? "tropas" : metric.key === "capital" ? "moedas" : "pontos"}</b></span>)}
           </div>
           {row.penalties > 0 && <small className="performance-status">Penalidades: −{fmt(row.penalties)} pontos</small>}
           <small className="performance-status active">ATIVO {row.tag}</small>
@@ -86,7 +86,7 @@ export default async function PerformancePage({ searchParams }: Props) {
         {categoryRows.map((row, index) => <article className="performance-card" key={`category-${row.player}`}>
           <div className="performance-card-head">
             <b><span>#{index + 1}</span>{row.player}{row.role && <small className="performance-leader-role">{row.role}</small>}</b>
-            <div className="performance-stat-tile"><span className="performance-stat-icon" aria-hidden="true">{selectedMetric.key === "capital" ? "🪙" : "✦"}</span><strong className="performance-category-value"><span>{fmt(row[selectedMetric.pointsKey])}/{selectedMetric.max}</span><small>pontos · {fmt(row[selectedMetric.percentKey])}%</small></strong></div>
+            <div className="performance-stat-tile"><span className="performance-stat-icon" aria-hidden="true">{selectedMetric.key === "capital" ? "🪙" : "✦"}</span><strong className="performance-category-value"><span>{fmt(row[selectedMetric.key])}</span><small>{selectedMetric.key === "donations" ? "tropas doadas" : selectedMetric.key === "capital" ? "moedas doadas" : "pontos registrados"}</small></strong></div>
           </div>
           <small className="performance-status active">ATIVO {row.tag}</small>
         </article>)}
