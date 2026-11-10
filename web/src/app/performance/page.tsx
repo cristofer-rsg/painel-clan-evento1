@@ -5,12 +5,12 @@ export const dynamic = "force-dynamic";
 type Props = { searchParams: Promise<{ month?: string; q?: string; category?: string; order?: string }> };
 function fmt(value: number) { return new Intl.NumberFormat("pt-BR").format(value); }
 const metrics = [
-  { key: "wars", label: "Guerras", target: 20, unit: "ataques", displayUnit: "Ataques" },
-  { key: "league", label: "Liga", target: 7, unit: "ataques", displayUnit: "Ataques" },
-  { key: "raid", label: "Raide", target: 24, unit: "ataques", displayUnit: "Ataques" },
-  { key: "donations", label: "Doações", target: 5000, unit: "tropas", displayUnit: "Tropas" },
-  { key: "games", label: "Jogos", target: 10000, unit: "pontos", displayUnit: "Pontos" },
-  { key: "capital", label: "Capital", target: 250000, unit: "moedas", displayUnit: "Moedas Doadas" },
+  { key: "wars", label: "Guerras", max: 200, unit: "pontos", pointsKey: "warsPoints", percentKey: "warsPercent" },
+  { key: "league", label: "Liga", max: 200, unit: "pontos", pointsKey: "leaguePoints", percentKey: "leaguePercent" },
+  { key: "raid", label: "Raide", max: 150, unit: "pontos", pointsKey: "raidPoints", percentKey: "raidPercent" },
+  { key: "donations", label: "Doações", max: 150, unit: "pontos", pointsKey: "donationsPoints", percentKey: "donationsPercent" },
+  { key: "games", label: "Jogos do Clã", max: 100, unit: "pontos", pointsKey: "gamesPoints", percentKey: "gamesPercent" },
+  { key: "capital", label: "Capital", max: 200, unit: "pontos", pointsKey: "capitalPoints", percentKey: "capitalPercent" },
 ] as const;
 
 export default async function PerformancePage({ searchParams }: Props) {
@@ -25,9 +25,8 @@ export default async function PerformancePage({ searchParams }: Props) {
     ["#9CLLGV8CC", "CO-LÍDER"],
   ]);
   const rankedRows = activeRows.map(row => {
-    const score = metrics.reduce((sum, metric) => sum + Math.min(row[metric.key] / metric.target, 1), 0) / metrics.length * 100;
     const role = leadershipTags.get(row.tag.trim().toUpperCase());
-    return { ...row, index: Number(score.toFixed(1)), role };
+    return { ...row, role };
   }).sort((a, b) => b.index - a.index || a.player.localeCompare(b.player, "pt-BR"))
     .map((row, index) => ({ ...row, position: index + 1 }));
   const visibleRows = searchTerm
@@ -38,8 +37,8 @@ export default async function PerformancePage({ searchParams }: Props) {
   const sortOrder = params.order === "asc" ? "asc" : "desc";
   const categoryRows = [...visibleRows].sort((a, b) =>
     sortOrder === "asc"
-      ? a[selectedMetric.key] - b[selectedMetric.key] || a.player.localeCompare(b.player, "pt-BR")
-      : b[selectedMetric.key] - a[selectedMetric.key] || a.player.localeCompare(b.player, "pt-BR")
+      ? a[selectedMetric.pointsKey] - b[selectedMetric.pointsKey] || a.player.localeCompare(b.player, "pt-BR")
+      : b[selectedMetric.pointsKey] - a[selectedMetric.pointsKey] || a.player.localeCompare(b.player, "pt-BR")
   );
   const totals = metrics.map(metric => ({
     ...metric,
@@ -50,7 +49,7 @@ export default async function PerformancePage({ searchParams }: Props) {
     <PublicNavigation />
     <section className="admin-content performance-content">
       <span className="auth-kicker">CONSULTA PÚBLICA • INDICADORES DO CLÃ</span><h1>Desempenho <em>mensal</em></h1>
-      <p>Índice de Atividade Ghost Hunt: seis metas fixas, com pontuação equilibrada de 0 a 100. Apenas integrantes ativos aparecem nesta consulta.</p>
+      <p>O desempenho geral é exibido em porcentagem. Cada atividade mostra os pontos conquistados e o percentual da respectiva meta.</p>
       <form className="history-filter" action="/performance" method="get">
         <label htmlFor="month">Mês de referência</label><select id="month" name="month" defaultValue={data.monthKey}>{data.months.map(month => <option value={month} key={month}>{new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric", timeZone: "America/Sao_Paulo" }).format(new Date(month + "-15T12:00:00-03:00"))}</option>)}</select>
         <label htmlFor="q">Buscar jogador</label><input id="q" name="q" type="search" placeholder="Nome ou tag" defaultValue={params.q || ""}/>
@@ -69,13 +68,13 @@ export default async function PerformancePage({ searchParams }: Props) {
         {visibleRows.map(row => <article className="performance-card" key={row.player}>
           <div className="performance-card-head">
             <b><span>#{row.position}</span>{row.player}{row.role && <small className="performance-leader-role">{row.role}</small>}</b>
-            <strong>{row.index.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%</strong>
+            <strong>{fmt(row.index)}%</strong>
           </div>
-          <div className="performance-progress" role="img" aria-label={`Meta geral: ${row.index.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`}><span style={{ width: `${Math.min(row.index, 100)}%` }} /></div>
+          <div className="performance-progress" role="img" aria-label={`Desempenho geral: ${row.index}%`}><span style={{ width: `${Math.min(row.index, 100)}%` }} /></div>
           <div className="performance-card-grid">
-            <span>Guerras <b>{fmt(row.wars)}</b></span><span>Liga <b>{fmt(row.league)}</b></span><span>Raide <b>{fmt(row.raid)}</b></span>
-            <span>Doações <b>{fmt(row.donations)}</b></span><span>Jogos <b>{fmt(row.games)}</b></span><span>Capital <b>{fmt(row.capital)}</b></span>
+            {metrics.map(metric => <span key={metric.key}>{metric.label} <b>{fmt(row[metric.pointsKey])}/{metric.max} pts · {fmt(row[metric.percentKey])}%</b></span>)}
           </div>
+          {row.penalties > 0 && <small className="performance-status">Penalidades: −{fmt(row.penalties)} pontos</small>}
           <small className="performance-status active">ATIVO {row.tag}</small>
         </article>)}
         {!visibleRows.length && data.connected && <p>Nenhum jogador cadastrado neste mês.</p>}
@@ -87,7 +86,7 @@ export default async function PerformancePage({ searchParams }: Props) {
         {categoryRows.map((row, index) => <article className="performance-card" key={`category-${row.player}`}>
           <div className="performance-card-head">
             <b><span>#{index + 1}</span>{row.player}{row.role && <small className="performance-leader-role">{row.role}</small>}</b>
-            <div className="performance-stat-tile"><span className="performance-stat-icon" aria-hidden="true">{selectedMetric.key === "capital" ? "🪙" : "✦"}</span><strong className="performance-category-value"><span>{fmt(row[selectedMetric.key])}</span><small>{selectedMetric.key === "capital" ? <>Moedas<br/>Doadas</> : selectedMetric.displayUnit}</small></strong></div>
+            <div className="performance-stat-tile"><span className="performance-stat-icon" aria-hidden="true">{selectedMetric.key === "capital" ? "🪙" : "✦"}</span><strong className="performance-category-value"><span>{fmt(row[selectedMetric.pointsKey])}/{selectedMetric.max}</span><small>pontos · {fmt(row[selectedMetric.percentKey])}%</small></strong></div>
           </div>
           <small className="performance-status active">ATIVO {row.tag}</small>
         </article>)}
