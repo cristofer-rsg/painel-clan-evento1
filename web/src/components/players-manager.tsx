@@ -46,6 +46,23 @@ export default function PlayersManager() {
     } catch (error) { setMessage(error instanceof Error ? error.message : "Falha ao atualizar."); }
     finally { setSaving(false); }
   }
+  async function remove(player: Player) {
+    const confirmed = window.confirm(`Tem certeza que deseja excluir o cadastro de ${player.name}? Os lançamentos e pontuações históricos serão preservados.`);
+    if (!confirmed) return;
+    setSaving(true); setMessage("");
+    try {
+      const response = await fetch("/api/admin/players", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: player.name, player_tag: player.player_tag }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Falha ao excluir jogador.");
+      setMessage("Cadastro de " + player.name + " excluído. O histórico de pontuação foi preservado.");
+      await load();
+    } catch (error) { setMessage(error instanceof Error ? error.message : "Falha ao excluir."); }
+    finally { setSaving(false); }
+  }
   return <section className="admin-content manager-content">
     <span className="auth-kicker">ADMINISTRAÇÃO DO CLÃ</span><h1>Gerenciar <em>jogadores</em></h1>
     <p>Novos cadastros entram inativos e serão ativados pela sincronização do clã.</p>
@@ -59,7 +76,7 @@ export default function PlayersManager() {
         
         <label>Está no grupo do WhatsApp?<select value={player.whatsapp || "Não"} onChange={e => setPlayers(rows => rows.map(row => playerKey(row) === playerKey(player) ? { ...row, whatsapp: e.target.value } : row))}><option>Sim</option><option>Não</option></select></label>
       </div>
-      <button className="manager-save" type="button" disabled={saving} onClick={() => void save(player)}>Salvar alterações</button>
+      <div className="manager-player-actions"><button className="manager-save" type="button" disabled={saving} onClick={() => void save(player)}>Salvar alterações</button><button className="manager-delete" type="button" disabled={saving} onClick={() => void remove(player)}>Excluir jogador</button></div>
     </article>)}{!filteredPlayers.length && <p className="manager-empty">Nenhum jogador encontrado com esses filtros.</p>}</div>}
     <a className="back-link" href="/admin">← Voltar à administração</a>
   </section>;
