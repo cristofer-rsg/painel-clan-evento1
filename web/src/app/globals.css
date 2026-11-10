@@ -1113,3 +1113,41 @@ body{
  .performance-card-head>b{max-width:none;flex:1 1 auto;gap:6px;font-size:14px}
  .performance-card-head>b .performance-leader-role{font-size:8px;padding:4px 5px}
 }
+
+
+/* Premium refinement: separate quantity and unit, prevent overflow */
+.performance-card-head>.performance-stat-tile{
+  box-sizing:border-box;
+  width:116px;min-width:116px;max-width:116px;
+  min-height:66px;padding:8px 7px;
+  display:grid;grid-template-columns:18px minmax(0,1fr);
+  align-items:center;justify-items:center;column-gap:5px;
+  overflow:hidden;
+}
+.performance-card-head>.performance-stat-tile>.performance-stat-icon{
+  grid-column:1;grid-row:1;font-size:18px;justify-self:center;
+}
+.performance-card-head>.performance-stat-tile>strong.performance-category-value{
+  grid-column:2;grid-row:1;
+  display:flex;flex:initial;min-width:0;width:100%;
+  flex-direction:column;align-items:center;justify-content:center;
+  gap:4px;white-space:normal;line-height:1.05;text-align:center;
+}
+.performance-card-head>.performance-stat-tile>strong.performance-category-value>span{
+  display:block;max-width:100%;font:800 21px 'Barlow Condensed';
+  white-space:nowrap;letter-spacing:-.25px;
+}
+.performance-card-head>.performance-stat-tile>strong.performance-category-value>small{
+  display:block;max-width:100%;margin:0;
+  font:700 9px Inter,sans-serif;line-height:1.1;
+  text-align:center;white-space:normal;overflow-wrap:anywhere;
+}
+@media(max-width:560px){
+ .performance-card-head>.performance-stat-tile{
+  width:116px;min-width:116px;max-width:116px;
+  min-height:64px;padding:7px 6px;column-gap:4px;
+ }
+ .performance-card-head>.performance-stat-tile>.performance-stat-icon{font-size:17px}
+ .performance-card-head>.performance-stat-tile>strong.performance-category-value>span{font-size:20px}
+ .performance-card-head>.performance-stat-tile>strong.performance-category-value>small{font-size:9px}
+}
