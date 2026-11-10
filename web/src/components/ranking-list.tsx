@@ -29,6 +29,7 @@ export default function RankingList({ players }: { players: RankingPlayer[] }) {
       || player.tag.toLocaleLowerCase("pt-BR").includes(term));
   }, [players, search]);
   const visible = search.trim() || showAll ? filtered : filtered.slice(0, 5);
+  const leader = players.find(player => player.position === 1) ?? players[0];
   return <>
     <div className="ranking-search">
       <input aria-label="Buscar jogador" placeholder="Buscar por nome ou tag..." value={search} onChange={event => setSearch(event.target.value)} />
@@ -51,10 +52,18 @@ export default function RankingList({ players }: { players: RankingPlayer[] }) {
           </span>
         </div>
         {isExpanded && <div className="ranking-breakdown">
-          <div className="ranking-breakdown-heading">PONTUAÇÃO POR CATEGORIA</div>
-          <div className="ranking-breakdown-grid">{categories.map(category => <span key={category.key}>
-            <small>{category.label}</small><b>{number(player[category.key])} <i>{category.suffix}</i></b>
-          </span>)}</div>
+          <div className="ranking-breakdown-heading">PONTUAÇÃO POR CATEGORIA {player.position === leader?.position ? "· LÍDER / REFERÊNCIA" : "(vs. " + (leader?.player ?? "1º colocado") + ")"}</div>
+          <div className="ranking-breakdown-grid">{categories.map(category => {
+            const value = player[category.key];
+            const delta = value - (leader?.[category.key] ?? value);
+            const bestValue = Math.max(...categories.map(item => player[item.key]));
+            const isBest = value > 0 && value === bestValue;
+            return <span className={(delta > 0 ? "is-above" : delta < 0 ? "is-below" : "is-equal") + (isBest ? " is-best" : "")} key={category.key}>
+              <small>{category.label}{isBest && <i className="ranking-best-star" aria-label="Melhor categoria"> ★</i>}</small>
+              <b><span>{number(value)} <i>{category.suffix}</i></span><strong>{delta > 0 ? "↑ +" + number(delta) : delta < 0 ? "↓ −" + number(Math.abs(delta)) : "= 0"}</strong></b>
+            </span>;
+          })}</div>
+          <div className="ranking-comparison-legend"><span><i className="legend-up">↑</i> Acima do líder</span><span><i className="legend-down">↓</i> Abaixo do líder</span><span><i className="legend-equal">=</i> Empatado</span><span><i className="legend-star">★</i> Melhor categoria</span></div>
           {player.penalties > 0 && <div className="ranking-penalty">Penalidades aplicadas: <b>−{number(player.penalties)} pts</b></div>}
         </div>}
       </article>;
