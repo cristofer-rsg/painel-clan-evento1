@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     const { data, error } = await createSupabaseAdmin().from("players")
       .select("name,player_tag,whatsapp,active,created_at").order("name", { ascending: true });
     if (error) throw error;
-    return NextResponse.json({ players: (data ?? []).filter((player) => player.active !== false) });
+    return NextResponse.json({ players: data ?? [] });
   } catch {
     return NextResponse.json({ error: "Não foi possível carregar os jogadores." }, { status: 500 });
   }
