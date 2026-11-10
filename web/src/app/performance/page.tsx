@@ -6,8 +6,8 @@ type Props = { searchParams: Promise<{ month?: string; q?: string; category?: st
 function fmt(value: number) { return new Intl.NumberFormat("pt-BR").format(value); }
 const metrics = [
   { key: "wars", label: "Guerras", target: 20, unit: "ataques", displayUnit: "Ataques" },
-  { key: "league", label: "Liga", target: 7, unit: "ataques" },
-  { key: "raid", label: "Raide", target: 24, unit: "ataques" },
+  { key: "league", label: "Liga", target: 7, unit: "ataques", displayUnit: "Ataques" },
+  { key: "raid", label: "Raide", target: 24, unit: "ataques", displayUnit: "Ataques" },
   { key: "donations", label: "Doações", target: 5000, unit: "tropas", displayUnit: "Tropas" },
   { key: "games", label: "Jogos", target: 10000, unit: "pontos", displayUnit: "Pontos" },
   { key: "capital", label: "Capital", target: 250000, unit: "moedas", displayUnit: "Moedas Doadas" },
