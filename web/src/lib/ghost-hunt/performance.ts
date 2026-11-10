@@ -67,18 +67,18 @@ export async function getPerformanceData(requestedMonth?: string, useManualDonat
       .gte("created_at", start.toISOString()).lt("created_at", end.toISOString()));
     const byTag = new Map(stats.filter(row => row.player_tag).map(row => [String(row.player_tag).trim().toUpperCase(), row]));
     const byName = new Map(stats.filter(row => row.player).map(row => [String(row.player).trim().toLocaleLowerCase("pt-BR"), row]));
-    const rawByPlayer = new Map<string, { wars: number; warAttacks: number; league: number; raid: number; raidAttacks: number; donationsEvents: number; gamesEvents: number; capital: number; penalties: number }>();
+    const rawByPlayer = new Map<string, { wars: number; warAttacks: number; league: number; leagueAttacks: number; raid: number; raidAttacks: number; donationsEvents: number; gamesEvents: number; capital: number; penalties: number }>();
     for (const event of events) {
       const key = (event.player || "").trim().toLocaleLowerCase("pt-BR");
       if (!key) continue;
-      const bucket = rawByPlayer.get(key) ?? { wars: 0, warAttacks: 0, league: 0, raid: 0, raidAttacks: 0, donationsEvents: 0, gamesEvents: 0, capital: 0, penalties: 0 };
+      const bucket = rawByPlayer.get(key) ?? { wars: 0, warAttacks: 0, league: 0, leagueAttacks: 0, raid: 0, raidAttacks: 0, donationsEvents: 0, gamesEvents: 0, capital: 0, penalties: 0 };
       const points = Number(event.points || 0);
       const category = (event.category || "").trim().toLocaleLowerCase("pt-BR");
       const activity = (event.activity || "").trim();
       if (points < 0) {
         if (activity.toLocaleLowerCase("pt-BR").includes("fora do espelho")) bucket.penalties += 50;
       } else if (category === "guerras") {\n        bucket.wars += points;\n        if (activity === "Participou da guerra (+5)") bucket.warAttacks += 1;\n        else if (activity === "Fez os dois ataques (+10)") bucket.warAttacks += 1;\n      }
-      else if (category === "liga dos clãs") bucket.league += points;
+      else if (category === "liga dos clãs") {\n        bucket.league += points;\n        if (activity.startsWith("Realizou ataque ")) bucket.leagueAttacks += 1;\n      }
       else if (category === "raide de fim de semana") {\n        bucket.raid += points;\n        const attackMatch = activity.match(/(\\d+)\\s+ataque/i);\n        if (attackMatch) bucket.raidAttacks += Number(attackMatch[1]);\n      }
       else if (category === "doações" && activity.startsWith("TROPAS_DOADAS:")) bucket.donationsEvents += Math.max(0, points);
       else if (category === "jogos do clã") bucket.gamesEvents = Math.max(bucket.gamesEvents, points);
