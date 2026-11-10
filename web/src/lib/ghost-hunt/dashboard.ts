@@ -5,7 +5,6 @@ import { createSupabaseAdmin } from "@/lib/supabase/admin";
 type Player = {
   name: string;
   player_tag?: string | null;
-  eligible?: string | null;
   whatsapp?: string | null;
   active?: boolean | null;
 };
@@ -116,9 +115,9 @@ export async function getDashboardData(): Promise<DashboardData> {
       .select("player_name,player_tag,entered_at").eq("is_baseline", false)
       .order("entered_at", { ascending: false }).limit(3);
     const recentMembers = recentResult.error ? [] : (recentResult.data ?? []).map((row) => ({ player_name: row.player_name, player_tag: row.player_tag, first_seen_at: row.entered_at })) as RecentMember[];
-    // O ranking operacional considera somente membros ativos e participantes da competição.
-    // Líder e co-líderes continuam cadastrados e com histórico, mas não concorrem.
-    const players = ((playerData ?? []) as Player[]).filter((player) => player.active !== false);
+    // O ranking considera somente membros ativos que confirmadamente estão no grupo do WhatsApp.
+    // Pontuações e eventos permanecem armazenados; ao entrar no grupo, o jogador recupera seu total automaticamente.
+    const players = ((playerData ?? []) as Player[]).filter((player) => player.active !== false && (player.whatsapp ?? "Não") === "Sim");
     // Excluir cargos de liderança por tag permanente: nomes podem conter caracteres decorativos.
     const excludedLeaderTags = new Set(["#L8GV8C2Y", "#P8CCGYU0", "#QU0GC0VLU", "#9CLLGV8CC"]);
     const competitors = players.filter(
@@ -156,12 +155,9 @@ export async function getDashboardData(): Promise<DashboardData> {
       const donations = Math.min(50, Math.floor(bucket.donatedTroops / 100));
       const games = Math.min(25, bucket.games);
       const capitalPoints = Math.floor(bucket.capitalCoins / 2500);
-      const eligible = (player.eligible ?? "Elegível") === "Elegível"
-        && (player.whatsapp ?? "Sim") === "Sim";
-      const total = eligible
-        ? Math.max(0, bucket.wars + bucket.league + donations + games + bucket.raid
-          + capitalPoints - bucket.penalties)
-        : 0;
+      const eligible = true;
+      const total = Math.max(0, bucket.wars + bucket.league + donations + games + bucket.raid
+        + capitalPoints - bucket.penalties);
       return {
         position: 0,
         player: player.name,
@@ -176,7 +172,7 @@ export async function getDashboardData(): Promise<DashboardData> {
         capitalPoints,
         penalties: bucket.penalties,
         eligible,
-        eligibilityStatus: player.eligible ?? "Elegível",
+        eligibilityStatus: "Elegível",
         whatsapp: player.whatsapp ?? "Sim",
       };
     }).sort((a, b) => b.total - a.total || b.wars - a.wars || b.league - a.league || b.raid - a.raid || b.capitalPoints - a.capitalPoints || b.donations - a.donations || b.games - a.games || a.player.localeCompare(b.player, "pt-BR"))
