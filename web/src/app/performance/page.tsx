@@ -87,7 +87,7 @@ export default async function PerformancePage({ searchParams }: Props) {
         {categoryRows.map((row, index) => <article className="performance-card" key={`category-${row.player}`}>
           <div className="performance-card-head">
             <b><span>#{index + 1}</span>{row.player}{row.role && <small className="performance-leader-role">{row.role}</small>}</b>
-            <strong className="performance-category-value"><span>{fmt(row[selectedMetric.key])}</span><small>{selectedMetric.key === "capital" ? <>Moedas<br/>Doadas</> : selectedMetric.displayUnit}</small></strong>
+            <div className="performance-quantity-box"><strong>{fmt(row[selectedMetric.key])}</strong><small>{selectedMetric.key === "capital" ? <>Moedas<br/>Doadas</> : selectedMetric.displayUnit}</small></div>
           </div>
           <small className="performance-status active">ATIVO {row.tag}</small>
         </article>)}
