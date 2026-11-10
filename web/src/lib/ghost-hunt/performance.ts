@@ -88,7 +88,7 @@ export async function getPerformanceData(requestedMonth?: string, useManualDonat
       }
       else if (category === "raide de fim de semana") {
         bucket.raid += points;
-        const attackMatch = activity.match(/(\\d+)\\s+ataque/i);
+        const attackMatch = activity.match(/(\d+)\s+ataque/i);
         if (attackMatch) bucket.raidAttacks += Number(attackMatch[1]);
       }
       else if (category === "doações" && activity.startsWith("TROPAS_DOADAS:")) bucket.donationsEvents += Math.max(0, points);
