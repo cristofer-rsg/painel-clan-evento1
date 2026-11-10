@@ -1019,3 +1019,26 @@ body{
   .gh-home-v2 .gh-v2-recent .recent-members-list time{font-size:13px}
   .gh-home-v2 .gh-v2-recent .recent-members-list article>strong{font-size:10px}
 }
+
+
+/* Discreet swipe arrows and smoother, prefetched mobile tab navigation */
+.mobile-nav-swipe-arrow{display:none}
+@media(max-width:900px){
+  .mobile-bottom-nav{
+    grid-template-columns:18px repeat(5,minmax(0,1fr)) 18px;
+    align-items:center;
+    gap:2px;
+  }
+  .mobile-nav-swipe-arrow{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:rgba(232,204,145,.72);
+    font-size:25px;
+    line-height:1;
+    font-weight:400;
+    user-select:none;
+    pointer-events:none;
+  }
+  .mobile-nav-item{min-width:0}
+}
