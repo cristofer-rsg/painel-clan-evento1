@@ -1073,3 +1073,39 @@ body{
  .performance-card-head>strong.performance-category-value>span{font-size:25px}
  .performance-card-head>strong.performance-category-value>small{font-size:13px}
 }
+
+
+/* Preview: compact inner card highlighting the category quantity */
+.performance-quantity-box{
+  flex:0 0 auto;
+  min-width:116px;
+  min-height:76px;
+  padding:9px 12px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+  border:1px solid rgba(220,177,91,.48);
+  border-radius:12px;
+  background:linear-gradient(145deg,rgba(218,170,77,.16),rgba(25,25,20,.72));
+  box-shadow:inset 0 1px rgba(255,236,190,.08),0 5px 14px rgba(0,0,0,.16);
+  text-align:center;
+}
+.performance-quantity-box>strong{
+  color:#f4d48b;
+  font:800 27px 'Barlow Condensed';
+  line-height:1;
+  white-space:nowrap;
+}
+.performance-quantity-box>small{
+  color:#e1c98f;
+  font:700 10px Inter,sans-serif;
+  line-height:1.15;
+  text-align:center;
+}
+@media(max-width:560px){
+  .performance-quantity-box{min-width:112px;min-height:72px;padding:8px 10px}
+  .performance-quantity-box>strong{font-size:26px}
+  .performance-quantity-box>small{font-size:10px}
+}
