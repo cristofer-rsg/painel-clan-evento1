@@ -34,6 +34,7 @@ export default async function PerformancePage({ searchParams }: Props) {
     ? rankedRows.filter(row => row.player.toLocaleLowerCase("pt-BR").includes(searchTerm) || row.tag.toLocaleLowerCase("pt-BR").includes(searchTerm))
     : rankedRows;
   const selectedMetric = metrics.find(metric => metric.key === params.category) || metrics[0];
+  const hasCategorySearch = Boolean(params.category && params.category !== "general" && metrics.some(metric => metric.key === params.category));
   const sortOrder = params.order === "asc" ? "asc" : "desc";
   const categoryRows = [...visibleRows].sort((a, b) =>
     sortOrder === "asc"
@@ -53,11 +54,12 @@ export default async function PerformancePage({ searchParams }: Props) {
       <form className="history-filter" action="/performance" method="get">
         <label htmlFor="month">Mês de referência</label><select id="month" name="month" defaultValue={data.monthKey}>{data.months.map(month => <option value={month} key={month}>{new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric", timeZone: "America/Sao_Paulo" }).format(new Date(month + "-15T12:00:00-03:00"))}</option>)}</select>
         <label htmlFor="q">Buscar jogador</label><input id="q" name="q" type="search" placeholder="Nome ou tag" defaultValue={params.q || ""}/>
-        <label htmlFor="category">Classificar por categoria</label><select id="category" name="category" defaultValue={selectedMetric.key}>{metrics.map(metric => <option value={metric.key} key={metric.key}>{metric.label}</option>)}</select>
+        <label htmlFor="category">Classificar por categoria</label><select id="category" name="category" defaultValue={params.category || "general"}><option value="general">Geral</option>{metrics.map(metric => <option value={metric.key} key={metric.key}>{metric.label}</option>)}</select>
         <label htmlFor="order">Ordenação</label><select id="order" name="order" defaultValue={sortOrder}><option value="desc">Maior para menor</option><option value="asc">Menor para maior</option></select>
         <button type="submit">Consultar</button>
       </form>
       {!data.connected && <div className="connection-alert"><b>Não foi possível carregar o desempenho.</b><span>Confira a conexão do servidor com o Supabase.</span>{data.error && <small>{data.error}</small>}</div>}
+      {!hasCategorySearch && <>
       <div className="performance-period">{data.monthLabel}</div>
       <div className="performance-section-heading"><h2>Desempenho do clã</h2><span>{activeRows.length} JOGADORES</span></div>
       <div className="performance-totals">{totals.map(metric => <article key={metric.key}><small>{metric.label}</small><b>{fmt(metric.value)}</b><span>{metric.unit}</span></article>)}</div>
@@ -78,7 +80,8 @@ export default async function PerformancePage({ searchParams }: Props) {
         </article>)}
         {!visibleRows.length && data.connected && <p>Nenhum jogador cadastrado neste mês.</p>}
       </div>
-      <section className="performance-list">
+      </>}
+      {hasCategorySearch && <section className="performance-list">
         <div className="performance-section-heading"><h2>Ranking por categoria</h2><span>{selectedMetric.label.toUpperCase()}</span></div>
         <p className="performance-result-count">Jogadores ordenados por {selectedMetric.label.toLocaleLowerCase("pt-BR")} • {sortOrder === "desc" ? "maior para menor" : "menor para maior"}</p>
         {categoryRows.map((row, index) => <article className="performance-card" key={`category-${row.player}`}>
@@ -89,7 +92,8 @@ export default async function PerformancePage({ searchParams }: Props) {
           <small className="performance-status active">ATIVO {row.tag}</small>
         </article>)}
         {!categoryRows.length && data.connected && <p>Nenhum jogador encontrado para esta consulta.</p>}
-      </section>
+      </section>}
+
       <a className="back-link" href="/">← Voltar ao ranking</a>
     </section>
   </main>;
