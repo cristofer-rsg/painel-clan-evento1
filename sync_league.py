@@ -94,6 +94,46 @@ def sync_capital_gold(db, token, players_by_tag):
     return failures
 
 
+
+def sync_league_completion_bonus(db, players_by_tag):
+    """Lança uma única vez o bônus de 10 pontos para quem completou 7 ataques.
+
+    A consulta usa as estatísticas mensais já consolidadas no banco, por isso
+    também funciona depois que a API encerra o grupo da Liga. A source_key
+    mensal por jogador torna a operação idempotente via RPC existente.
+    """
+    month_key = datetime.now(TZ).strftime("%Y-%m")
+    rows = (db.table("player_monthly_stats")
+            .select("player_tag,player,league_attacks")
+            .eq("month_key", month_key)
+            .gte("league_attacks", 7)
+            .execute().data or [])
+    events = []
+    for row in rows:
+        tag = row.get("player_tag")
+        player = players_by_tag.get(tag)
+        if not player:
+            continue
+        events.append({
+            "source_key": f"league-completion:{month_key.replace('-', '')}:{tag}",
+            "war_key": f"league:{month_key.replace('-', '')}",
+            "player_tag": tag,
+            "player": player["name"],
+            "activity": "Completou os 7 ataques da Liga dos Clãs (+10 bônus)",
+            "points": 10,
+        })
+    if not events:
+        print(f"Bônus de conclusão da Liga: nenhum jogador elegível em {month_key}.")
+        return
+    result = db.rpc("record_clash_league_events", {"p_events": events}).execute()
+    response = result.data or {}
+    inserted = response.get("inserted", 0) if isinstance(response, dict) else 0
+    skipped = response.get("skipped", 0) if isinstance(response, dict) else 0
+    print(
+        f"Bônus de conclusão da Liga ({month_key}): "
+        f"elegíveis={len(events)}, lançados={inserted}, já registrados/ignorados={skipped}."
+    )
+
 def make_war_events(war, players_by_tag):
     if war.get("state") not in ("inWar", "warEnded"):
         return [], []
@@ -169,6 +209,8 @@ def main():
     # A sincronização da Capital é independente da Liga. Falhas individuais
     # são registradas e serão tentadas novamente na próxima execução.
     sync_capital_gold(db, token, players_by_tag)
+    # O bônus é conferido antes da consulta à Liga ativa, inclusive após o encerramento.
+    sync_league_completion_bonus(db, players_by_tag)
 
     clan_tag = quote(CLAN_TAG, safe="")
     try:
