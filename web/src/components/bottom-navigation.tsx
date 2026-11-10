@@ -16,13 +16,20 @@ export default function BottomNavigation() {
   const pathname = usePathname();
   const router = useRouter();
   const touchStart = useRef<{ x: number; y: number } | null>(null);
+  const navigationPending = useRef(false);
+  const currentPath = useRef(pathname);
 
   useEffect(() => {
-    // Preload the five destinations so a swipe can change tabs without a full reload.
+    currentPath.current = pathname;
+    navigationPending.current = false;
+  }, [pathname]);
+
+  useEffect(() => {
+    // Warm every tab route, including Home, as soon as the navigation is mounted.
     items.forEach((item) => router.prefetch(item.href));
 
     const onTouchStart = (event: TouchEvent) => {
-      if (event.touches.length !== 1) {
+      if (event.touches.length !== 1 || navigationPending.current) {
         touchStart.current = null;
         return;
       }
@@ -30,7 +37,7 @@ export default function BottomNavigation() {
       const target = event.target;
       if (
         target instanceof Element &&
-        target.closest("input, textarea, select, [contenteditable='true'], [data-no-swipe], .horizontal-scroll")
+        target.closest("input, textarea, select, [contenteditable='true'], [data-no-swipe], .horizontal-scroll, [data-swipe-ignore]")
       ) {
         touchStart.current = null;
         return;
@@ -43,21 +50,30 @@ export default function BottomNavigation() {
     const onTouchEnd = (event: TouchEvent) => {
       const start = touchStart.current;
       touchStart.current = null;
-      if (!start || event.changedTouches.length !== 1) return;
+      if (!start || event.changedTouches.length !== 1 || navigationPending.current) return;
 
       const touch = event.changedTouches[0];
       const deltaX = touch.clientX - start.x;
       const deltaY = touch.clientY - start.y;
+      const absX = Math.abs(deltaX);
+      const absY = Math.abs(deltaY);
 
-      if (Math.abs(deltaX) < 75 || Math.abs(deltaX) < Math.abs(deltaY) * 1.35) return;
+      // A shorter but clearly horizontal gesture is enough; vertical scroll remains untouched.
+      if (absX < 48 || absX < absY * 1.2) return;
 
+      const path = currentPath.current;
       const currentIndex = items.findIndex((item) =>
-        item.href === "/" ? pathname === "/" : pathname === item.href || pathname.startsWith(item.href + "/")
+        item.href === "/" ? path === "/" : path === item.href || path.startsWith(item.href + "/")
       );
-      const index = currentIndex >= 0 ? currentIndex : pathname.startsWith("/player/") ? 1 : 0;
-      const nextIndex = deltaX < 0 ? Math.min(items.length - 1, index + 1) : Math.max(0, index - 1);
+      const index = currentIndex >= 0 ? currentIndex : path.startsWith("/player/") ? 1 : 0;
+      const nextIndex = deltaX < 0
+        ? Math.min(items.length - 1, index + 1)
+        : Math.max(0, index - 1);
 
-      if (nextIndex !== index) router.push(items[nextIndex].href, { scroll: false });
+      if (nextIndex !== index) {
+        navigationPending.current = true;
+        router.push(items[nextIndex].href, { scroll: false });
+      }
     };
 
     const onTouchCancel = () => { touchStart.current = null; };
@@ -71,7 +87,7 @@ export default function BottomNavigation() {
       window.removeEventListener("touchend", onTouchEnd);
       window.removeEventListener("touchcancel", onTouchCancel);
     };
-  }, [pathname, router]);
+  }, [router]);
 
   if (pathname.startsWith("/admin") || pathname === "/login") return null;
 
