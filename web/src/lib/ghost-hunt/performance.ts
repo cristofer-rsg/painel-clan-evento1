@@ -2,7 +2,7 @@ import "server-only";
 import { createSupabaseAdmin } from "@/lib/supabase/admin";
 
 type Player = { name: string; player_tag: string | null; active: boolean | null };
-type Stats = { month_key: string; player_tag: string | null; player: string | null; donations: number | null; clan_games_points: number | null };
+type Stats = { month_key: string; player_tag: string | null; player: string | null; war_attacks: number | null; donations: number | null; clan_games_points: number | null };
 type EventRow = { player: string | null; category: string | null; activity: string | null; points: number | null };
 const WEIGHTS = {
   wars: { target: 200, max: 200 },
@@ -53,7 +53,7 @@ export async function getPerformanceData(requestedMonth?: string, useManualDonat
     const db = createSupabaseAdmin();
     const [playersResult, allStats] = await Promise.all([
       db.from("players").select("name,player_tag,active").order("name", { ascending: true }),
-      allRows<Stats>(db.from("player_monthly_stats").select("month_key,player_tag,player,donations,clan_games_points").order("month_key", { ascending: false })),
+      allRows<Stats>(db.from("player_monthly_stats").select("month_key,player_tag,player,war_attacks,donations,clan_games_points").order("month_key", { ascending: false })),
     ]);
     if (playersResult.error) throw playersResult.error;
     const months = Array.from(new Set([fallbackMonth, ...allStats.map(row => row.month_key).filter(Boolean)])).sort().reverse();
@@ -113,7 +113,7 @@ export async function getPerformanceData(requestedMonth?: string, useManualDonat
       const totalPoints = Math.max(0, warsPoints + leaguePoints + raidPoints + donationsPoints + gamesPoints + capitalPoints - raw.penalties);
       const index = Math.round(totalPoints / 10);
       return {
-        player: player.name, tag: player.player_tag || "", wars: raw.warAttacks, league: raw.leagueAttacks, raid: raw.raidAttacks,
+        player: player.name, tag: player.player_tag || "", wars: stat?.war_attacks == null ? raw.warAttacks : Number(stat.war_attacks), league: raw.leagueAttacks, raid: raw.raidAttacks,
         donations, games, capital: raw.capital,
         warsPoints, leaguePoints, raidPoints, donationsPoints, gamesPoints, capitalPoints,
         warsPercent: Math.round(warsPoints / 200 * 100), leaguePercent: Math.round(leaguePoints / 200 * 100),
