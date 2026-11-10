@@ -9,6 +9,8 @@ type Player = {
   active?: boolean | null;
 };
 
+type MonthlyStat = { month_key: string; player_tag: string | null; player: string | null; clan_games_points: number | null };
+
 type EventRow = {
   id: number;
   player: string | null;
@@ -121,7 +123,13 @@ export async function getDashboardData(): Promise<DashboardData> {
     if (playerError) throw new Error(`Falha ao consultar jogadores: ${playerError.message}`);
 
     const bounds = monthBounds(monthKey);
-    const events = await fetchAllEvents(bounds.start, bounds.end);
+    const [events, gamesStatsResult] = await Promise.all([
+      fetchAllEvents(bounds.start, bounds.end),
+      supabase.from("player_monthly_stats").select("month_key,player_tag,player,clan_games_points").eq("month_key", monthKey),
+    ]);
+    if (gamesStatsResult.error) throw new Error(`Falha ao consultar pontuação dos Jogos do Clã: ${gamesStatsResult.error.message}`);
+    const gamesByTag = new Map((gamesStatsResult.data ?? []).filter((row: MonthlyStat) => row.player_tag).map((row: MonthlyStat) => [String(row.player_tag).trim().toUpperCase(), Number(row.clan_games_points || 0)]));
+    const gamesByName = new Map((gamesStatsResult.data ?? []).filter((row: MonthlyStat) => row.player).map((row: MonthlyStat) => [String(row.player).trim().toLocaleLowerCase("pt-BR"), Number(row.clan_games_points || 0)]));
     const recentResult = await supabase.from("clan_member_entry_history")
       .select("player_name,player_tag,entered_at").eq("is_baseline", false)
       .order("entered_at", { ascending: false }).limit(3);
@@ -163,7 +171,8 @@ export async function getDashboardData(): Promise<DashboardData> {
       const wars = score(bucket.warsRaw, WEIGHTS.wars.target, WEIGHTS.wars.max);
       const league = score(bucket.leagueRaw, WEIGHTS.league.target, WEIGHTS.league.max);
       const donations = score(bucket.donatedTroops, WEIGHTS.donations.target, WEIGHTS.donations.max);
-      const games = score(bucket.gamesRaw, WEIGHTS.games.target, WEIGHTS.games.max);
+      const gamesRaw = Math.max(bucket.gamesRaw, gamesByTag.get((player.player_tag ?? "").trim().toUpperCase()) ?? 0, gamesByName.get(player.name.trim().toLocaleLowerCase("pt-BR")) ?? 0);
+      const games = score(gamesRaw, WEIGHTS.games.target, WEIGHTS.games.max);
       const raid = score(bucket.raidRaw, WEIGHTS.raid.target, WEIGHTS.raid.max);
       const capitalPoints = score(bucket.capitalCoins, WEIGHTS.capital.target, WEIGHTS.capital.max);
       const totalBeforePenalty = wars + league + donations + games + raid + capitalPoints;
