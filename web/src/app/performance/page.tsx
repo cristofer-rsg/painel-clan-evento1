@@ -5,9 +5,9 @@ export const dynamic = "force-dynamic";
 type Props = { searchParams: Promise<{ month?: string; q?: string; category?: string; order?: string }> };
 function fmt(value: number) { return new Intl.NumberFormat("pt-BR").format(value); }
 const metrics = [
-  { key: "wars", label: "Guerras", max: 200, unit: "pontos", pointsKey: "warsPoints", percentKey: "warsPercent" },
+  { key: "wars", label: "Ataques de guerra", max: 200, unit: "ataques", pointsKey: "warsPoints", percentKey: "warsPercent" },
   { key: "league", label: "Liga", max: 200, unit: "pontos", pointsKey: "leaguePoints", percentKey: "leaguePercent" },
-  { key: "raid", label: "Raide", max: 150, unit: "pontos", pointsKey: "raidPoints", percentKey: "raidPercent" },
+  { key: "raid", label: "Ataques da raide", max: 150, unit: "ataques", pointsKey: "raidPoints", percentKey: "raidPercent" },
   { key: "donations", label: "Doações", max: 150, unit: "pontos", pointsKey: "donationsPoints", percentKey: "donationsPercent" },
   { key: "games", label: "Jogos do Clã", max: 100, unit: "pontos", pointsKey: "gamesPoints", percentKey: "gamesPercent" },
   { key: "capital", label: "Capital", max: 200, unit: "pontos", pointsKey: "capitalPoints", percentKey: "capitalPercent" },
@@ -72,7 +72,7 @@ export default async function PerformancePage({ searchParams }: Props) {
           </div>
           <div className="performance-progress" role="img" aria-label={`Desempenho geral: ${row.index}%`}><span style={{ width: `${Math.min(row.index, 100)}%` }} /></div>
           <div className="performance-card-grid">
-            {metrics.map(metric => <span key={metric.key}>{metric.label} <b>{fmt(row[metric.key])} {metric.key === "donations" ? "tropas" : metric.key === "capital" ? "moedas" : "pontos"}</b></span>)}
+            {metrics.map(metric => <span key={metric.key}>{metric.label} <b>{fmt(row[metric.key])} {metric.key === "wars" || metric.key === "raid" ? "ataques" : metric.key === "donations" ? "tropas" : metric.key === "capital" ? "moedas" : "pontos"}</b></span>)}
           </div>
           {row.penalties > 0 && <small className="performance-status">Penalidades: −{fmt(row.penalties)} pontos</small>}
           <small className="performance-status active">ATIVO {row.tag}</small>
@@ -86,7 +86,7 @@ export default async function PerformancePage({ searchParams }: Props) {
         {categoryRows.map((row, index) => <article className="performance-card" key={`category-${row.player}`}>
           <div className="performance-card-head">
             <b><span>#{index + 1}</span>{row.player}{row.role && <small className="performance-leader-role">{row.role}</small>}</b>
-            <div className="performance-stat-tile"><span className="performance-stat-icon" aria-hidden="true">{selectedMetric.key === "capital" ? "🪙" : "✦"}</span><strong className="performance-category-value"><span>{fmt(row[selectedMetric.key])}</span><small>{selectedMetric.key === "donations" ? "tropas doadas" : selectedMetric.key === "capital" ? "moedas doadas" : "pontos registrados"}</small></strong></div>
+            <div className="performance-stat-tile"><span className="performance-stat-icon" aria-hidden="true">{selectedMetric.key === "capital" ? "🪙" : "✦"}</span><strong className="performance-category-value"><span>{fmt(row[selectedMetric.key])}</span><small>{selectedMetric.key === "wars" || selectedMetric.key === "raid" ? "ataques realizados" : selectedMetric.key === "donations" ? "tropas doadas" : selectedMetric.key === "capital" ? "moedas doadas" : "pontos registrados"}</small></strong></div>
           </div>
           <small className="performance-status active">ATIVO {row.tag}</small>
         </article>)}
