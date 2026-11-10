@@ -1,6 +1,11 @@
 name: Sincronizar Liga dos Clãs
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - "sync_league.py"
+      - ".github/workflows/sync-league.yml"
   schedule:
     - cron: "*/15 * * * *"
   workflow_dispatch:
