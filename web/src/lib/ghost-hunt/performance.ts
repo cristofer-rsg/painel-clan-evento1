@@ -5,7 +5,7 @@ type Player = { name: string; player_tag: string | null; active: boolean | null 
 type Stats = { month_key: string; player_tag: string | null; player: string | null; donations: number | null; clan_games_points: number | null };
 type EventRow = { player: string | null; category: string | null; activity: string | null; points: number | null };
 const WEIGHTS = {
-  wars: { target: 20, max: 200 },
+  wars: { target: 200, max: 200 },
   league: { target: 140, max: 200 },
   raid: { target: 16, max: 150 },
   donations: { target: 10000, max: 150 },
