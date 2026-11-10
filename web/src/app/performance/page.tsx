@@ -5,12 +5,12 @@ export const dynamic = "force-dynamic";
 type Props = { searchParams: Promise<{ month?: string; q?: string; category?: string; order?: string }> };
 function fmt(value: number) { return new Intl.NumberFormat("pt-BR").format(value); }
 const metrics = [
-  { key: "wars", label: "Ataques de guerra", max: 200, unit: "Ataques", pointsKey: "warsPoints", percentKey: "warsPercent" },
-  { key: "league", label: "Liga", max: 200, unit: "ataques", pointsKey: "leaguePoints", percentKey: "leaguePercent" },
-  { key: "raid", label: "Ataques da raide", max: 150, unit: "ataques", pointsKey: "raidPoints", percentKey: "raidPercent" },
-  { key: "donations", label: "Doações", max: 150, unit: "Pontos", pointsKey: "donationsPoints", percentKey: "donationsPercent" },
-  { key: "games", label: "Jogos do Clã", max: 100, unit: "pontos", pointsKey: "gamesPoints", percentKey: "gamesPercent" },
-  { key: "capital", label: "Capital", max: 200, unit: "pontos", pointsKey: "capitalPoints", percentKey: "capitalPercent" },
+  { key: "wars", label: "Guerras", max: 200, unit: "Ataques", pointsKey: "warsPoints", percentKey: "warsPercent" },
+  { key: "league", label: "Liga", max: 200, unit: "Ataques", pointsKey: "leaguePoints", percentKey: "leaguePercent" },
+  { key: "raid", label: "Raide", max: 150, unit: "Ataques", pointsKey: "raidPoints", percentKey: "raidPercent" },
+  { key: "donations", label: "Doações", max: 150, unit: "Tropas Doadas", pointsKey: "donationsPoints", percentKey: "donationsPercent" },
+  { key: "games", label: "Jogos do Clã", max: 100, unit: "Pontos Obtidos", pointsKey: "gamesPoints", percentKey: "gamesPercent" },
+  { key: "capital", label: "Capital", max: 200, unit: "Moedas Doadas", pointsKey: "capitalPoints", percentKey: "capitalPercent" },
 ] as const;
 
 export default async function PerformancePage({ searchParams }: Props) {
@@ -71,8 +71,11 @@ export default async function PerformancePage({ searchParams }: Props) {
             <strong>{fmt(row.index)}%</strong>
           </div>
           <div className="performance-progress" role="img" aria-label={`Desempenho geral: ${row.index}%`}><span style={{ width: `${Math.min(row.index, 100)}%` }} /></div>
-          <div className="performance-card-grid">
-            {metrics.map(metric => <span key={metric.key}>{metric.label} <b>{fmt(row[metric.key])} {metric.key === "wars" || metric.key === "league" || metric.key === "raid" ? "Ataques" : metric.key === "donations" ? "Tropas" : metric.key === "capital" ? "Moedas" : "Pontos"}</b></span>)}
+          <div className="performance-player-stats">
+            {metrics.map(metric => <div className="performance-player-stat-row" key={metric.key}>
+              <span className="performance-player-stat-label"><i aria-hidden="true">{metric.key === "wars" ? "⚔" : metric.key === "league" ? "🏆" : metric.key === "raid" ? "🛡" : metric.key === "donations" ? "👥" : metric.key === "games" ? "🎮" : "🏰"}</i>{metric.label}</span>
+              <strong className="performance-player-stat-tile"><b>{fmt(row[metric.key])}</b><small>{metric.key === "wars" || metric.key === "league" || metric.key === "raid" ? "Ataques" : metric.key === "donations" ? "Tropas" : metric.key === "capital" ? "Moedas" : "Pontos"}</small></strong>
+            </div>)}
           </div>
           {row.penalties > 0 && <small className="performance-status">Penalidades: −{fmt(row.penalties)} pontos</small>}
           <small className="performance-status active">ATIVO {row.tag}</small>
