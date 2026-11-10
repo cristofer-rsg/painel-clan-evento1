@@ -1060,3 +1060,7 @@ body{
  .ranking-breakdown-grid>span>b>strong{font-size:9px}
  .ranking-comparison-legend{gap:5px 8px;font-size:8px}
 }
+
+.performance-card-head>strong.performance-capital-value{display:flex;flex-direction:column;align-items:flex-end;gap:0;line-height:1.02}
+.performance-card-head>strong.performance-capital-value small{font:600 9px Inter,sans-serif;color:#e8cc91;line-height:1.15;text-align:right}
+@media(max-width:560px){.performance-card-head>strong.performance-capital-value{font-size:18px}.performance-card-head>strong.performance-capital-value small{font-size:9px}}
