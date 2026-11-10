@@ -1094,3 +1094,22 @@ body{
  .performance-card-head>strong.performance-category-value>small{font-size:11px}
  .performance-card-head>b{max-width:calc(100% - 140px)}
 }
+
+
+/* Compact category stat tile to preserve player names and leadership badges */
+.performance-card-head>.performance-stat-tile{
+  min-width:108px;width:108px;min-height:64px;padding:7px 8px;gap:6px;border-radius:11px;
+}
+.performance-stat-icon{font-size:20px}
+.performance-card-head>strong.performance-category-value>span{font-size:23px}
+.performance-card-head>strong.performance-category-value>small{font-size:10px;line-height:1.05}
+.performance-card-head>b{flex:1 1 auto;min-width:0;gap:7px}
+.performance-card-head>b .performance-leader-role{flex:0 0 auto;white-space:nowrap;font-size:9px;padding:4px 6px}
+@media(max-width:560px){
+ .performance-card-head>.performance-stat-tile{min-width:108px;width:108px;min-height:62px;padding:6px 7px;gap:5px;border-radius:10px}
+ .performance-stat-icon{font-size:19px}
+ .performance-card-head>strong.performance-category-value>span{font-size:22px}
+ .performance-card-head>strong.performance-category-value>small{font-size:9px}
+ .performance-card-head>b{max-width:none;flex:1 1 auto;gap:6px;font-size:14px}
+ .performance-card-head>b .performance-leader-role{font-size:8px;padding:4px 5px}
+}
