@@ -42,7 +42,7 @@ export default async function PerformancePage({ searchParams }: Props) {
   );
   const totals = metrics.map(metric => ({
     ...metric,
-    value: activeRows.reduce((sum, row) => sum + row[metric.key], 0),
+    value: activeRows.reduce((sum, row) => sum + row[metric.pointsKey], 0),
   }));
   return <main className="admin-shell">
     <header className="admin-header"><a className="brand" href="/"><span className="brand-mark">GH</span><span className="brand-copy"><strong>GHOST <i>HUNT</i></strong><small>CLAN MANAGEMENT</small></span></a><a className="back-link" href="/">← Ranking</a></header>
