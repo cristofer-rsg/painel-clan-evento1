@@ -57,7 +57,7 @@ export async function getPerformanceData(requestedMonth?: string, useManualDonat
     ]);
     if (playersResult.error) throw playersResult.error;
     const months = Array.from(new Set([fallbackMonth, ...allStats.map(row => row.month_key).filter(Boolean)])).sort().reverse();
-    const monthKey = requestedMonth && /^\\d{4}-(0[1-9]|1[0-2])$/.test(requestedMonth) && months.includes(requestedMonth)
+    const monthKey = requestedMonth && /^\d{4}-(0[1-9]|1[0-2])$/.test(requestedMonth) && months.includes(requestedMonth)
       ? requestedMonth : fallbackMonth;
     const stats = allStats.filter(row => row.month_key === monthKey);
     const start = new Date(monthKey + "-01T00:00:00-03:00");
