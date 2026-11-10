@@ -1151,3 +1151,48 @@ body{
  .performance-card-head>.performance-stat-tile>strong.performance-category-value>span{font-size:20px}
  .performance-card-head>.performance-stat-tile>strong.performance-category-value>small{font-size:9px}
 }
+
+
+/* Ghost Hunt - resumo do clã e estatísticas individuais em padrão dourado */
+.performance-totals article{
+  display:grid;grid-template-rows:auto auto auto;gap:5px;
+  border-color:#8e6a32;background:linear-gradient(145deg,#292115,#17130d);
+  border-radius:16px;min-height:112px;
+}
+.performance-totals article small{font-size:13px;color:#f2dfb8;font-weight:700}
+.performance-totals article b{font:800 34px 'Barlow Condensed';color:#f5c96f;line-height:1}
+.performance-totals article span{font-size:12px;color:#aeb9c8}
+.performance-player-stats{display:grid;grid-template-columns:1fr;gap:0;margin-top:10px}
+.performance-player-stat-row{
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(132px,46%);
+  align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #6d522b55;
+}
+.performance-player-stat-row:last-child{border-bottom:0}
+.performance-player-stat-label{
+  display:flex;align-items:center;gap:12px;min-width:0;
+  color:#f0dfc0;font-size:14px;font-weight:600;
+}
+.performance-player-stat-label i{
+  display:grid;place-items:center;width:34px;height:34px;flex:0 0 34px;
+  color:#f6c75f;font-style:normal;font-size:23px;
+  filter:drop-shadow(0 0 7px #d99d2e99);
+}
+.performance-player-stat-tile{
+  box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:6px;
+  min-height:52px;padding:8px 10px;border:1px solid #b5822d;border-radius:13px;
+  background:linear-gradient(145deg,#2b2112,#17130d);
+  color:#f5ce79;box-shadow:inset 0 0 14px #c28b2415;
+}
+.performance-player-stat-tile b{font-size:17px;font-weight:800;white-space:nowrap}
+.performance-player-stat-tile small{font-size:12px;color:#f2d69a;font-weight:700}
+@media(max-width:560px){
+ .performance-totals article{min-height:108px;padding:13px}
+ .performance-totals article small{font-size:12px}
+ .performance-totals article b{font-size:31px}
+ .performance-player-stat-row{grid-template-columns:minmax(0,1fr) minmax(126px,46%);gap:7px}
+ .performance-player-stat-label{font-size:13px;gap:8px}
+ .performance-player-stat-label i{width:29px;height:29px;flex-basis:29px;font-size:21px}
+ .performance-player-stat-tile{min-height:48px;padding:7px 6px;gap:5px}
+ .performance-player-stat-tile b{font-size:15px}
+ .performance-player-stat-tile small{font-size:11px}
+}
