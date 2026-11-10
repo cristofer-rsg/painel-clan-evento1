@@ -5,12 +5,12 @@ export const dynamic = "force-dynamic";
 type Props = { searchParams: Promise<{ month?: string; q?: string; category?: string; order?: string }> };
 function fmt(value: number) { return new Intl.NumberFormat("pt-BR").format(value); }
 const metrics = [
-  { key: "wars", label: "Guerras", target: 20, unit: "ataques" },
+  { key: "wars", label: "Guerras", target: 20, unit: "ataques", displayUnit: "Ataques" },
   { key: "league", label: "Liga", target: 7, unit: "ataques" },
   { key: "raid", label: "Raide", target: 24, unit: "ataques" },
-  { key: "donations", label: "Doações", target: 5000, unit: "tropas" },
-  { key: "games", label: "Jogos", target: 10000, unit: "pontos" },
-  { key: "capital", label: "Capital", target: 250000, unit: "moedas" },
+  { key: "donations", label: "Doações", target: 5000, unit: "tropas", displayUnit: "Tropas" },
+  { key: "games", label: "Jogos", target: 10000, unit: "pontos", displayUnit: "Pontos" },
+  { key: "capital", label: "Capital", target: 250000, unit: "moedas", displayUnit: "Moedas Doadas" },
 ] as const;
 
 export default async function PerformancePage({ searchParams }: Props) {
@@ -87,7 +87,7 @@ export default async function PerformancePage({ searchParams }: Props) {
         {categoryRows.map((row, index) => <article className="performance-card" key={`category-${row.player}`}>
           <div className="performance-card-head">
             <b><span>#{index + 1}</span>{row.player}{row.role && <small className="performance-leader-role">{row.role}</small>}</b>
-            <strong>{fmt(row[selectedMetric.key])}</strong>
+            <strong>{fmt(row[selectedMetric.key])} {selectedMetric.displayUnit}</strong>
           </div>
           <small className="performance-status active">ATIVO {row.tag}</small>
         </article>)}
