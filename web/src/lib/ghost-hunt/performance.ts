@@ -77,9 +77,20 @@ export async function getPerformanceData(requestedMonth?: string, useManualDonat
       const activity = (event.activity || "").trim();
       if (points < 0) {
         if (activity.toLocaleLowerCase("pt-BR").includes("fora do espelho")) bucket.penalties += 50;
-      } else if (category === "guerras") {\n        bucket.wars += points;\n        if (activity === "Participou da guerra (+5)") bucket.warAttacks += 1;\n        else if (activity === "Fez os dois ataques (+10)") bucket.warAttacks += 1;\n      }
-      else if (category === "liga dos clãs") {\n        bucket.league += points;\n        if (activity.startsWith("Realizou ataque ")) bucket.leagueAttacks += 1;\n      }
-      else if (category === "raide de fim de semana") {\n        bucket.raid += points;\n        const attackMatch = activity.match(/(\\d+)\\s+ataque/i);\n        if (attackMatch) bucket.raidAttacks += Number(attackMatch[1]);\n      }
+      } else if (category === "guerras") {
+        bucket.wars += points;
+        if (activity === "Participou da guerra (+5)") bucket.warAttacks += 1;
+        else if (activity === "Fez os dois ataques (+10)") bucket.warAttacks += 1;
+      }
+      else if (category === "liga dos clãs") {
+        bucket.league += points;
+        if (activity.startsWith("Realizou ataque ")) bucket.leagueAttacks += 1;
+      }
+      else if (category === "raide de fim de semana") {
+        bucket.raid += points;
+        const attackMatch = activity.match(/(\\d+)\\s+ataque/i);
+        if (attackMatch) bucket.raidAttacks += Number(attackMatch[1]);
+      }
       else if (category === "doações" && activity.startsWith("TROPAS_DOADAS:")) bucket.donationsEvents += Math.max(0, points);
       else if (category === "jogos do clã") bucket.gamesEvents = Math.max(bucket.gamesEvents, points);
       else if (category === "capital do clã" && activity === "Doação automática de Ouro da Capital") bucket.capital += Math.max(0, points);
