@@ -1,6 +1,6 @@
 import { getHistoryData } from "@/lib/ghost-hunt/history";
 import PublicNavigation from "@/components/public-navigation";
-import HistoryCategorySearch from "@/components/history-category-search";
+import HistoryEventCategoryFilter from "@/components/history-event-category-filter";
 
 export const dynamic = "force-dynamic";
 type Props = { searchParams: Promise<{ month?: string }> };
@@ -24,9 +24,7 @@ export default async function HistoryPage({ searchParams }: Props) {
       <div className="history-ranking">{data.ranking.map(row => <article key={row.player}>
         <b className="history-position">{row.position}</b><div className="history-player"><strong>{row.player}</strong><small>{row.eligible} • WhatsApp: {row.whatsapp}</small><small>Guerras {fmt(row.wars)} · Liga {fmt(row.league)} · Doações {fmt(row.donations)} · Jogos {fmt(row.games)} · Raide {fmt(row.raid)}</small></div><strong className="history-total">{fmt(row.total)} pts</strong>
       </article>)}{!data.ranking.length && <p>Não há classificação registrada para este mês.</p>}</div>
-      <HistoryCategorySearch ranking={data.ranking} />
-      <div className="history-section-title"><h2>Lançamentos</h2><span>{data.events.length} REGISTROS</span></div>
-      <div className="history-events">{data.events.map(event => <article key={event.id}><div><b>{event.player}</b><small>{date(event.created_at)} · {event.category}</small><p>{event.activity}</p></div><strong>{fmt(event.points)} pts</strong></article>)}{!data.events.length && <p>Nenhum lançamento neste mês.</p>}</div>
+      <HistoryEventCategoryFilter events={data.events} />
       <a className="back-link" href="/">← Voltar ao ranking</a>
     </section>
   </main>;
