@@ -841,12 +841,19 @@ def month_label(month_key):
 def render_live_ranking(player_mode=False):
     """Atualiza somente a área do ranking a cada 60 segundos."""
     fresh_players = [p for p in load_players() if p.get("active", True) is not False]
+    # O Ranking de premiação mostra somente membros ativos e elegíveis,
+    # incluindo a exigência de participação no grupo de WhatsApp.
+    ranking_players = [
+        p for p in fresh_players
+        if p.get("eligible", "Elegível") == "Elegível"
+        and p.get("whatsapp", "Sim") == "Sim"
+    ]
     now_local = datetime.now(TZ)
     month_now = now_local.strftime("%Y-%m")
     # load_events já aplica os limites UTC correspondentes ao mês local;
     # não é necessário converter cada timestamp novamente no navegador/servidor.
     month_events = load_events(month_now)
-    live_ranking = build_ranking(fresh_players, month_events)
+    live_ranking = build_ranking(ranking_players, month_events)
     greeting = st.session_state.auth_player if player_mode else ("Operador" if is_operator else "Administrador")
     st.markdown(
         f"<div class='gh-welcome'><div><div class='gh-welcome-title'>👋 Olá, {html.escape(str(greeting))}!</div>"
@@ -856,7 +863,7 @@ def render_live_ranking(player_mode=False):
     )
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("🏆 Pontos do líder", int(live_ranking.iloc[0]["Total"]) if not live_ranking.empty else 0)
-    c2.metric("👥 Jogadores", len(fresh_players))
+    c2.metric("👥 Jogadores", len(ranking_players))
     wars_count = sum(1 for event in month_events if str(event.get("category", "")).casefold() == "guerras")
     c3.metric("⚔️ Registros de guerra", wars_count)
     c4.metric("📝 Lançamentos", len(month_events))
