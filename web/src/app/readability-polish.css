@@ -134,3 +134,104 @@
  .gh-home .gh-top-player strong{font-size:10px}
  .gh-home .mobile-bottom-nav{backdrop-filter:blur(16px)}
 }
+
+
+/* Ranking — final Black / Gold palette override.
+   Keeps medal colors only on the rank badges; removes legacy cyan/blue row styling. */
+.history-content .ranking-panel{
+  border-color:rgba(184,135,62,.58);
+  background:linear-gradient(145deg,#211c15 0%,#17130f 100%);
+}
+.history-content .ranking-panel .ranking-head{
+  color:#dfcfad;
+  border-color:#493821;
+  background:rgba(214,166,76,.035);
+}
+.history-content .ranking-panel .ranking-entry{
+  background:transparent;
+  border-bottom-color:rgba(184,135,62,.2);
+}
+.history-content .ranking-panel .ranking-entry.ranking-top-1{
+  background:linear-gradient(90deg,rgba(214,166,76,.105),rgba(214,166,76,.025) 58%,transparent 100%);
+}
+.history-content .ranking-panel .ranking-entry.ranking-top-2,
+.history-content .ranking-panel .ranking-entry.ranking-top-3{
+  background:transparent;
+}
+.history-content .ranking-panel .ranking-entry .ranking-row{
+  color:#f4ead7;
+  border:0;
+  background:transparent;
+}
+.history-content .ranking-panel .ranking-entry .ranking-row:hover{
+  background:rgba(214,166,76,.055);
+}
+.history-content .ranking-panel .ranking-profile-link{
+  color:#f3e5c8;
+  font-weight:800;
+}
+.history-content .ranking-panel .ranking-profile-link:hover{
+  color:#ffe0a0;
+}
+.history-content .ranking-panel .ranking-player small{
+  color:#b7a78a;
+}
+.history-content .ranking-panel .ranking-score>strong{
+  color:#f0ca78;
+}
+.history-content .ranking-panel .ranking-details-button{
+  color:#b7a78a;
+  background:transparent;
+}
+.history-content .ranking-panel .ranking-details-button:hover{
+  color:#fff0cf;
+}
+.history-content .ranking-panel .ranking-details-button i{
+  color:#f0ca78;
+}
+.history-content .ranking-panel .ranking-position{
+  border-color:#69502b;
+  background:#302519;
+  color:#f0ca78;
+}
+.history-content .ranking-panel .ranking-top-1 .ranking-position{
+  border-color:#f0ca78;
+  background:linear-gradient(145deg,#f3d995,#b8873e);
+  color:#24190b;
+}
+.history-content .ranking-panel .ranking-top-2 .ranking-position{
+  border-color:#b9c2cc;
+  background:linear-gradient(145deg,#e0e5e9,#8795a3);
+  color:#202832;
+}
+.history-content .ranking-panel .ranking-top-3 .ranking-position{
+  border-color:#c28b61;
+  background:linear-gradient(145deg,#c9946b,#805238);
+  color:#fff4e8;
+}
+.history-content .ranking-panel .ranking-breakdown{
+  background:linear-gradient(90deg,rgba(214,166,76,.07),transparent 75%);
+}
+.history-content .ranking-panel .ranking-breakdown-heading{
+  color:#d6c6a7;
+}
+.history-content .ranking-panel .ranking-breakdown-grid>span{
+  border-color:rgba(214,166,76,.18);
+  background:#17130f;
+}
+.history-content .ranking-panel .ranking-breakdown-grid b{
+  color:#f0ca78;
+}
+.history-content .ranking-panel .ranking-actions .outline-button{
+  border-color:#80653a;
+  color:#eadfc9;
+  background:#211b13;
+}
+.history-content .ranking-panel .ranking-actions .outline-button span{
+  color:#f0ca78;
+}
+@media(max-width:560px){
+  .history-content .ranking-panel .ranking-entry.ranking-top-1{
+    background:linear-gradient(90deg,rgba(214,166,76,.10),transparent 100%);
+  }
+}
