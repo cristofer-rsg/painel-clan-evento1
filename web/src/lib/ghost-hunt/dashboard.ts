@@ -93,7 +93,7 @@ async function fetchAllEvents(start: string, end: string): Promise<EventRow[]> {
   for (let offset = 0; ; offset += pageSize) {
     const { data, error } = await supabase
       .from("events")
-      .select("id,player,category,activity,points,created_at")
+      .select("id,player,player_tag,category,activity,points,created_at")
       .gte("created_at", start)
       .lt("created_at", end)
       .order("created_at", { ascending: true })
@@ -160,11 +160,11 @@ export async function getDashboardData(): Promise<DashboardData> {
       else if (category === "jogos do clã") bucket.gamesRaw = Math.max(bucket.gamesRaw, points);
       else if (category === "raide de fim de semana") bucket.raidRaw += points;
       else if (category === "capital do clã" && activity === "Doação automática de Ouro da Capital") bucket.capitalCoins += points;
-      totals.set(event.player, bucket);
+      totals.set(eventKey, bucket);
     }
 
     const ranking = competitors.map((player) => {
-      const bucket = totals.get(player.name) ?? {
+      const playerKey = player.player_tag ? player.player_tag.trim().toUpperCase() : `name:${player.name.trim().toLocaleLowerCase("pt-BR")}`;\n      const bucket = totals.get(playerKey) ?? {
         warsRaw: 0, leagueRaw: 0, donatedTroops: 0, gamesRaw: 0,
         raidRaw: 0, capitalCoins: 0, penalties: 0,
       };
