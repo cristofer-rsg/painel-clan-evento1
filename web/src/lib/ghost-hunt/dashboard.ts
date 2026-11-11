@@ -14,6 +14,7 @@ type MonthlyStat = { month_key: string; player_tag: string | null; player: strin
 type EventRow = {
   id: number;
   player: string | null;
+  player_tag: string | null;
   category: string | null;
   activity: string | null;
   points: number | null;
