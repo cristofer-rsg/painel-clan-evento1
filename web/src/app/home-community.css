@@ -1,0 +1,511 @@
+
+/* Ghost Hunt Community Home — visual layer only */
+.gh-home{--gh-cyan:#35ded2;--gh-cyan-light:#a4fff5;--gh-orange:#ff9c43;--gh-gold:#ffc36f}
+.gh-home .topbar{border-bottom-color:rgba(53,222,210,.2);background:rgba(4,14,26,.96)}
+.gh-home .brand-mark{border-color:#35ded2;color:#9cfff5;box-shadow:0 0 22px #35ded233}
+.gh-home .brand-copy i{color:#62eee4}
+.gh-home .status-dot{background:#35ded2;box-shadow:0 0 12px #35ded2}
+.gh-home .avatar{display:grid;place-items:center;border-color:#35ded2;color:#a4fff5;background:#0b2938;box-shadow:0 0 18px #35ded222}
+.gh-content{padding-top:25px}
+.gh-hero{position:relative;overflow:hidden;min-height:270px;margin:0 0 19px;border:1px solid rgba(53,222,210,.3);border-radius:20px;background:linear-gradient(110deg,#071827 0%,#0a2639 48%,#071725 100%);box-shadow:0 15px 42px #0005,inset 0 1px #ffffff12}
+.gh-hero:after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,rgba(4,15,27,.95) 0%,rgba(4,15,27,.82) 39%,rgba(4,15,27,.12) 100%)}
+.gh-hero-art{position:absolute;inset:0;overflow:hidden;background:radial-gradient(ellipse at 52% 78%,#f28b31aa 0,transparent 23%),radial-gradient(ellipse at 52% 45%,#125e8b 0,transparent 42%),linear-gradient(180deg,#07182c,#0a2940 65%,#061522)}
+.gh-hero-art:before{content:"";position:absolute;left:-4%;right:-4%;bottom:0;height:42%;background:linear-gradient(180deg,#142d42,#06101b);clip-path:polygon(0 55%,12% 42%,21% 54%,31% 24%,42% 44%,50% 4%,60% 42%,72% 25%,83% 50%,92% 31%,100% 50%,100% 100%,0 100%);border-top:1px solid #ffae5b88}
+.gh-moon{position:absolute;right:9%;top:15%;width:52px;height:52px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#d8f6ff,#55b8d5 65%,#1b5b85);box-shadow:0 0 38px #52bde888}
+.gh-castle{position:absolute;z-index:1;left:43%;bottom:20%;width:150px;height:122px;transform:translateX(-50%);background:linear-gradient(90deg,#10283b,#35516a 48%,#10283b);clip-path:polygon(0 100%,0 38%,15% 38%,15% 14%,29% 14%,29% 35%,38% 35%,38% 0,62% 0,62% 35%,72% 35%,72% 14%,87% 14%,87% 38%,100% 38%,100% 100%);filter:drop-shadow(0 0 18px #ff8e35)}
+.gh-castle:before{content:"";position:absolute;inset:36% 39% 0;background:linear-gradient(#ffb44d,#6e371c);box-shadow:0 0 25px #ff9b36}
+.gh-castle i{position:absolute;top:28%;width:8px;height:19px;background:#ffb75c;box-shadow:0 0 12px #ff9b36}
+.gh-castle i:nth-child(1){left:22%}.gh-castle i:nth-child(2){left:48%;top:13%}.gh-castle i:nth-child(3){right:20%}
+.gh-castle b{position:absolute;z-index:2;left:43%;top:52%;font:900 18px 'Barlow Condensed';color:#f8d49b;text-shadow:0 2px 8px #000}
+.gh-hero-figure{position:absolute;z-index:2;bottom:17%;font-size:76px;filter:drop-shadow(0 0 12px #000);opacity:.8}
+.gh-figure-left{left:3%;color:#f2b46a;transform:rotate(-13deg)}
+.gh-figure-right{right:5%;color:#8b8ef0;transform:rotate(12deg)}
+.gh-banner-flag{position:absolute;z-index:2;bottom:31%;padding:9px 7px;border:1px solid #e9a84e;background:#091a2a;color:#ffc36f;font:900 13px 'Barlow Condensed';box-shadow:0 0 15px #ff9c4355}
+.gh-flag-left{left:30%;transform:rotate(-7deg)}.gh-flag-right{right:28%;transform:rotate(8deg)}
+.gh-hero-copy{position:relative;z-index:3;padding:30px 27px;max-width:620px}
+.gh-hero-copy .overline{color:#8bdedb}
+.gh-hero-copy h1{font:800 clamp(37px,5vw,53px) 'Barlow Condensed';margin:8px 0 4px;text-shadow:0 3px 16px #000}
+.gh-hero-copy h1 em{font-style:normal;color:#52e6dc}
+.gh-hero-copy .muted{font-size:14px;color:#d0e0e8;text-shadow:0 2px 8px #000}
+.gh-hero-copy .season-chip{margin-top:19px;width:max-content;border-color:#ff9c4388;background:rgba(8,21,33,.86);box-shadow:0 0 22px #ff9c4322}
+.gh-hero-copy .season-chip>span{color:#ffb65e}
+.gh-hero-copy .season-chip b{color:#ffc078}
+.gh-metrics{gap:12px}
+.gh-metric{border-color:rgba(53,222,210,.35);border-radius:16px;background:linear-gradient(145deg,#0d2c3e,#071827);box-shadow:inset 0 1px #ffffff0c,0 8px 26px #0003}
+.gh-metric .metric-icon{width:39px;height:39px;border:1px solid #35ded255;border-radius:12px;background:#0b3945;color:#5cebe0;font-size:21px;box-shadow:0 0 16px #35ded222}
+.gh-metric.gold .metric-icon,.gh-metric.copper .metric-icon{border-color:#ff9c4366;background:#422b1c;color:#ffb35f}
+.gh-metric .metric-kicker{color:#a8c3d0;font-size:10px}
+.gh-metric .metric-value{font:800 36px 'Barlow Condensed';color:#f5fbff}
+.gh-metric.gold .metric-value{color:#ffc36f}
+.gh-metric .metric-note{font-size:11px;color:#91aaba}
+.gh-shortcuts{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:9px;margin:17px 0 20px}
+.gh-shortcut{min-height:105px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:11px 5px;border:1px solid rgba(53,222,210,.35);border-radius:15px;background:linear-gradient(145deg,#0d2c3e,#071827);box-shadow:inset 0 1px #ffffff0c,0 8px 22px #0003;transition:.2s}
+.gh-shortcut:hover{transform:translateY(-3px);border-color:#ff9c43;box-shadow:0 0 20px #35ded222}
+.gh-shortcut>span{font-size:28px;filter:drop-shadow(0 0 8px #35ded266)}
+.gh-shortcut>b{font-size:11px;color:#d8eaf1;text-align:center}
+.gh-season-banner{position:relative;display:flex;align-items:center;justify-content:space-between;overflow:hidden;min-height:142px;margin:0 0 20px;padding:19px 24px;border:1px solid #35ded277;border-radius:18px;background:radial-gradient(ellipse at 75% 50%,#f28a2e66,transparent 35%),linear-gradient(105deg,#09283a,#071625 70%);box-shadow:inset 0 1px #ffffff14,0 10px 28px #0004}
+.gh-season-banner>div:first-child{position:relative;z-index:2;max-width:60%}
+.gh-season-banner p{margin:0;color:#e7f4f7;font-size:16px;font-weight:900;letter-spacing:1px}
+.gh-season-banner h2{margin:0;color:#ffad4f;font:900 clamp(27px,4vw,38px) 'Barlow Condensed';text-shadow:0 0 20px #ff8b2c66}
+.gh-season-banner span{display:block;margin-top:5px;color:#c6d9e2;font-size:12px;line-height:1.5}
+.gh-season-art{position:absolute;right:8%;bottom:-13px;display:flex;align-items:center;gap:3px}
+.gh-season-art span{font-size:92px;filter:drop-shadow(0 0 20px #ff8c37)}
+.gh-season-art b{align-self:center;padding:13px 9px;border:1px solid #ffb65c;background:#091a2a;color:#ffc36f;font:900 20px 'Barlow Condensed';transform:rotate(7deg);box-shadow:0 0 16px #ff9c4355}
+.gh-recent{margin:0 0 22px;border-color:rgba(53,222,210,.32);border-radius:18px;background:linear-gradient(145deg,#102b40,#071827);box-shadow:inset 0 1px #ffffff0b}
+.gh-recent .recent-members-heading>span{border-color:#ff9c4377;background:#3b281d;color:#ffc078}
+.gh-recent .recent-members-empty{border-color:#35ded244;background:#061827;color:#a9c0cd}
+.gh-top-ranking{overflow:hidden;border:1px solid rgba(53,222,210,.3);border-radius:16px;background:linear-gradient(145deg,#102b40,#071827)}
+.gh-top-player{display:grid;grid-template-columns:34px 38px minmax(0,1fr) auto;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid rgba(53,222,210,.12)}
+.gh-top-player:last-of-type{border-bottom:0}
+.gh-place{font-size:24px}
+.gh-player-avatar{width:37px;height:37px;display:grid;place-items:center;border:1px solid #35ded277;border-radius:50%;background:linear-gradient(145deg,#174b5c,#0b2030);color:#9dfff5;font:800 18px 'Barlow Condensed'}
+.gh-top-player b{overflow:hidden;color:#eef8fc;font-size:13px;text-overflow:ellipsis;white-space:nowrap}
+.gh-top-player strong{padding:7px 10px;border:1px solid #35ded244;border-radius:20px;color:#a4fff5;font-size:11px;white-space:nowrap}
+.gh-top-player.place-1 strong{border-color:#ff9c4388;color:#ffc078;background:#432b1b}
+.gh-full-ranking{display:flex;justify-content:space-between;padding:13px 16px;border-top:1px solid rgba(53,222,210,.16);color:#8ff5eb;font-size:11px;font-weight:800}
+.gh-view-all{color:#83eee5;font-size:11px;font-weight:800}
+@media(max-width:900px){.gh-content{padding-top:20px}.gh-shortcuts{grid-template-columns:repeat(6,minmax(0,1fr))}}
+@media(max-width:560px){
+ .gh-content{padding:15px 12px calc(112px + env(safe-area-inset-bottom))}
+ .gh-hero{min-height:275px;border-radius:18px;margin-bottom:14px}
+ .gh-hero-art:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(4,15,27,.7),rgba(4,15,27,.1) 75%),linear-gradient(0deg,rgba(4,15,27,.96),transparent 65%)}
+ .gh-castle{left:53%;width:125px;height:105px;bottom:24%}
+ .gh-hero-figure{font-size:57px;bottom:25%}
+ .gh-figure-left{left:-2%}.gh-figure-right{right:0}
+ .gh-banner-flag{bottom:40%;font-size:11px}.gh-flag-left{left:27%}.gh-flag-right{right:23%}
+ .gh-moon{right:7%;top:12%;width:35px;height:35px}
+ .gh-hero-copy{padding:18px 15px;min-height:275px;display:flex;flex-direction:column;justify-content:flex-end}
+ .gh-hero-copy .overline{font-size:9px;margin-bottom:4px}
+ .gh-hero-copy h1{font-size:40px}
+ .gh-hero-copy .muted{font-size:12px;max-width:290px}
+ .gh-hero-copy .season-chip{margin-top:13px;padding:8px 10px}
+ .gh-metrics{gap:9px}
+ .gh-metric{min-height:120px;padding:11px;border-radius:15px}
+ .gh-metric .metric-icon{width:34px;height:34px;font-size:18px}
+ .gh-metric .metric-kicker{font-size:8px;letter-spacing:.25px}
+ .gh-metric .metric-value{font-size:32px;margin:9px 0 1px}
+ .gh-metric .metric-note{font-size:10px}
+ .gh-shortcuts{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:13px 0 16px}
+ .gh-shortcut{min-height:82px;border-radius:13px;gap:5px}
+ .gh-shortcut>span{font-size:24px}.gh-shortcut>b{font-size:10px}
+ .gh-season-banner{min-height:132px;padding:14px;border-radius:15px}
+ .gh-season-banner>div:first-child{max-width:68%}
+ .gh-season-banner p{font-size:12px}.gh-season-banner h2{font-size:31px}
+ .gh-season-banner span{font-size:10px}
+ .gh-season-art{right:-4%;bottom:-13px}.gh-season-art span{font-size:72px}.gh-season-art b{font-size:16px}
+ .gh-recent{padding:13px;margin:0 0 20px}
+ .gh-recent .recent-members-heading h2{font-size:20px}
+ .gh-top-player{grid-template-columns:28px 34px minmax(0,1fr) auto;gap:7px;padding:10px}
+ .gh-player-avatar{width:33px;height:33px}
+ .gh-top-player b{font-size:12px}.gh-top-player strong{font-size:10px;padding:6px 7px}
+}
+@media(prefers-reduced-motion:reduce){.gh-shortcut{transition:none}.gh-shortcut:hover{transform:none}}
+
+
+/* Monthly season-pass reward banner — independent of the existing podium */
+.gh-rewards-banner{position:relative;isolation:isolate;overflow:hidden;margin:26px 0 30px;padding:25px;border:1px solid rgba(240,177,91,.55);border-radius:20px;background:radial-gradient(ellipse at 50% 0%,rgba(240,177,91,.17),transparent 48%),linear-gradient(145deg,#182536 0%,#0a1727 62%,#101c2b 100%);box-shadow:0 16px 38px rgba(0,0,0,.28),inset 0 1px rgba(255,255,255,.07)}
+.gh-rewards-glow{position:absolute;z-index:-1;width:270px;height:270px;right:-90px;top:-150px;border-radius:50%;background:rgba(240,177,91,.12);filter:blur(28px);pointer-events:none}
+.gh-rewards-heading{text-align:center;max-width:680px;margin:0 auto}
+.gh-rewards-crown{display:inline-grid;place-items:center;width:43px;height:43px;border:1px solid rgba(255,195,111,.45);border-radius:14px;background:rgba(255,195,111,.1);color:#ffc36f;font-size:27px;box-shadow:0 0 22px rgba(255,175,86,.14)}
+.gh-rewards-heading .overline{margin:11px 0 5px;color:#ffc36f}
+.gh-rewards-heading h2{margin:0;color:#fff1d8;font:800 clamp(25px,4vw,35px) 'Barlow Condensed';letter-spacing:.7px}
+.gh-rewards-heading>p:last-child{margin:8px 0 0;color:#c2d0dc;font-size:13px;line-height:1.6}
+.gh-rewards-prizes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;max-width:600px;margin:20px auto}
+.gh-reward-prize{display:grid;grid-template-columns:38px 1fr;align-items:center;column-gap:10px;padding:13px 16px;border:1px solid rgba(255,195,111,.32);border-radius:14px;background:linear-gradient(130deg,rgba(116,79,35,.42),rgba(17,30,44,.9))}
+.gh-reward-prize.second{border-color:rgba(190,199,214,.25);background:linear-gradient(130deg,rgba(74,79,91,.45),rgba(17,30,44,.9))}
+.gh-reward-prize>span{grid-row:span 2;font-size:28px}
+.gh-reward-prize>b{font-size:11px;letter-spacing:1px;color:#e7edf3}
+.gh-reward-prize>strong{margin-top:3px;color:#ffc36f;font-size:14px;letter-spacing:.7px}
+.gh-reward-prize.second>strong{color:#d9e0e8}
+.gh-rewards-rules{max-width:760px;margin:20px auto 0;padding:17px 19px;border:1px solid rgba(83,161,185,.24);border-radius:14px;background:rgba(3,15,27,.48)}
+.gh-rewards-rules h3{margin:0 0 12px;color:#a4fff5;font:800 12px 'Inter';letter-spacing:1px}
+.gh-rewards-rules p{display:flex;align-items:flex-start;gap:11px;margin:9px 0;color:#d5e0e8;font-size:12px;line-height:1.55}
+.gh-rewards-rules p span{flex:0 0 24px;color:#ffc36f;font:800 12px 'Barlow Condensed'}
+.gh-rewards-actions{display:grid;grid-template-columns:minmax(0,1fr) minmax(250px,.72fr);gap:13px;max-width:850px;margin:17px auto 0}
+.gh-leader-profile{display:flex;align-items:center;gap:15px;min-width:0;padding:14px;border:1px solid rgba(83,161,185,.25);border-radius:15px;background:rgba(5,18,31,.62)}
+.gh-leader-qr{flex:0 0 116px;padding:6px;border-radius:10px;background:#fff}
+.gh-leader-qr img{display:block;width:104px;height:104px;object-fit:contain}
+.gh-leader-copy{display:flex;flex-direction:column;align-items:flex-start;min-width:0;gap:6px}
+.gh-leader-copy small{color:#8ea8bd;font-size:9px;font-weight:800;letter-spacing:.8px}
+.gh-leader-copy strong{color:#ffe0a6;font-size:15px;overflow-wrap:anywhere}
+.gh-leader-copy>span{color:#a9bdcc;font-size:10px;line-height:1.45}
+.gh-reward-button{display:flex;align-items:center;justify-content:center;gap:9px;min-height:43px;padding:11px 14px;border:1px solid transparent;border-radius:11px;color:#fff;font-size:11px;font-weight:800;text-align:center;line-height:1.35;transition:transform .18s,filter .18s,box-shadow .18s}
+.gh-reward-button:hover{transform:translateY(-2px);filter:brightness(1.1)}
+.gh-reward-button b{font-size:16px}
+.gh-clash-button{margin-top:4px;border-color:rgba(99,177,255,.42);background:linear-gradient(110deg,#1769a5,#17477a);box-shadow:0 7px 18px rgba(23,105,165,.2)}
+.gh-whatsapp-button{align-self:stretch;min-height:100%;border-color:rgba(69,211,132,.42);background:linear-gradient(120deg,#147b4c,#0c583b);box-shadow:0 7px 20px rgba(20,123,76,.2);font-size:13px}
+.gh-whatsapp-button>span{font-size:21px}
+.gh-rewards-footnote{max-width:850px;margin:12px auto 0;color:#8198aa;font-size:10px;line-height:1.55;text-align:center}
+@media(max-width:640px){
+ .gh-rewards-banner{margin:20px 0 25px;padding:17px 13px;border-radius:17px}
+ .gh-rewards-heading h2{font-size:30px}
+ .gh-rewards-heading>p:last-child{font-size:12px}
+ .gh-rewards-prizes{gap:8px;margin:16px auto}
+ .gh-reward-prize{grid-template-columns:27px 1fr;gap:7px;padding:11px 9px}
+ .gh-reward-prize>span{font-size:23px}
+ .gh-reward-prize>b{font-size:9px}
+ .gh-reward-prize>strong{font-size:12px}
+ .gh-rewards-rules{padding:14px 12px}
+ .gh-rewards-rules p{font-size:11px;gap:7px}
+ .gh-rewards-actions{grid-template-columns:1fr}
+ .gh-leader-profile{gap:11px;padding:11px}
+ .gh-leader-qr{flex-basis:94px;padding:5px}
+ .gh-leader-qr img{width:84px;height:84px}
+ .gh-leader-copy strong{font-size:13px}
+ .gh-leader-copy>span{font-size:9px}
+ .gh-whatsapp-button{min-height:48px}
+}
+
+
+/* Compact warm-gold reward banner — removes the blue/cyan palette */
+.gh-rewards-banner{
+  margin:16px 0 20px;padding:17px 19px;
+  border-color:rgba(207,164,91,.48);
+  background:radial-gradient(ellipse at 50% 0%,rgba(194,146,66,.12),transparent 52%),linear-gradient(145deg,#211d17 0%,#11100e 58%,#1b1711 100%);
+  box-shadow:0 12px 28px rgba(0,0,0,.25),inset 0 1px rgba(255,255,255,.06)
+}
+.gh-rewards-glow{background:rgba(207,164,91,.09)}
+.gh-rewards-heading{max-width:620px}
+.gh-rewards-crown{display:none}
+.gh-rewards-heading .overline{margin:0 0 3px;color:#d6ad68;font-size:10px}
+.gh-rewards-heading h2{font-size:clamp(23px,3vw,30px);color:#f4dfb7}
+.gh-rewards-heading>p:last-child{margin:3px 0 0;color:#bdb3a2;font-size:11px}
+.gh-rewards-prizes{max-width:520px;gap:9px;margin:12px auto}
+.gh-reward-prize{grid-template-columns:29px 1fr;column-gap:7px;padding:9px 12px;border-color:rgba(207,164,91,.35);background:linear-gradient(130deg,rgba(104,75,35,.28),rgba(27,24,19,.9))}
+.gh-reward-prize.second{border-color:rgba(174,163,142,.25);background:linear-gradient(130deg,rgba(75,69,57,.28),rgba(27,24,19,.9))}
+.gh-reward-prize>span{font-size:22px}
+.gh-reward-prize>b{font-size:10px;color:#e8dcc7}
+.gh-reward-prize>strong{margin-top:1px;color:#e2b96f;font-size:12px}
+.gh-reward-prize.second>strong{color:#d4c9b8}
+.gh-rewards-rules{max-width:760px;margin:10px auto 0;padding:10px 13px;border-color:rgba(207,164,91,.22);border-radius:11px;background:rgba(8,8,7,.42)}
+.gh-rewards-rules h3{margin:0 0 5px;color:#dfbd7d;font-size:11px}
+.gh-rewards-rules p{gap:7px;margin:4px 0;color:#d5cdbf;font-size:10px;line-height:1.4}
+.gh-rewards-rules p span{flex-basis:18px;color:#d6ad68;font-size:11px}
+.gh-rewards-actions{grid-template-columns:minmax(0,1fr) 220px;gap:9px;max-width:760px;margin:10px auto 0}
+.gh-leader-profile{gap:10px;padding:9px;border-color:rgba(207,164,91,.22);border-radius:11px;background:rgba(8,8,7,.45)}
+.gh-leader-qr{flex-basis:70px;padding:4px;border-radius:7px}
+.gh-leader-qr img{width:62px;height:62px}
+.gh-leader-copy{gap:3px}
+.gh-leader-copy small{color:#b8a47f;font-size:8px}
+.gh-leader-copy strong{color:#f0d49b;font-size:12px}
+.gh-leader-copy>span{color:#b9b0a1;font-size:9px}
+.gh-reward-button{min-height:32px;padding:7px 10px;border-radius:8px;font-size:10px}
+.gh-clash-button{margin-top:2px;border-color:rgba(226,185,111,.55);background:linear-gradient(110deg,#a77a35,#76521f);box-shadow:0 5px 12px rgba(117,82,31,.16)}
+.gh-whatsapp-button{min-height:100%;border-color:rgba(80,164,105,.38);background:linear-gradient(120deg,#17633f,#10482f);box-shadow:none;font-size:11px}
+.gh-whatsapp-button>span{font-size:16px}
+.gh-rewards-footnote{margin:7px auto 0;color:#938a7b;font-size:9px}
+@media(max-width:640px){
+ .gh-rewards-banner{margin:13px 0 18px;padding:13px 11px;border-radius:14px}
+ .gh-rewards-heading h2{font-size:24px}
+ .gh-rewards-heading>p:last-child{font-size:10px}
+ .gh-rewards-prizes{gap:6px;margin:9px auto}
+ .gh-reward-prize{grid-template-columns:23px 1fr;gap:5px;padding:8px 7px}
+ .gh-reward-prize>span{font-size:19px}
+ .gh-reward-prize>b{font-size:8px;letter-spacing:.6px}
+ .gh-reward-prize>strong{font-size:11px}
+ .gh-rewards-rules{margin-top:8px;padding:8px 9px}
+ .gh-rewards-rules h3{margin-bottom:4px;font-size:10px}
+ .gh-rewards-rules p{margin:3px 0;font-size:9px;line-height:1.35}
+ .gh-rewards-rules p span{flex-basis:16px;font-size:10px}
+ .gh-rewards-actions{grid-template-columns:1fr;gap:7px;margin-top:8px}
+ .gh-leader-profile{gap:8px;padding:7px}
+ .gh-leader-qr{flex-basis:61px;padding:3px}
+ .gh-leader-qr img{width:55px;height:55px}
+ .gh-leader-copy small{font-size:7px}
+ .gh-leader-copy strong{font-size:11px}
+ .gh-leader-copy>span{font-size:8px}
+ .gh-clash-button{min-height:28px;padding:6px 8px;font-size:9px}
+ .gh-whatsapp-button{min-height:35px;padding:7px 9px;font-size:10px}
+ .gh-whatsapp-button>span{font-size:14px}
+ .gh-rewards-footnote{margin-top:5px;font-size:8px}
+}
+
+
+/* Extra-compact rewards layout: both actions side by side on mobile */
+.gh-rewards-banner{margin:10px 0 15px;padding:12px 15px;border-radius:13px}
+.gh-rewards-heading .overline{font-size:9px}
+.gh-rewards-heading h2{font-size:25px}
+.gh-rewards-heading>p:last-child{font-size:10px}
+.gh-rewards-prizes{margin:8px auto;gap:7px}
+.gh-reward-prize{padding:7px 10px}
+.gh-rewards-rules{margin-top:7px;padding:8px 11px}
+.gh-rewards-rules h3{font-size:10px;margin-bottom:3px}
+.gh-rewards-rules p{margin:2px 0;font-size:9px;line-height:1.3}
+.gh-rewards-actions{grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;align-items:stretch}
+.gh-leader-profile{height:100%;padding:7px;gap:7px}
+.gh-leader-qr{flex-basis:54px;padding:3px}
+.gh-leader-qr img{width:48px;height:48px}
+.gh-leader-copy small{font-size:7px}
+.gh-leader-copy strong{font-size:10px}
+.gh-leader-copy>span{font-size:8px}
+.gh-clash-button{font-size:8px;min-height:28px;padding:5px 6px}
+.gh-whatsapp-button{min-height:100%;height:100%;padding:7px 6px;font-size:9px;gap:5px}
+.gh-whatsapp-button>span{font-size:13px}
+.gh-whatsapp-button b{font-size:13px}
+.gh-rewards-footnote{font-size:8px;margin-top:5px}
+@media(max-width:640px){
+ .gh-rewards-banner{margin:9px 0 14px;padding:10px 9px;border-radius:12px}
+ .gh-rewards-heading h2{font-size:22px}
+ .gh-rewards-heading>p:last-child{font-size:9px}
+ .gh-rewards-prizes{margin:7px auto;gap:5px}
+ .gh-reward-prize{grid-template-columns:20px 1fr;gap:4px;padding:6px}
+ .gh-reward-prize>span{font-size:17px}
+ .gh-reward-prize>b{font-size:7px}
+ .gh-reward-prize>strong{font-size:10px}
+ .gh-rewards-rules{margin-top:6px;padding:7px 8px}
+ .gh-rewards-rules h3{font-size:9px}
+ .gh-rewards-rules p{font-size:8px;line-height:1.28}
+ .gh-rewards-actions{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px;margin-top:7px}
+ .gh-leader-profile{min-width:0;padding:6px;gap:5px}
+ .gh-leader-qr{flex:0 0 43px;padding:2px}
+ .gh-leader-qr img{width:39px;height:39px}
+ .gh-leader-copy{gap:2px}
+ .gh-leader-copy small{font-size:6px;letter-spacing:.25px}
+ .gh-leader-copy strong{font-size:9px;line-height:1.2}
+ .gh-leader-copy>span{font-size:7px;line-height:1.2}
+ .gh-clash-button{margin-top:2px;min-height:26px;padding:5px 4px;font-size:7px;gap:3px}
+ .gh-clash-button b{font-size:11px}
+ .gh-whatsapp-button{min-height:100%;height:100%;padding:5px 4px;font-size:8px;gap:4px;line-height:1.2}
+ .gh-whatsapp-button>span{font-size:11px}
+ .gh-whatsapp-button b{font-size:11px}
+ .gh-rewards-footnote{font-size:7px;line-height:1.25;margin-top:4px}
+}
+
+/* Ghost Hunt home v2 — editorial esports dashboard */
+.gh-home-v2{--v2-gold:#d8b36c;--v2-cream:#f1e5cc;--v2-muted:#a99e8b;--v2-line:rgba(216,179,108,.2)}
+.gh-home-v2 .gh-topbar{background:rgba(12,11,9,.97);border-bottom-color:var(--v2-line)}
+.gh-home-v2 .brand-mark,.gh-home-v2 .avatar{border-color:#c9a45f;color:#f0d49b;background:#211b12;box-shadow:0 0 16px #c9a45f1c}
+.gh-home-v2 .brand-copy i{color:#d9b56e}
+.gh-home-v2 .status-dot{background:#c9a45f;box-shadow:0 0 10px #c9a45f}
+.gh-home-v2 .gh-content{padding-top:22px}
+.gh-home-v2 .gh-v2-hero{position:relative;isolation:isolate;display:flex;align-items:center;overflow:hidden;min-height:270px;margin:0 0 17px;padding:30px 34px;border:1px solid rgba(216,179,108,.3);border-radius:20px;background:linear-gradient(112deg,#1b1812 0%,#100f0d 56%,#21190f 100%);box-shadow:0 18px 42px #0005,inset 0 1px #ffffff0b}
+.gh-v2-hero:after{content:"";position:absolute;z-index:-1;inset:0;background:linear-gradient(90deg,rgba(12,11,9,.08),rgba(12,11,9,.1) 55%,rgba(12,11,9,.68))}
+.gh-v2-hero-art{position:absolute;z-index:-1;right:3%;top:50%;width:300px;height:230px;transform:translateY(-50%);display:grid;place-items:center;opacity:.8}
+.gh-v2-sigil{display:grid;place-items:center;width:155px;height:155px;border:1px solid rgba(224,185,111,.45);border-radius:50%;color:#d9b56e;font:900 52px 'Barlow Condensed';letter-spacing:-5px;text-shadow:0 0 28px #d9b56e66;box-shadow:0 0 0 12px rgba(216,179,108,.035),0 0 0 28px rgba(216,179,108,.025),inset 0 0 35px #d9b56e16}
+.gh-v2-orbit{position:absolute;border:1px solid rgba(216,179,108,.22);border-radius:50%;transform:rotate(-25deg)}
+.gh-v2-orbit.orbit-one{width:260px;height:115px}.gh-v2-orbit.orbit-two{width:220px;height:290px;transform:rotate(54deg)}
+.gh-v2-hero-copy{position:relative;z-index:1;max-width:570px}
+.gh-v2-eyebrow{display:flex;align-items:center;gap:8px;color:#d3b77f;font-size:10px;font-weight:900;letter-spacing:1.5px}
+.gh-v2-live-dot{width:7px;height:7px;border-radius:50%;background:#b99a5d;box-shadow:0 0 10px #b99a5d}
+.gh-v2-hero-copy h1{margin:13px 0 8px;color:#f2e7d2;font:900 clamp(39px,5vw,58px)/.9 'Barlow Condensed';letter-spacing:1px}
+.gh-v2-hero-copy h1 em{font-style:normal;color:#d8b36c}
+.gh-v2-hero-copy p{margin:0;color:#b9ae9c;font-size:13px}
+.gh-v2-hero-link{display:inline-flex;align-items:center;gap:15px;margin-top:20px;padding:10px 14px;border:1px solid rgba(216,179,108,.5);border-radius:7px;background:#c49a4a;color:#17120b;font-size:10px;font-weight:900;letter-spacing:.8px}
+.gh-v2-hero-link b{font-size:15px}
+.gh-v2-season-stamp{position:absolute;right:28px;bottom:23px;display:flex;flex-direction:column;align-items:center;min-width:65px;padding:9px 11px;border:1px solid rgba(216,179,108,.35);border-radius:9px;background:rgba(15,13,10,.7);color:#d8b36c}
+.gh-v2-season-stamp small{font-size:8px;letter-spacing:1px}.gh-v2-season-stamp strong{font:900 23px 'Barlow Condensed'}.gh-v2-season-stamp span{font-size:9px;color:#a99e8b}
+.gh-v2-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0 0 24px}
+.gh-v2-stat{display:flex;align-items:center;gap:12px;min-width:0;padding:14px 15px;border:1px solid rgba(216,179,108,.19);border-radius:12px;background:linear-gradient(145deg,#1b1812,#12110e);box-shadow:inset 0 1px #ffffff08}
+.gh-v2-stat-icon{display:grid;place-items:center;flex:0 0 37px;height:37px;border:1px solid rgba(216,179,108,.25);border-radius:10px;background:#292116;color:#d8b36c;font-size:20px}
+.gh-v2-stat>div{display:flex;flex-direction:column;min-width:0}
+.gh-v2-stat small{color:#a99e8b;font-size:8px;font-weight:900;letter-spacing:.7px}
+.gh-v2-stat strong{margin:2px 0;color:#f1e5cc;font:900 27px 'Barlow Condensed';line-height:1}
+.gh-v2-stat>div>span{color:#817969;font-size:9px}
+.gh-v2-section{margin:0 0 21px}
+.gh-v2-section-head{display:flex;align-items:end;justify-content:space-between;margin:0 0 11px}
+.gh-v2-section-head small,.gh-v2-full-ranking-head small{color:#b89a62;font-size:9px;font-weight:900;letter-spacing:1.4px}
+.gh-v2-section-head h2{margin:2px 0 0;color:#f0e4ce;font:800 24px 'Barlow Condensed'}
+.gh-v2-section-head>span,.gh-v2-section-head>a{color:#958975;font-size:9px;font-weight:900;letter-spacing:.8px}
+.gh-v2-section-head>a{color:#d6b36f}
+.gh-v2-activity-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:9px}
+.gh-v2-activity{position:relative;display:flex;flex-direction:column;align-items:flex-start;min-height:106px;padding:12px 11px;border:1px solid rgba(216,179,108,.17);border-radius:11px;background:linear-gradient(145deg,#1b1812,#11100e);transition:transform .18s,border-color .18s}
+.gh-v2-activity:hover{transform:translateY(-3px);border-color:#c9a45f}
+.gh-v2-activity-icon{display:grid;place-items:center;width:32px;height:32px;margin-bottom:8px;border-radius:9px;background:#2b2418;font-size:19px}
+.gh-v2-activity b{color:#e8dcc7;font-size:11px}
+.gh-v2-activity small{margin-top:3px;color:#827967;font-size:8px;line-height:1.3}
+.gh-v2-activity i{position:absolute;right:10px;top:11px;color:#a88c58;font-size:13px;font-style:normal}
+.gh-v2-season-strip{display:flex;align-items:center;gap:12px;margin:0 0 17px;padding:12px 15px;border:1px solid rgba(216,179,108,.24);border-radius:11px;background:linear-gradient(100deg,#272014,#15120e 75%)}
+.gh-v2-season-emblem{display:grid;place-items:center;flex:0 0 39px;height:39px;border:1px solid rgba(216,179,108,.35);border-radius:10px;color:#d8b36c;font-size:24px}
+.gh-v2-season-strip>div:nth-child(2){display:flex;flex-direction:column;flex:1;min-width:0}
+.gh-v2-season-strip small{color:#b99b62;font-size:8px;font-weight:900;letter-spacing:1px}
+.gh-v2-season-strip strong{color:#f0e4ce;font-size:13px}
+.gh-v2-season-strip span{color:#938977;font-size:9px}
+.gh-v2-season-strip>a{padding:8px 10px;border:1px solid rgba(216,179,108,.3);border-radius:6px;color:#d8b36c;font-size:9px;font-weight:900;white-space:nowrap}
+.gh-home-v2 .gh-rewards-banner{margin:0 0 24px}
+.gh-v2-ranking-section{margin-top:0}
+.gh-v2-podium{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 19px}
+.gh-v2-podium-card{display:flex;flex-direction:column;align-items:center;min-width:0;padding:14px 9px 12px;border:1px solid rgba(216,179,108,.19);border-radius:12px;background:linear-gradient(150deg,#1c1913,#11100e);text-align:center}
+.gh-v2-podium-card.rank-1{border-color:rgba(216,179,108,.55);background:linear-gradient(150deg,#302516,#17130e);box-shadow:0 8px 22px #0003}
+.gh-v2-medal{font-size:21px}
+.gh-v2-player-avatar{display:grid;place-items:center;width:37px;height:37px;margin:7px 0;border:1px solid rgba(216,179,108,.4);border-radius:50%;background:#2b2418;color:#e4c27d;font:900 18px 'Barlow Condensed'}
+.gh-v2-podium-card>b{overflow:hidden;max-width:100%;color:#e9dfcf;font-size:11px;text-overflow:ellipsis;white-space:nowrap}
+.gh-v2-podium-card>strong{margin:5px 0;color:#d8b36c;font:900 19px 'Barlow Condensed'}
+.gh-v2-podium-card>strong small{font:800 7px 'Inter';color:#9b8d76}
+.gh-v2-rank-label{color:#94856d;font-size:8px;font-weight:900;letter-spacing:1px}
+.gh-v2-full-ranking-head{display:flex;align-items:end;justify-content:space-between;margin:0 0 9px}
+.gh-v2-full-ranking-head h3{margin:2px 0 0;color:#f0e4ce;font:800 20px 'Barlow Condensed'}
+.gh-v2-full-ranking-head>span{padding:6px 9px;border:1px solid rgba(216,179,108,.25);border-radius:20px;color:#d8b36c;font-size:8px;font-weight:900;letter-spacing:.7px}
+.gh-home-v2 .ranking-panel{border-color:rgba(216,179,108,.22);background:linear-gradient(145deg,#1b1812,#100f0d)}
+.gh-home-v2 .ranking-head{border-bottom-color:rgba(216,179,108,.16);color:#bca77e}
+.gh-home-v2 .gh-v2-recent{margin-top:20px;border-color:rgba(216,179,108,.2);background:linear-gradient(145deg,#1b1812,#100f0d)}
+.gh-home-v2 .gh-v2-recent .recent-members-heading h2{color:#f0e4ce}
+.gh-home-v2 .gh-v2-recent .recent-members-heading>span{border-color:rgba(216,179,108,.3);background:#292116;color:#d8b36c}
+.gh-home-v2 .footer{border-top-color:rgba(216,179,108,.15);color:#847a68}
+@media(max-width:900px){.gh-v2-activity-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.gh-v2-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){
+ .gh-home-v2 .gh-content{padding:13px 12px calc(112px + env(safe-area-inset-bottom))}
+ .gh-home-v2 .gh-v2-hero{min-height:210px;margin-bottom:12px;padding:20px 17px;border-radius:15px}
+ .gh-v2-hero-art{right:-26%;width:220px;height:190px;opacity:.55}
+ .gh-v2-sigil{width:112px;height:112px;font-size:40px}
+ .gh-v2-orbit.orbit-one{width:190px;height:85px}.gh-v2-orbit.orbit-two{width:165px;height:220px}
+ .gh-v2-eyebrow{font-size:8px;letter-spacing:1px;gap:5px}
+ .gh-v2-hero-copy h1{font-size:40px;margin:11px 0 6px}
+ .gh-v2-hero-copy p{max-width:205px;font-size:10px}
+ .gh-v2-hero-link{margin-top:13px;padding:8px 10px;font-size:8px}
+ .gh-v2-season-stamp{right:12px;bottom:12px;min-width:48px;padding:6px 7px}
+ .gh-v2-season-stamp small{font-size:6px}.gh-v2-season-stamp strong{font-size:19px}.gh-v2-season-stamp span{font-size:7px}
+ .gh-v2-stats{gap:7px;margin-bottom:17px}
+ .gh-v2-stat{gap:8px;padding:10px 9px;border-radius:9px}
+ .gh-v2-stat-icon{flex-basis:29px;height:29px;font-size:16px;border-radius:8px}
+ .gh-v2-stat small{font-size:7px;letter-spacing:.35px}
+ .gh-v2-stat strong{font-size:24px}
+ .gh-v2-stat>div>span{font-size:8px}
+ .gh-v2-section{margin-bottom:15px}
+ .gh-v2-section-head{margin-bottom:8px}
+ .gh-v2-section-head h2{font-size:22px}
+ .gh-v2-section-head small{font-size:8px}
+ .gh-v2-activity-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+ .gh-v2-activity{min-height:85px;padding:8px;border-radius:9px}
+ .gh-v2-activity-icon{width:27px;height:27px;margin-bottom:5px;font-size:16px}
+ .gh-v2-activity b{font-size:9px}
+ .gh-v2-activity small{font-size:7px}
+ .gh-v2-activity i{right:7px;top:7px;font-size:11px}
+ .gh-v2-season-strip{gap:8px;margin-bottom:13px;padding:9px;border-radius:9px}
+ .gh-v2-season-emblem{flex-basis:31px;height:31px;font-size:19px}
+ .gh-v2-season-strip small{font-size:7px}.gh-v2-season-strip strong{font-size:11px}.gh-v2-season-strip span{font-size:8px}
+ .gh-v2-season-strip>a{padding:7px;font-size:7px}
+ .gh-home-v2 .gh-rewards-banner{margin-bottom:17px}
+ .gh-v2-podium{gap:6px;margin-bottom:14px}
+ .gh-v2-podium-card{padding:10px 5px;border-radius:9px}
+ .gh-v2-medal{font-size:17px}
+ .gh-v2-player-avatar{width:30px;height:30px;margin:5px 0;font-size:16px}
+ .gh-v2-podium-card>b{font-size:9px}
+ .gh-v2-podium-card>strong{font-size:17px}
+ .gh-v2-rank-label{font-size:7px}
+ .gh-v2-full-ranking-head h3{font-size:19px}
+ .gh-v2-full-ranking-head>span{font-size:7px;padding:5px 7px}
+}
+@media(prefers-reduced-motion:reduce){.gh-v2-activity{transition:none}.gh-v2-activity:hover{transform:none}}
+
+/* Brand emphasis, hunter welcome, and compact paired community links */
+.gh-home-v2 .brand-copy strong{display:flex;align-items:center;gap:5px;letter-spacing:2px}
+.gh-home-v2 .brand-copy strong i{display:inline-block;padding:2px 5px;background:linear-gradient(110deg,#d8b36c,#f0d79e);color:#241a0b;font-style:normal;font-weight:1000;letter-spacing:2.4px;text-shadow:none;box-shadow:0 0 14px rgba(216,179,108,.2)}
+.gh-home-v2 .gh-v2-eyebrow{color:#e0c17e}
+.gh-home-v2 .gh-v2-hero-link{font-size:10px}
+.gh-home-v2 .gh-rewards-actions{display:block;max-width:760px;margin:10px auto 0}
+.gh-home-v2 .gh-leader-profile{display:flex;align-items:center;gap:10px}
+.gh-home-v2 .gh-leader-copy{flex:1;min-width:0}
+.gh-home-v2 .gh-leader-buttons{display:flex;align-items:center;gap:6px;margin-top:5px}
+.gh-home-v2 .gh-leader-buttons .gh-reward-button{display:inline-flex;align-items:center;justify-content:center;min-height:30px;margin:0;padding:6px 10px;white-space:nowrap;font-size:9px}
+.gh-home-v2 .gh-leader-buttons .gh-clash-button{flex:1;background:linear-gradient(110deg,#a77a35,#76521f);border-color:rgba(226,185,111,.55)}
+.gh-home-v2 .gh-leader-buttons .gh-whatsapp-button{flex:0 0 auto;min-height:30px;height:auto;background:linear-gradient(120deg,#17633f,#10482f);border-color:rgba(80,164,105,.38);font-size:9px}
+.gh-home-v2 .gh-leader-buttons .gh-whatsapp-button span{font-size:12px}
+.gh-home-v2 .gh-leader-buttons .gh-whatsapp-button b,.gh-home-v2 .gh-leader-buttons .gh-clash-button b{font-size:12px}
+@media(max-width:640px){
+ .gh-home-v2 .brand-copy strong{gap:4px;letter-spacing:1.7px}
+ .gh-home-v2 .brand-copy strong i{padding:2px 4px;letter-spacing:2px}
+ .gh-home-v2 .gh-v2-eyebrow{font-size:8px;letter-spacing:.9px}
+ .gh-home-v2 .gh-rewards-actions{margin-top:7px}
+ .gh-home-v2 .gh-leader-profile{gap:7px;padding:6px}
+ .gh-home-v2 .gh-leader-copy{gap:2px}
+ .gh-home-v2 .gh-leader-buttons{gap:5px;margin-top:4px}
+ .gh-home-v2 .gh-leader-buttons .gh-reward-button{min-height:27px;padding:5px 7px;font-size:8px;gap:3px}
+ .gh-home-v2 .gh-leader-buttons .gh-whatsapp-button{min-height:27px;padding:5px 8px;font-size:8px}
+ .gh-home-v2 .gh-leader-buttons .gh-whatsapp-button span{font-size:11px}
+}
+
+/* Welcome headline and full-width, better-framed monthly rewards panel */
+.gh-home-v2 .gh-v2-hero-copy h1{max-width:570px;letter-spacing:.4px}
+.gh-home-v2 .gh-rewards-banner{width:100%;box-sizing:border-box;overflow:hidden}
+.gh-home-v2 .gh-rewards-actions{display:block;width:100%;max-width:none;box-sizing:border-box}
+.gh-home-v2 .gh-leader-profile{display:grid;grid-template-columns:64px minmax(0,1fr);align-items:center;width:100%;max-width:none;min-width:0;box-sizing:border-box}
+.gh-home-v2 .gh-leader-qr{width:64px;max-width:64px;min-width:0;box-sizing:border-box}
+.gh-home-v2 .gh-leader-qr img{display:block;width:100%;height:auto;aspect-ratio:1;object-fit:contain}
+.gh-home-v2 .gh-leader-copy{display:flex;flex-direction:column;align-items:stretch;width:100%;min-width:0;max-width:none}
+.gh-home-v2 .gh-leader-buttons{display:flex;width:100%;min-width:0;flex-wrap:nowrap;align-items:stretch;gap:6px}
+.gh-home-v2 .gh-leader-buttons .gh-reward-button{flex:1 1 0;min-width:0;white-space:nowrap;text-align:center}
+.gh-home-v2 .gh-rewards-rules,.gh-home-v2 .gh-rewards-prizes{width:100%;box-sizing:border-box}
+@media(max-width:640px){
+ .gh-home-v2 .gh-v2-hero-copy h1{font-size:39px;line-height:.94;max-width:275px}
+ .gh-home-v2 .gh-rewards-banner{padding:10px 9px;margin-left:0;margin-right:0}
+ .gh-home-v2 .gh-rewards-heading h2{font-size:21px}
+ .gh-home-v2 .gh-rewards-prizes{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .gh-home-v2 .gh-rewards-rules{padding:8px 9px}
+ .gh-home-v2 .gh-rewards-actions{margin-top:7px}
+ .gh-home-v2 .gh-leader-profile{grid-template-columns:58px minmax(0,1fr);gap:7px;padding:7px}
+ .gh-home-v2 .gh-leader-qr{width:58px;max-width:58px}
+ .gh-home-v2 .gh-leader-copy small{font-size:6.5px;letter-spacing:.25px}
+ .gh-home-v2 .gh-leader-copy strong{font-size:9px;white-space:nowrap}
+ .gh-home-v2 .gh-leader-copy>span{font-size:7px}
+ .gh-home-v2 .gh-leader-buttons{gap:5px}
+ .gh-home-v2 .gh-leader-buttons .gh-reward-button{min-height:28px;padding:5px 4px;font-size:7.5px;gap:3px}
+ .gh-home-v2 .gh-leader-buttons .gh-whatsapp-button{font-size:8px}
+}
+
+
+/* Podium medals: distinct gold, silver and bronze hierarchy */
+.gh-home-v2 .gh-v2-podium{align-items:end;gap:10px}
+.gh-home-v2 .gh-v2-podium-card{position:relative;justify-content:center;transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}
+.gh-home-v2 .gh-v2-podium-card.rank-1{
+  z-index:2;min-height:190px;padding:20px 10px 17px;transform:translateY(-8px);
+  border:1px solid rgba(244,202,105,.9);
+  background:linear-gradient(155deg,#493719 0%,#2b2112 48%,#17130d 100%);
+  box-shadow:0 0 0 1px rgba(244,202,105,.13),0 12px 28px rgba(0,0,0,.42),0 0 25px rgba(222,174,76,.13)
+}
+.gh-home-v2 .gh-v2-podium-card.rank-1 .gh-v2-medal{font-size:28px;filter:drop-shadow(0 2px 5px rgba(244,202,105,.35))}
+.gh-home-v2 .gh-v2-podium-card.rank-1 .gh-v2-player-avatar{width:49px;height:49px;margin:9px 0;border-color:#e8c36f;background:linear-gradient(145deg,#6d5124,#302313);color:#ffe3a0;font-size:23px;box-shadow:0 0 16px rgba(230,185,92,.17)}
+.gh-home-v2 .gh-v2-podium-card.rank-1>b{color:#fff0c9;font-size:13px}
+.gh-home-v2 .gh-v2-podium-card.rank-1>strong{color:#f4ce79;font-size:26px}
+.gh-home-v2 .gh-v2-podium-card.rank-1 .gh-v2-rank-label{color:#f0cc7d}
+.gh-home-v2 .gh-v2-podium-card.rank-2{
+  min-height:164px;padding:15px 9px 13px;border-color:rgba(190,200,211,.72);
+  background:linear-gradient(155deg,#343b43 0%,#20252b 52%,#14171b 100%);
+  box-shadow:0 8px 20px rgba(0,0,0,.28)
+}
+.gh-home-v2 .gh-v2-podium-card.rank-2 .gh-v2-player-avatar{border-color:#aeb9c5;background:linear-gradient(145deg,#515c68,#252c34);color:#e2e9f0}
+.gh-home-v2 .gh-v2-podium-card.rank-2>b,.gh-home-v2 .gh-v2-podium-card.rank-2>strong{color:#dce4ed}
+.gh-home-v2 .gh-v2-podium-card.rank-2 .gh-v2-rank-label{color:#b9c4d0}
+.gh-home-v2 .gh-v2-podium-card.rank-3{
+  min-height:145px;padding:12px 8px 11px;border-color:rgba(190,125,79,.7);
+  background:linear-gradient(155deg,#422b20 0%,#291d17 54%,#17120f 100%);
+  box-shadow:0 6px 16px rgba(0,0,0,.25)
+}
+.gh-home-v2 .gh-v2-podium-card.rank-3 .gh-v2-player-avatar{width:34px;height:34px;border-color:#b77b50;background:linear-gradient(145deg,#70452d,#342116);color:#f0c09b;font-size:17px}
+.gh-home-v2 .gh-v2-podium-card.rank-3>b,.gh-home-v2 .gh-v2-podium-card.rank-3>strong{color:#e0a77d}
+.gh-home-v2 .gh-v2-podium-card.rank-3 .gh-v2-rank-label{color:#c58b65}
+@media(max-width:560px){
+ .gh-home-v2 .gh-v2-podium{gap:6px;align-items:end}
+ .gh-home-v2 .gh-v2-podium-card.rank-1{min-height:157px;padding:13px 5px 11px;transform:translateY(-5px)}
+ .gh-home-v2 .gh-v2-podium-card.rank-1 .gh-v2-medal{font-size:22px}
+ .gh-home-v2 .gh-v2-podium-card.rank-1 .gh-v2-player-avatar{width:38px;height:38px;margin:6px 0;font-size:19px}
+ .gh-home-v2 .gh-v2-podium-card.rank-1>b{font-size:10px}
+ .gh-home-v2 .gh-v2-podium-card.rank-1>strong{font-size:20px}
+ .gh-home-v2 .gh-v2-podium-card.rank-2{min-height:137px;padding:10px 4px 9px}
+ .gh-home-v2 .gh-v2-podium-card.rank-2 .gh-v2-player-avatar{width:32px;height:32px;margin:5px 0}
+ .gh-home-v2 .gh-v2-podium-card.rank-2>b{font-size:9px}
+ .gh-home-v2 .gh-v2-podium-card.rank-2>strong{font-size:17px}
+ .gh-home-v2 .gh-v2-podium-card.rank-3{min-height:121px;padding:8px 4px 8px}
+ .gh-home-v2 .gh-v2-podium-card.rank-3 .gh-v2-player-avatar{width:27px;height:27px;margin:4px 0;font-size:14px}
+ .gh-home-v2 .gh-v2-podium-card.rank-3>b{font-size:8px}
+ .gh-home-v2 .gh-v2-podium-card.rank-3>strong{font-size:15px}
+}
+@media(prefers-reduced-motion:reduce){.gh-home-v2 .gh-v2-podium-card{transition:none}}
+
+
+/* Medieval castle artwork in the welcome hero */
+.gh-home-v2 .gh-v2-castle-art{right:2%;width:min(39%,390px);height:100%;min-height:220px;opacity:.9;pointer-events:none}
+.gh-home-v2 .gh-v2-castle{position:relative;z-index:1;width:100%;height:100%;max-height:285px;overflow:visible;filter:drop-shadow(0 8px 18px rgba(0,0,0,.45))}
+.gh-home-v2 .gh-v2-castle-halo{position:absolute;z-index:0;right:12%;top:18%;width:72%;height:65%;border-radius:50%;background:radial-gradient(ellipse,rgba(207,164,86,.16),rgba(207,164,86,.045) 48%,transparent 72%);filter:blur(10px)}
+@media(max-width:560px){
+ .gh-home-v2 .gh-v2-castle-art{right:-8%;width:57%;height:100%;min-height:180px;opacity:.56}
+ .gh-home-v2 .gh-v2-castle{max-height:205px}
+ .gh-home-v2 .gh-v2-hero:after{background:linear-gradient(90deg,rgba(12,11,9,.04),rgba(12,11,9,.12) 48%,rgba(12,11,9,.32))}
+}
+
+/* Novos membros: cartões em verde esmeralda, mantendo a identidade dourada */
+.gh-home-v2 .gh-v2-recent .recent-members-list article{border-color:rgba(83,177,119,.28);background:linear-gradient(115deg,rgba(13,48,35,.96),rgba(12,29,23,.96));box-shadow:inset 3px 0 0 rgba(83,177,119,.5)}
+.gh-home-v2 .gh-v2-recent .recent-member-shield{background:linear-gradient(145deg,#245b3d,#153b2a);color:#a9e7b9;border:1px solid rgba(120,207,145,.24)}
+.gh-home-v2 .gh-v2-recent .recent-members-list article b{color:#f0f5e9}
+.gh-home-v2 .gh-v2-recent .recent-members-list article small{color:#a9c7b0}
+.gh-home-v2 .gh-v2-recent .recent-members-list time{color:#c5d9c8}
+.gh-home-v2 .gh-v2-recent .recent-members-list article>strong{border-color:rgba(105,195,132,.42);background:rgba(33,91,53,.28);color:#a9e7b9}
