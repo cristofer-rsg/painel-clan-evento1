@@ -2,15 +2,20 @@ name: Sincronizar Guerras do Clã
 
 on:
   schedule:
-    - cron: "*/5 * * * *"
+    - cron: "2-59/5 * * * *"
   workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: sync-wars
+  cancel-in-progress: false
+
 jobs:
   sync-wars:
     runs-on: ubuntu-latest
+    timeout-minutes: 4
 
     steps:
       - name: Baixar repositório
