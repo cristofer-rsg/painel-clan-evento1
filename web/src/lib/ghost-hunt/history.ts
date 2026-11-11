@@ -2,7 +2,7 @@ import "server-only";
 import { createSupabaseAdmin } from "@/lib/supabase/admin";
 
 type Player = { name: string; player_tag: string | null; eligible: string | null; whatsapp: string | null };
-type EventRow = { id: number; player: string; category: string; activity: string; points: number; created_at: string };
+type EventRow = { id: number; player: string; player_tag: string | null; category: string; activity: string; points: number; created_at: string };
 export type HistoryRanking = { position: number; player: string; eligible: string; whatsapp: string; wars: number; league: number; donations: number; games: number; raid: number; capitalPoints: number; penalties: number; total: number };
 export type HistoryData = { month: string; months: string[]; ranking: HistoryRanking[]; events: EventRow[]; snapshot: boolean; error?: string };
 
@@ -42,10 +42,10 @@ function calculate(players: Player[], events: EventRow[]): HistoryRanking[] {
     else if (category === "jogos do clã") b.games = Math.max(b.games, points);
     else if (category === "raide de fim de semana") b.raid += points;
     else if (category === "capital do clã") b.capital += points;
-    totals.set(event.player, b);
+    totals.set(eventKey, b);
   }
   return players.map(player => {
-    const b = totals.get(player.name) || { wars: 0, league: 0, donated: 0, games: 0, raid: 0, capital: 0, penalties: 0 };
+    const playerKey = player.player_tag ? player.player_tag.trim().toUpperCase() : `name:${player.name.trim().toLocaleLowerCase("pt-BR")}`;\n    const b = totals.get(playerKey) || { wars: 0, league: 0, donated: 0, games: 0, raid: 0, capital: 0, penalties: 0 };
     const eligible = (player.eligible || "Elegível") === "Elegível" && (player.whatsapp || "Sim") === "Sim";
     return {
       position: 0, player: player.name, eligible: player.eligible || "Elegível", whatsapp: player.whatsapp || "Sim",
@@ -66,7 +66,7 @@ export async function getHistoryData(requestedMonth?: string): Promise<HistoryDa
     const { data: snapshotData, error: snapshotError } = await db.from("monthly_rankings").select("*").eq("month_key", month).order("position", { ascending: true });
     if (snapshotError) throw snapshotError;
     const bounds = rangeFor(month);
-    const events = await pages<EventRow>(db.from("events").select("id,player,category,activity,points,created_at").gte("created_at", bounds.start).lt("created_at", bounds.end).order("created_at", { ascending: false }));
+    const events = await pages<EventRow>(db.from("events").select("id,player,player_tag,category,activity,points,created_at").gte("created_at", bounds.start).lt("created_at", bounds.end).order("created_at", { ascending: false }));
     if (snapshotData?.length) {
       const ranking = snapshotData.map(row => ({
         position: Number(row.position), player: row.player, eligible: row.eligible || "", whatsapp: row.whatsapp || "",
