@@ -1246,3 +1246,35 @@ body{
   justify-content:flex-start;
   margin-left:0;
 }
+
+
+/* Restaura o botão dourado de detalhes do ranking */
+.ranking-details-button{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  min-height:36px;
+  padding:0 14px;
+  border:1px solid #e5bd68;
+  border-radius:10px;
+  background:linear-gradient(135deg,#b98232,#edc66c);
+  color:#21170b;
+  font-size:11px;
+  font-weight:900;
+  line-height:1;
+  box-shadow:0 4px 12px #c99a3c20;
+}
+.ranking-details-button i{
+  color:#21170b;
+  font-size:15px;
+  font-style:normal;
+  font-weight:900;
+}
+.ranking-details-button:hover{
+  filter:brightness(1.08);
+}
+.ranking-details-button:focus-visible{
+  outline:2px solid #f4d58e;
+  outline-offset:3px;
+}
