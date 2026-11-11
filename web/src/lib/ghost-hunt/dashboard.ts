@@ -144,8 +144,9 @@ export async function getDashboardData(): Promise<DashboardData> {
     }>();
 
     for (const event of events) {
-      if (!event.player) continue;
-      const bucket = totals.get(event.player) ?? {
+      const eventKey = event.player_tag ? event.player_tag.trim().toUpperCase() : `name:${(event.player || "").trim().toLocaleLowerCase("pt-BR")}`;
+      if (!eventKey || eventKey === "name:") continue;
+      const bucket = totals.get(eventKey) ?? {
         warsRaw: 0, leagueRaw: 0, donatedTroops: 0, gamesRaw: 0,
         raidRaw: 0, capitalCoins: 0, penalties: 0,
       };
