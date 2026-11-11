@@ -69,8 +69,8 @@ export async function getPlayerProfile(tag: string): Promise<PlayerProfile | nul
       const rows: EventRow[] = [];
       for (let offset = 0; ; offset += 1000) {
         const { data, error } = await db.from("events")
-          .select("id,player,category,activity,points,created_at")
-          .eq("player", player.name).gte("created_at", bounds.start).lt("created_at", bounds.end)
+          .select("id,player,player_tag,category,activity,points,created_at")
+          .eq("player_tag", player.player_tag).gte("created_at", bounds.start).lt("created_at", bounds.end)
           .order("created_at", { ascending: false }).range(offset, offset + 999);
         if (error) throw error;
         const page = (data || []) as EventRow[];
