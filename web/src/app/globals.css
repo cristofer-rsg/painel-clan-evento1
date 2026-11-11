@@ -1238,3 +1238,11 @@ body{
   .performance-card-head>b>.performance-player-identity>.performance-player-name{font-size:13px}
   .performance-card-head>b>.performance-player-identity>.performance-leader-role{min-height:22px;padding:4px 7px;font-size:8px}
 }
+
+
+/* Aproxima o nome da colocação nos cartões do desempenho */
+.performance-card-head>b>.performance-player-identity{
+  flex:0 1 auto;
+  justify-content:flex-start;
+  margin-left:0;
+}
