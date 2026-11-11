@@ -3,7 +3,7 @@ import { createSupabaseAdmin } from "@/lib/supabase/admin";
 
 type Player = { name: string; player_tag: string | null; active: boolean | null };
 type Stats = { month_key: string; player_tag: string | null; player: string | null; war_attacks: number | null; league_attacks: number | null; raid_attacks: number | null; donations: number | null; clan_games_points: number | null };
-type EventRow = { player: string | null; category: string | null; activity: string | null; points: number | null };
+type EventRow = { player: string | null; player_tag: string | null; category: string | null; activity: string | null; points: number | null };
 const WEIGHTS = {
   wars: { target: 200, max: 200 },
   league: { target: 140, max: 200 },
@@ -63,13 +63,13 @@ export async function getPerformanceData(requestedMonth?: string, useManualDonat
     const start = new Date(monthKey + "-01T00:00:00-03:00");
     const [year, month] = monthKey.split("-").map(Number);
     const end = new Date((month === 12 ? year + 1 : year) + "-" + String(month === 12 ? 1 : month + 1).padStart(2, "0") + "-01T00:00:00-03:00");
-    const events = await allRows<EventRow>(db.from("events").select("player,category,activity,points")
+    const events = await allRows<EventRow>(db.from("events").select("player,player_tag,category,activity,points")
       .gte("created_at", start.toISOString()).lt("created_at", end.toISOString()));
     const byTag = new Map(stats.filter(row => row.player_tag).map(row => [String(row.player_tag).trim().toUpperCase(), row]));
     const byName = new Map(stats.filter(row => row.player).map(row => [String(row.player).trim().toLocaleLowerCase("pt-BR"), row]));
     const rawByPlayer = new Map<string, { wars: number; warAttacks: number; league: number; leagueAttacks: number; raid: number; raidAttacks: number; donationsEvents: number; gamesEvents: number; capital: number; penalties: number }>();
     for (const event of events) {
-      const key = (event.player || "").trim().toLocaleLowerCase("pt-BR");
+      const key = event.player_tag ? `tag:${event.player_tag.trim().toUpperCase()}` : `name:${(event.player || "").trim().toLocaleLowerCase("pt-BR")}`;
       if (!key) continue;
       const bucket = rawByPlayer.get(key) ?? { wars: 0, warAttacks: 0, league: 0, leagueAttacks: 0, raid: 0, raidAttacks: 0, donationsEvents: 0, gamesEvents: 0, capital: 0, penalties: 0 };
       const points = Number(event.points || 0);
@@ -96,7 +96,7 @@ export async function getPerformanceData(requestedMonth?: string, useManualDonat
     }
     const players = playersResult.data || [];
     const rows = players.map((player: Player) => {
-      const key = player.name.trim().toLocaleLowerCase("pt-BR");
+      const key = player.player_tag ? `tag:${player.player_tag.trim().toUpperCase()}` : `name:${player.name.trim().toLocaleLowerCase("pt-BR")}`;
       const stat = (player.player_tag ? byTag.get(player.player_tag.trim().toUpperCase()) : undefined) || byName.get(key);
       const raw = rawByPlayer.get(key) ?? { wars: 0, warAttacks: 0, league: 0, leagueAttacks: 0, raid: 0, raidAttacks: 0, donationsEvents: 0, gamesEvents: 0, capital: 0, penalties: 0 };
       const recordedDonations = Number(stat?.donations || 0);
