@@ -11,6 +11,7 @@ type PlayerRow = {
 type EventRow = {
   id: number;
   player: string | null;
+  player_tag: string | null;
   category: string | null;
   activity: string | null;
   points: number | null;
