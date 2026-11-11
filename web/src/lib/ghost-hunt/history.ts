@@ -45,7 +45,8 @@ function calculate(players: Player[], events: EventRow[]): HistoryRanking[] {
     totals.set(eventKey, b);
   }
   return players.map(player => {
-    const playerKey = player.player_tag ? player.player_tag.trim().toUpperCase() : `name:${player.name.trim().toLocaleLowerCase("pt-BR")}`;\n    const b = totals.get(playerKey) || { wars: 0, league: 0, donated: 0, games: 0, raid: 0, capital: 0, penalties: 0 };
+    const playerKey = player.player_tag ? player.player_tag.trim().toUpperCase() : `name:${player.name.trim().toLocaleLowerCase("pt-BR")}`;
+    const b = totals.get(playerKey) || { wars: 0, league: 0, donated: 0, games: 0, raid: 0, capital: 0, penalties: 0 };
     const eligible = (player.eligible || "Elegível") === "Elegível" && (player.whatsapp || "Sim") === "Sim";
     return {
       position: 0, player: player.name, eligible: player.eligible || "Elegível", whatsapp: player.whatsapp || "Sim",
