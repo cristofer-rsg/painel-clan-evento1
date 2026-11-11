@@ -32,8 +32,9 @@ function calculate(players: Player[], events: EventRow[]): HistoryRanking[] {
   players = players.filter(player => !excludedLeaderTags.has((player.player_tag || "").trim().toUpperCase()));
   const totals = new Map<string, { wars: number; league: number; donated: number; games: number; raid: number; capital: number; penalties: number }>();
   for (const event of events) {
-    if (!event.player) continue;
-    const b = totals.get(event.player) || { wars: 0, league: 0, donated: 0, games: 0, raid: 0, capital: 0, penalties: 0 };
+    const eventKey = event.player_tag ? event.player_tag.trim().toUpperCase() : `name:${(event.player || "").trim().toLocaleLowerCase("pt-BR")}`;
+    if (!eventKey || eventKey === "name:") continue;
+    const b = totals.get(eventKey) || { wars: 0, league: 0, donated: 0, games: 0, raid: 0, capital: 0, penalties: 0 };
     const points = Number(event.points || 0), category = (event.category || "").trim().toLocaleLowerCase("pt-BR"), activity = event.activity || "";
     if (points < 0) b.penalties += Math.abs(points);
     else if (category === "guerras") b.wars += points;
