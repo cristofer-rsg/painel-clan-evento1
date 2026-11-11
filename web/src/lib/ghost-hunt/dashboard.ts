@@ -164,7 +164,8 @@ export async function getDashboardData(): Promise<DashboardData> {
     }
 
     const ranking = competitors.map((player) => {
-      const playerKey = player.player_tag ? player.player_tag.trim().toUpperCase() : `name:${player.name.trim().toLocaleLowerCase("pt-BR")}`;\n      const bucket = totals.get(playerKey) ?? {
+      const playerKey = player.player_tag ? player.player_tag.trim().toUpperCase() : `name:${player.name.trim().toLocaleLowerCase("pt-BR")}`;
+      const bucket = totals.get(playerKey) ?? {
         warsRaw: 0, leagueRaw: 0, donatedTroops: 0, gamesRaw: 0,
         raidRaw: 0, capitalCoins: 0, penalties: 0,
       };
