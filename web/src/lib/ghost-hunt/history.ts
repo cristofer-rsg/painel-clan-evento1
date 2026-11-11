@@ -107,7 +107,7 @@ export async function archivePreviousMonthIfNeeded(): Promise<boolean> {
 
   const bounds = rangeFor(monthKey);
   const events = await pages<EventRow>(db.from("events")
-    .select("id,player,category,activity,points,created_at")
+    .select("id,player,player_tag,category,activity,points,created_at")
     .gte("created_at", bounds.start).lt("created_at", bounds.end)
     .order("created_at", { ascending: false }));
   if (!events.length) return false;
