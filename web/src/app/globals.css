@@ -1198,3 +1198,9 @@ body{
  .performance-player-stat-tile b{font-size:14px}
  .performance-player-stat-tile small{font-size:10px}
 }
+
+
+/* Centraliza o nome e o selo de liderança no espaço do cabeçalho */
+.performance-player-identity{display:flex;flex:1 1 auto;min-width:0;align-items:center;justify-content:center;gap:7px;text-align:center;}
+.performance-player-name{min-width:0;overflow-wrap:anywhere;text-align:center;}
+.performance-card-head>b{align-items:center;}
