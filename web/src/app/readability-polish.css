@@ -362,7 +362,7 @@
 .performance-leader-card .performance-card-head b{color:#ffedc8}
 .performance-leader-card .performance-card-head b>span{color:#e6bd69;margin-right:7px}
 .performance-leader-card .performance-card-head strong{color:#f0cb7a}
-.performance-leader-role{display:inline-block;margin:4px 0 8px;padding:4px 8px;border:1px solid #99733d;border-radius:20px;color:#f3d28f;font-size:9px;font-weight:900;letter-spacing:.7px}
+.performance-leader-role{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;margin:0;padding:4px 7px;border:1px solid #99733d;border-radius:999px;color:#f3d28f;font-family:inherit;font-size:9px;font-weight:900;letter-spacing:0;line-height:1;white-space:nowrap}
 .performance-section-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:22px 0 8px;padding-bottom:10px;border-bottom:1px solid #59452c}
 .performance-section-heading h2{margin:0;color:#f6e8cb;font-size:19px;font-weight:900}
 .performance-section-heading>span{color:#cba65f;font-size:9px;font-weight:900;letter-spacing:1px}
