@@ -215,6 +215,18 @@ def main():
         war, players_by_tag
     )
 
+    # Diagnóstico da origem: registra a quantidade que a API oficial/proxy
+    # retornou por membro e o total de ataques desta guerra em cada execução.
+    api_attack_total = sum(
+        len(member.get("attacks") or [])
+        for member in (war.get("clan") or {}).get("members") or []
+    )
+    print(
+        f"Auditoria da guerra {war_key}: "
+        f"{len((war.get('clan') or {}).get('members') or [])} membros, "
+        f"{api_attack_total} ataques individuais retornados pela API."
+    )
+
     # Estatística mensal: uma origem por jogador e guerra. A mesma chave
     # é atualizada nas próximas execuções, sem somar ataques em duplicidade.
     month_key = war_started.astimezone(TZ).strftime("%Y-%m")
