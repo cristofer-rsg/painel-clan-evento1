@@ -1,4 +1,5 @@
 import AdminNavigation from "@/components/admin-navigation";
+import AnalyticsDashboard from "@/components/analytics-dashboard";
 import LogoutButton from "@/components/logout-button";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -21,26 +22,21 @@ export default async function AdminAnalyticsPage() {
     <section className="admin-content analytics-content">
       <span className="auth-kicker">SESSÃO SEGURA • ESTATÍSTICAS DO SITE</span>
       <h1>Analytics <em>do Ghost Hunt</em></h1>
-      <p>Acompanhe o alcance do site e entenda como os visitantes navegam pelo Ghost Hunt.</p>
+      <p>Acompanhe os acessos, descubra as páginas mais visitadas e veja de onde vêm os visitantes.</p>
 
       <div className="analytics-status">
         <span className="analytics-status-dot" aria-hidden="true" />
-        <div><b>Coleta de visitas integrada ao site</b><small>O Vercel Web Analytics registra visualizações das páginas públicas após a ativação e a publicação.</small></div>
+        <div><b>Analytics integrado ao Ghost Hunt</b><small>As visitas públicas são registradas de forma agregada. Áreas administrativas e login ficam fora da coleta.</small></div>
       </div>
 
-      <div className="analytics-metrics">
-        <article><span>◎</span><b>Visitantes únicos</b><small>Estimativa de visitantes no período selecionado.</small></article>
-        <article><span>▤</span><b>Visualizações</b><small>Total de páginas públicas visualizadas.</small></article>
-        <article><span>↗</span><b>Origem dos acessos</b><small>Referências e páginas que encaminharam visitantes.</small></article>
-        <article><span>▦</span><b>Dispositivos e regiões</b><small>Distribuição agregada por dispositivo e localização aproximada.</small></article>
-      </div>
+      <AnalyticsDashboard />
 
       <section className="analytics-dashboard-link">
-        <div><span className="auth-kicker">PAINEL DE DADOS</span><h2>Relatórios completos no Vercel</h2><p>Os números, gráficos, filtros de período, páginas mais acessadas e origens ficam no painel oficial do Vercel. Abra-o por este atalho, usando a conta que administra o projeto.</p></div>
-        <a href={vercelAnalyticsUrl} target="_blank" rel="noopener noreferrer">Abrir painel de Analytics <span aria-hidden="true">↗</span></a>
+        <div><span className="auth-kicker">RELATÓRIOS AVANÇADOS</span><h2>Painel oficial da Vercel</h2><p>Consulte também os relatórios nativos da hospedagem, como complemento às estatísticas exibidas aqui.</p></div>
+        <a href={vercelAnalyticsUrl} target="_blank" rel="noopener noreferrer">Abrir painel da Vercel <span aria-hidden="true">↗</span></a>
       </section>
 
-      <p className="analytics-privacy">Privacidade: as rotas administrativas e a tela de login são excluídas da coleta. Nenhum nome, tag de jogador ou conteúdo de conta é enviado como métrica de visita.</p>
+      <p className="analytics-privacy">Privacidade: não armazenamos endereço IP, nome, tag de jogador ou conteúdo de contas. O identificador de visitante é aleatório e armazenado somente como hash; localização é aproximada e depende dos dados fornecidos pela hospedagem.</p>
       <a className="back-link" href="/admin">← Voltar à administração</a>
     </section>
   </main>;
