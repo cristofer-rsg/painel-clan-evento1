@@ -1025,7 +1025,7 @@ body{
 .mobile-nav-swipe-arrow{display:none}
 @media(max-width:900px){
   .mobile-bottom-nav{
-    grid-template-columns:18px repeat(6,minmax(0,1fr)) 18px;
+    grid-template-columns:18px repeat(5,minmax(0,1fr)) 18px;
     align-items:center;
     gap:2px;
   }
