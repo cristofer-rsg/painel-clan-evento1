@@ -5,6 +5,7 @@ import "./gold-theme.css";
 import "./readability-polish.css";
 import "./rules.css";
 import BottomNavigation from "@/components/bottom-navigation";
+import { Analytics } from "@vercel/analytics/next";
 
 const siteUrl = "https://ghosthunt.com.br";
 
@@ -42,7 +43,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="pt-BR">
-      <body>{children}<BottomNavigation /></body>
+      <body>{children}<BottomNavigation /><Analytics /></body>
     </html>
   );
 }
