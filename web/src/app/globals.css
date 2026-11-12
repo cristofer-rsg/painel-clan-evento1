@@ -1237,3 +1237,17 @@ body{
 }
 .ranking-details-button:hover i{color:#171006}
 .ranking-details-button:focus-visible{outline-color:#ffe6a6}
+
+
+/* Reforço de especificidade para manter os botões dourados no Início e Ranking. */
+.ranking-entry .ranking-score .ranking-details-button{
+  background:linear-gradient(145deg,#f5d78b 0%,#d5a743 58%,#b98227 100%) !important;
+  border:1px solid #e2b95f !important;
+  color:#21180a !important;
+  box-shadow:0 3px 10px rgba(0,0,0,.24),inset 0 1px rgba(255,255,255,.38) !important;
+}
+.ranking-entry .ranking-score .ranking-details-button i{color:#21180a !important}
+.ranking-entry .ranking-score .ranking-details-button:hover{
+  background:linear-gradient(145deg,#ffe9ad 0%,#e8bd5b 58%,#c99232 100%) !important;
+  border-color:#ffe6a6 !important;
+}
