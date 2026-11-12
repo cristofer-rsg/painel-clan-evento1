@@ -67,7 +67,7 @@ export default async function PerformancePage({ searchParams }: Props) {
         <p className="performance-result-count">{visibleRows.length} de {rankedRows.length} jogador(es)</p>
         {visibleRows.map(row => <article className="performance-card" key={row.player}>
           <div className="performance-card-head">
-            <b><span>#{row.position}</span>{row.player}{row.role && <small className="performance-leader-role">{row.role}</small>}</b>
+            <b><span className="performance-position-badge">{row.position}</span><span className="performance-player-name">{row.player}</span>{row.role && <small className="performance-leader-role">{row.role}</small>}</b>
             <strong>{fmt(row.index)}%</strong>
           </div>
           <div className="performance-progress" role="img" aria-label={`Desempenho geral: ${row.index}%`}><span style={{ width: `${Math.min(row.index, 100)}%` }} /></div>
@@ -88,7 +88,7 @@ export default async function PerformancePage({ searchParams }: Props) {
         <p className="performance-result-count">Jogadores ordenados por {selectedMetric.label.toLocaleLowerCase("pt-BR")} • {sortOrder === "desc" ? "maior para menor" : "menor para maior"}</p>
         {categoryRows.map((row, index) => <article className="performance-card" key={`category-${row.player}`}>
           <div className="performance-card-head">
-            <b><span>#{index + 1}</span>{row.player}{row.role && <small className="performance-leader-role">{row.role}</small>}</b>
+            <b><span className="performance-position-badge">{index + 1}</span><span className="performance-player-name">{row.player}</span>{row.role && <small className="performance-leader-role">{row.role}</small>}</b>
             <div className="performance-stat-tile"><span className="performance-stat-icon" aria-hidden="true">{selectedMetric.key === "capital" ? "🪙" : "✦"}</span><strong className="performance-category-value"><span>{fmt(row[selectedMetric.key])}</span><small>{selectedMetric.key === "wars" || selectedMetric.key === "league" || selectedMetric.key === "raid" ? "Ataques Realizados" : selectedMetric.key === "donations" ? "Tropas Doadas" : selectedMetric.key === "capital" ? "Moedas Doadas" : "Pontos Obtidos"}</small></strong></div>
           </div>
           <small className="performance-status active">ATIVO {row.tag}</small>
