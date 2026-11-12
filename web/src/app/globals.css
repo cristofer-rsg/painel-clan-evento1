@@ -1251,3 +1251,27 @@ body{
   background:linear-gradient(145deg,#ffe9ad 0%,#e8bd5b 58%,#c99232 100%) !important;
   border-color:#ffe6a6 !important;
 }
+
+
+/* Performance page: restore compact gold rank and leadership badges */
+.performance-card-head>b{flex-wrap:wrap;min-width:0}
+.performance-card-head>b .performance-position-badge{
+  display:grid;place-items:center;flex:0 0 34px;width:34px;height:34px;
+  border:1px solid #a98447;border-radius:10px;
+  background:linear-gradient(145deg,#493719,#241d12);
+  color:#f1d18a;font:800 12px 'Barlow Condensed';
+  box-shadow:inset 0 1px 0 #f5d99522,0 2px 8px #0003;
+}
+.performance-card-head>b .performance-player-name{min-width:0;overflow-wrap:anywhere}
+.performance-card-head>b .performance-leader-role{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:23px;padding:4px 8px;margin-left:1px;
+  border:1px solid #a98447;border-radius:7px;
+  background:linear-gradient(135deg,#392d18,#211b11);
+  color:#f1d18a;font-size:9px;font-weight:900;
+  letter-spacing:.55px;line-height:1;white-space:nowrap;
+}
+@media(max-width:560px){
+  .performance-card-head>b{gap:7px}
+  .performance-card-head>b .performance-position-badge{flex-basis:32px;width:32px;height:32px}
+}
