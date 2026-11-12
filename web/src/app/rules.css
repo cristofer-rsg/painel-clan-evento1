@@ -15,3 +15,16 @@
 .rules-note{font-size:11px;line-height:1.65;color:#aa9b80;margin:13px 0 0}
 .rules-final{margin-top:15px}
 @media(max-width:700px){.rules-content{padding:22px 13px 115px}.rules-content>p{font-size:13px}.rules-grid{grid-template-columns:1fr;gap:12px}.rules-card{padding:15px}.rules-point-row{font-size:11px}.rules-point-row>b{max-width:55%}.rules-highlight{padding:14px}.rules-card-heading h2{font-size:16px}}
+
+.rules-table{border:1px solid rgba(214,166,76,.28);border-radius:13px;overflow:hidden;margin-top:12px;background:rgba(0,0,0,.18)}
+.rules-table-head{display:flex;justify-content:space-between;padding:9px 12px;background:rgba(125,86,20,.38);color:#f0ca78;font-size:12px;font-weight:800}
+.rules-table-head b{min-width:55px;text-align:right}
+.rules-table .rules-point-row{padding:5px 10px;font-size:12px}
+.rules-table .rules-point-row>b{color:#f0b900;max-width:38%;white-space:nowrap}
+.rules-subrow{padding:5px 10px 2px;color:#d9cfbd;font-size:12px;border-top:1px solid rgba(214,166,76,.12)}
+.rules-penalties{border-color:rgba(194,48,48,.45)}
+.rules-penalties .rules-table-head{background:rgba(120,20,20,.65);color:#ff9292}
+.rules-penalties .rules-point-row>b{color:#ffbd36}
+.rules-timing{padding:11px 13px;margin-top:12px;border:1px solid rgba(214,166,76,.5);border-radius:13px;background:rgba(108,77,28,.22);color:#e9dcc5;font-size:12px;line-height:1.5}
+.rules-timing>b{color:#f0ca78}.rules-timing p{margin:5px 0 0}
+@media(max-width:700px){.rules-table .rules-point-row{font-size:11px}.rules-table-head{font-size:11px}.rules-timing{font-size:11px}}
