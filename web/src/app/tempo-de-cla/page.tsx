@@ -18,9 +18,6 @@ function duration(milliseconds: number) {
 
 export default async function ClanTenurePage() {
   const data = await getClanTenureData();
-  const averageDays = data.players.length
-    ? Math.floor(data.players.reduce((sum, player) => sum + player.totalMilliseconds, 0) / data.players.length / 86_400_000)
-    : 0;
 
   return <main className="admin-shell">
     <header className="admin-header">
@@ -38,7 +35,6 @@ export default async function ClanTenurePage() {
       <div className="tenure-summary">
         <article><small>Jogadores registrados</small><strong>{data.players.length}</strong></article>
         <article><small>No clã agora</small><strong>{data.activeCount}</strong></article>
-        <article><small>Média acumulada</small><strong>{averageDays} dias</strong></article>
       </div>
 
       {data.trackedFrom && <div className="tenure-notice">Base histórica disponível a partir de <b>{date(data.trackedFrom)}</b>. O tempo anterior a esse primeiro registro não é estimado. As entradas e saídas passam a ser contabilizadas pelas sincronizações automáticas do clã.</div>}
