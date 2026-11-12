@@ -1301,3 +1301,44 @@ body{
   .performance-card-head{column-gap:7px}
   .performance-card-head>b{grid-template-columns:32px minmax(0,1fr);column-gap:7px}
 }
+
+
+/* Final performance header correction: only rank and role are badges */
+.performance-card-head>b{
+  display:flex;align-items:center;flex-wrap:wrap;
+  width:100%;max-width:none;min-width:0;gap:7px;
+}
+.performance-card-head>b .performance-position-badge{
+  display:grid!important;place-items:center;
+  flex:0 0 34px!important;width:34px!important;height:34px!important;
+  padding:0!important;
+}
+.performance-card-head>b .performance-player-name{
+  display:block!important;position:static!important;
+  flex:1 1 140px!important;width:auto!important;max-width:none!important;
+  min-width:0!important;height:auto!important;min-height:0!important;
+  padding:0!important;margin:0!important;
+  border:0!important;border-radius:0!important;
+  background:transparent!important;box-shadow:none!important;
+  color:inherit!important;font:inherit!important;
+  text-align:left;white-space:normal!important;
+  overflow-wrap:normal!important;word-break:normal!important;
+  line-height:1.25;
+}
+.performance-card-head>b .performance-leader-role{
+  display:inline-flex!important;align-items:center;justify-content:center;
+  flex:0 0 auto!important;width:auto!important;height:auto!important;
+  min-height:23px;padding:4px 8px!important;margin:0!important;
+  border:1px solid #a98447!important;border-radius:7px!important;
+  background:linear-gradient(135deg,#392d18,#211b11)!important;
+  color:#f1d18a!important;font:900 9px Inter,sans-serif!important;
+  letter-spacing:.55px;line-height:1;white-space:nowrap!important;
+}
+@media(max-width:560px){
+  .performance-card-head>b .performance-position-badge{
+    flex-basis:32px!important;width:32px!important;height:32px!important;
+  }
+  .performance-card-head>b .performance-player-name{
+    flex:1 1 125px!important;
+  }
+}
