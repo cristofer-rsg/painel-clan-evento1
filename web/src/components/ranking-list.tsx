@@ -21,7 +21,7 @@ const categories = [
 export default function RankingList({ players }: { players: RankingPlayer[] }) {
   const [search, setSearch] = useState("");
   const [showAll, setShowAll] = useState(false);
-  const [expanded, setExpanded] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
   const filtered = useMemo(() => {
     const term = search.trim().toLocaleLowerCase("pt-BR");
     if (!term) return players;
@@ -36,7 +36,7 @@ export default function RankingList({ players }: { players: RankingPlayer[] }) {
       <small>{filtered.length} de {players.length} jogador(es)</small>
     </div>
     {visible.map(player => {
-      const isExpanded = expanded === player.player;
+      const isExpanded = expanded.has(player.player);
       return <article className={`ranking-entry${player.position <= 3 ? ` ranking-top-${player.position}` : ""}`} key={player.player}>
         <div className="ranking-row ranking-row-toggle">
           <span className="ranking-player"><b className="ranking-position">{player.position}</b><span>
@@ -46,7 +46,7 @@ export default function RankingList({ players }: { players: RankingPlayer[] }) {
           <span className="ranking-score"><strong>{number(player.total)} pts</strong>
             <button className="ranking-details-button" type="button" aria-expanded={isExpanded}
               aria-label={`${isExpanded ? "Ocultar" : "Ver"} pontuação por categoria de ${player.player}`}
-              onClick={() => setExpanded(isExpanded ? null : player.player)}>
+              onClick={() => setExpanded(current => {\n                const next = new Set(current);\n                if (next.has(player.player)) next.delete(player.player);\n                else next.add(player.player);\n                return next;\n              })}>
               {isExpanded ? "Recolher" : "Detalhes"} <i>{isExpanded ? "−" : "+"}</i>
             </button>
           </span>
