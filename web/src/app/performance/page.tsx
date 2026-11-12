@@ -77,7 +77,7 @@ export default async function PerformancePage({ searchParams }: Props) {
               <strong className="performance-player-stat-tile"><b>{fmt(row[metric.key])}</b><small>{metric.key === "wars" || metric.key === "league" || metric.key === "raid" ? "Ataques" : metric.key === "donations" ? "Tropas" : metric.key === "capital" ? "Moedas" : "Pontos"}</small></strong>
             </div>)}
           </div>
-          {row.penalties > 0 && <small className="performance-status">Penalidades: −{fmt(row.penalties)} pontos</small>}
+          {row.penalties > 0 && <small className="performance-status penalty">Penalidades: −{fmt(row.penalties)} pontos</small>}
           <small className="performance-status active">ATIVO {row.tag}</small>
         </article>)}
         {!visibleRows.length && data.connected && <p>Nenhum jogador cadastrado neste mês.</p>}
