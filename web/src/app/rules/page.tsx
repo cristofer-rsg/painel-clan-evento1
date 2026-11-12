@@ -49,12 +49,13 @@ export default function RulesPage() {
         <div className="rules-card-heading"><span className="rules-icon">⚔️</span><div><h2>Regras obrigatórias das guerras</h2><p>Prazo dos ataques e única penalidade</p></div></div>
         <div className="rules-points">
           <div className="rules-point-row"><span>Primeiro ataque</span><b>Respeitar o espelho definido</b></div>
-          <div className="rules-point-row"><span>Segundo ataque</span><b>Até 12 horas antes do fim da guerra</b></div>
-          <div className="rules-point-row"><span>Atacar fora do espelho sem autorização</span><b>−50 pontos</b></div>
-          <div className="rules-point-row"><span>Deixar de realizar ataques</span><b>Sem multa adicional</b></div>
-          <div className="rules-point-row"><span>Pontuação final</span><b>Nunca fica abaixo de zero</b></div>
+          <div className="rules-point-row"><span>Segundo ataque</span><b>Somente nas últimas 12 horas da guerra</b></div>
+          <div className="rules-point-row"><span>Atacar fora do espelho</span><b>−5 pontos por ataque</b></div>
+          <div className="rules-point-row"><span>Não realizar nenhum ataque</span><b>−10 pontos</b></div>
+          <div className="rules-point-row"><span>Realizar apenas um ataque</span><b>−5 pontos</b></div>
+          <div className="rules-point-row"><span>Pontuação final</span><b>Pode ficar negativa</b></div>
         </div>
-        <p className="rules-note">Deixar de realizar um ou os dois ataques não gera desconto. O jogador apenas deixa de receber os pontos correspondentes. Atacar fora do espelho sem autorização é a única infração com desconto de pontos. Não há penalidades duplicadas.</p>
+        <p className="rules-note">A ausência dos dois ataques gera penalidade de −10 pontos. A realização de apenas um ataque gera penalidade de −5 pontos. Cada ataque realizado fora do espelho gera −5 pontos. O segundo ataque só pode ser realizado quando faltarem 12 horas ou menos para o encerramento da guerra. As penalidades são aplicadas conforme as infrações identificadas, sem duplicar a mesma penalidade pelo mesmo fato.</p>
       </section>
 
       <section className="rules-card rules-final">
