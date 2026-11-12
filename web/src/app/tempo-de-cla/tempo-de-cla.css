@@ -56,14 +56,14 @@
 .tenure-duration strong{color:#ffd779}
 .tenure-duration small{color:#c7b58f}
 .tenure-status{
-  border-color:#a98447;
-  background:linear-gradient(135deg,#49351866,#241a0d);
-  color:#f4d18a;
+  border-color:#00a86b;
+  background:linear-gradient(135deg,rgba(0,168,107,.22),rgba(0,75,48,.28));
+  color:#39d98a;
 }
 .tenure-status.inactive{
-  border-color:#74634a;
-  background:#332a1d;
-  color:#c8b99e;
+  border-color:#c43d4b;
+  background:linear-gradient(135deg,rgba(196,61,75,.22),rgba(91,20,30,.3));
+  color:#ff6b78;
 }
 .tenure-meta span{
   border-color:#5c4729;
