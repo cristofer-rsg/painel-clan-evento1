@@ -76,7 +76,9 @@ export async function getPerformanceData(requestedMonth?: string, useManualDonat
       const category = (event.category || "").trim().toLocaleLowerCase("pt-BR");
       const activity = (event.activity || "").trim();
       if (points < 0) {
-        if (activity.toLocaleLowerCase("pt-BR").includes("fora do espelho")) bucket.penalties += 50;
+        // O banco já registra o valor real da penalidade (ex.: -5 por ataque fora do espelho).
+        // Somamos o valor absoluto para exibir o total acumulado sem multiplicadores artificiais.
+        bucket.penalties += Math.abs(points);
       } else if (category === "guerras") {
         bucket.wars += points;
         if (/^Fez [1-3] estrela/i.test(activity)) bucket.warAttacks += 1;
@@ -110,7 +112,7 @@ export async function getPerformanceData(requestedMonth?: string, useManualDonat
       const donationsPoints = score(donations, WEIGHTS.donations.target, WEIGHTS.donations.max);
       const gamesPoints = score(games, WEIGHTS.games.target, WEIGHTS.games.max);
       const capitalPoints = score(raw.capital, WEIGHTS.capital.target, WEIGHTS.capital.max);
-      const totalPoints = Math.max(0, warsPoints + leaguePoints + raidPoints + donationsPoints + gamesPoints + capitalPoints - raw.penalties);
+      const totalPoints = warsPoints + leaguePoints + raidPoints + donationsPoints + gamesPoints + capitalPoints - raw.penalties;
       const index = Math.round(totalPoints / 10);
       return {
         player: player.name, tag: player.player_tag || "", wars: stat?.war_attacks == null ? raw.warAttacks : Number(stat.war_attacks), league: raw.leagueAttacks, raid: raw.raidAttacks,
