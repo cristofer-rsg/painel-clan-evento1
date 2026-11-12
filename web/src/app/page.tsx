@@ -50,6 +50,7 @@ export default async function HomePage() {
           <a className="nav-item" href="/ranking"><span className="nav-icon">♛</span><span>Ranking</span></a>
           <a className="nav-item" href="/performance"><span className="nav-icon">◈</span><span>Desempenho</span></a>
           <a className="nav-item" href="/history"><span className="nav-icon">▤</span><span>Histórico</span></a>
+          <a className="nav-item" href="/tempo-de-cla"><span className="nav-icon">⌛</span><span>Tempo de Clã</span></a>
           <div className="side-divider" />
           <div className="side-label">ADMINISTRAÇÃO</div>
           <a className="nav-item" href="/admin"><span className="nav-icon">⚙</span><span>Gerenciar aplicativo</span></a>
