@@ -1,0 +1,53 @@
+name: Ghost Hunt - CI
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "web/**"
+      - ".github/workflows/ghost-hunt-ci.yml"
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - ".github/workflows/ghost-hunt-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ghost-hunt-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web-checks:
+    name: ghost-hunt-ci
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    env:
+      # Valores fictícios apenas para permitir a compilação no CI.
+      # Nunca são usados em produção nem acessam o Supabase real.
+      SUPABASE_URL: https://ci-placeholder.supabase.co
+      SUPABASE_SECRET_KEY: ci-placeholder
+      ADMIN_PASSWORD: ci-placeholder
+      GHOST_HUNT_SESSION_SECRET: ci-placeholder
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: TypeScript check
+        run: npm run typecheck
+
+      - name: Production build
+        run: npm run build
