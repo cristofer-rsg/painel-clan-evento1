@@ -18,6 +18,7 @@ export default async function AdminPage() {
       <a href="/admin/players"><span>♟</span><b>Gerenciar jogadores</b><small>Cadastro, elegibilidade e WhatsApp</small><i>→</i></a>
       <a href="/admin/events"><span>✎</span><b>Editar lançamentos</b><small>Corrigir ou excluir registros do mês</small><i>→</i></a>
       <a href="/admin/performance"><span>◈</span><b>Desempenho administrativo</b><small>Índice dinâmico, inativos e ordenação completa</small><i>→</i></a>
+      <a href="/admin/analytics"><span>▥</span><b>Analytics do site</b><small>Visitantes, visualizações e páginas mais acessadas</small><i>→</i></a>
     </div>
     <section className="export-center" aria-labelledby="export-title">
       <div className="export-heading"><span className="auth-kicker">RELATÓRIOS E ARQUIVOS</span><h2 id="export-title">Central de <em>exportações</em></h2><p>Baixe uma cópia dos dados para conferência, arquivo ou análise externa.</p></div>
