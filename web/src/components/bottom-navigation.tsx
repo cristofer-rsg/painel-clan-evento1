@@ -22,6 +22,7 @@ export default function BottomNavigation() {
   useEffect(() => {
     currentPath.current = pathname;
     navigationPending.current = false;
+    touchStart.current = null;
   }, [pathname]);
 
   useEffect(() => {
@@ -29,6 +30,13 @@ export default function BottomNavigation() {
     items.forEach((item) => router.prefetch(item.href));
 
     const onTouchStart = (event: TouchEvent) => {
+      // Horizontal swipe navigation belongs only to public pages.
+      // Admin pages must never fall through to the public tab index.
+      if (currentPath.current.startsWith("/admin") || currentPath.current === "/login") {
+        touchStart.current = null;
+        return;
+      }
+
       if (event.touches.length !== 1 || navigationPending.current) {
         touchStart.current = null;
         return;
@@ -52,6 +60,9 @@ export default function BottomNavigation() {
       touchStart.current = null;
       if (!start || event.changedTouches.length !== 1 || navigationPending.current) return;
 
+      const path = currentPath.current;
+      if (path.startsWith("/admin") || path === "/login") return;
+
       const touch = event.changedTouches[0];
       const deltaX = touch.clientX - start.x;
       const deltaY = touch.clientY - start.y;
@@ -61,7 +72,6 @@ export default function BottomNavigation() {
       // A shorter but clearly horizontal gesture is enough; vertical scroll remains untouched.
       if (absX < 48 || absX < absY * 1.2) return;
 
-      const path = currentPath.current;
       const currentIndex = items.findIndex((item) =>
         item.href === "/" ? path === "/" : path === item.href || path.startsWith(item.href + "/")
       );
