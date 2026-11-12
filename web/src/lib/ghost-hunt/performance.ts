@@ -76,7 +76,9 @@ export async function getPerformanceData(requestedMonth?: string, useManualDonat
       const category = (event.category || "").trim().toLocaleLowerCase("pt-BR");
       const activity = (event.activity || "").trim();
       if (points < 0) {
-        if (activity.toLocaleLowerCase("pt-BR").includes("fora do espelho")) bucket.penalties += 50;
+        // O banco já registra o valor real da penalidade (ex.: -5 por ataque fora do espelho).
+        // Somamos o valor absoluto para exibir o total acumulado sem multiplicadores artificiais.
+        bucket.penalties += Math.abs(points);
       } else if (category === "guerras") {
         bucket.wars += points;
         if (/^Fez [1-3] estrela/i.test(activity)) bucket.warAttacks += 1;
