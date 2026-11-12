@@ -41,7 +41,7 @@ export default function RankingList({ players }: { players: RankingPlayer[] }) {
         <div className="ranking-row ranking-row-toggle">
           <span className="ranking-player"><b className="ranking-position">{player.position}</b><span>
             {player.tag ? <Link className="ranking-profile-link" href={`/player/${encodeURIComponent(player.tag)}`}>{player.player}</Link> : <b>{player.player}</b>}
-            <small>{player.eligible ? "Elegível" : "Não elegível"}{player.tag ? " · " + player.tag : ""}</small>
+            <small>{player.eligible ? "Elegível" : "Inelegível"}{player.tag ? " · " + player.tag : ""}</small>
           </span></span>
           <span className="ranking-score"><strong>{number(player.total)} pts</strong>
             <button className="ranking-details-button" type="button" aria-expanded={isExpanded}
