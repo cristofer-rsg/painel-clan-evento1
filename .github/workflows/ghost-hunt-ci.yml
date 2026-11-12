@@ -4,9 +4,6 @@ on:
   pull_request:
     branches:
       - main
-    paths:
-      - "web/**"
-      - ".github/workflows/ghost-hunt-ci.yml"
   workflow_dispatch:
 
 permissions:
