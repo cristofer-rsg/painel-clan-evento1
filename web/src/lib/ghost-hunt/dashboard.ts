@@ -153,7 +153,7 @@ export async function getDashboardData(): Promise<DashboardData> {
       const category = (event.category ?? "").trim().toLocaleLowerCase("pt-BR");
       const activity = (event.activity ?? "").trim();
       if (points < 0) {
-        if (activity.toLocaleLowerCase("pt-BR").includes("fora do espelho")) bucket.penalties += 50;
+        bucket.penalties += Math.abs(points);
       } else if (category === "guerras") bucket.warsRaw += points;
       else if (category === "liga dos clãs") bucket.leagueRaw += points;
       else if (category === "doações" && activity.startsWith("TROPAS_DOADAS:")) bucket.donatedTroops += Math.max(0, points);
@@ -176,7 +176,7 @@ export async function getDashboardData(): Promise<DashboardData> {
       const raid = score(bucket.raidRaw, WEIGHTS.raid.target, WEIGHTS.raid.max);
       const capitalPoints = score(bucket.capitalCoins, WEIGHTS.capital.target, WEIGHTS.capital.max);
       const totalBeforePenalty = wars + league + donations + games + raid + capitalPoints;
-      const total = Math.max(0, totalBeforePenalty - bucket.penalties);
+      const total = totalBeforePenalty - bucket.penalties;
       return {
         position: 0,
         player: player.name,
