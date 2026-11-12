@@ -168,6 +168,13 @@ def make_war_events(war, players_by_tag):
             "player_tag": tag, "player": name, "war_attacks": 0,
             "league_attacks": len(attacks), "raid_attacks": 0,
         })
+        if war.get("state") == "warEnded" and not attacks:
+            events.append({
+                "source_key": f"{war_time}:{tag}:penalty:missed-daily-attack",
+                "war_key": str(war_time), "player_tag": tag, "player": name,
+                "activity": "Penalidade: não realizou o ataque do dia na Liga (−5)",
+                "points": -5,
+            })
         for index, attack in enumerate(attacks, start=1):
             order = attack.get("order", index)
             stars = int(attack.get("stars") or 0)
@@ -189,6 +196,9 @@ def make_war_events(war, players_by_tag):
                     enemy_positions.get(defender_tag) == member.get("mapPosition")):
                 add(f"mirror:{order}",
                     f"Acertou o espelho no ataque {order} (+5)", 5)
+            else:
+                add(f"penalty:off-mirror:{order}",
+                    "Penalidade: atacou fora do espelho na Liga (−5)", -5)
     return events, stat_sources
 
 
