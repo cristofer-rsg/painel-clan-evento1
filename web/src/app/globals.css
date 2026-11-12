@@ -1342,3 +1342,16 @@ body{
     flex:1 1 125px!important;
   }
 }
+
+
+/* Keep leadership badge immediately beside the player's name */
+.performance-card-head>b .performance-player-name{
+  flex:0 1 auto!important;
+  width:auto!important;
+  max-width:calc(100% - 45px)!important;
+}
+.performance-card-head>b .performance-leader-role{
+  flex:0 0 auto!important;
+  margin-left:0!important;
+  align-self:center;
+}
