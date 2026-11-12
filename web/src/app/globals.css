@@ -1275,3 +1275,29 @@ body{
   .performance-card-head>b{gap:7px}
   .performance-card-head>b .performance-position-badge{flex-basis:32px;width:32px;height:32px}
 }
+
+
+/* Performance mobile header: keep player names intact and prevent flex fragmentation */
+.performance-card-head{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;column-gap:10px}
+.performance-card-head>b{
+  display:grid;grid-template-columns:34px minmax(0,1fr);
+  grid-template-areas:"position name" ". role";
+  align-items:center;justify-items:start;column-gap:9px;row-gap:5px;
+  min-width:0;max-width:100%;overflow-wrap:normal;word-break:normal;
+}
+.performance-card-head>b .performance-position-badge{
+  grid-area:position;align-self:center;
+}
+.performance-card-head>b .performance-player-name{
+  grid-area:name;display:block;min-width:0;max-width:100%;
+  white-space:normal;overflow-wrap:break-word;word-break:normal;
+  hyphens:none;line-height:1.25;
+}
+.performance-card-head>b .performance-leader-role{
+  grid-area:role;margin:0 0 0 1px;justify-self:start;
+}
+.performance-card-head>strong{grid-column:2;grid-row:1;align-self:start}
+@media(max-width:560px){
+  .performance-card-head{column-gap:7px}
+  .performance-card-head>b{grid-template-columns:32px minmax(0,1fr);column-gap:7px}
+}
