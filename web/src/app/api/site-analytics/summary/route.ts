@@ -5,19 +5,42 @@ import { adminSessionCookie, isAdminSessionValid } from "@/lib/ghost-hunt/sessio
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+function parseDate(value: string | null, endOfDay = false) {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const date = new Date(`${value}T${endOfDay ? "23:59:59.999" : "00:00:00.000"}Z`);
+  return Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== value ? null : date;
+}
+
 export async function GET(request: NextRequest) {
   const cookieStore = await cookies();
   if (!(await isAdminSessionValid(cookieStore.get(adminSessionCookie.name)?.value))) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
 
-  const allowedDays = [1, 7, 30, 90];
-  const requestedDays = Number(request.nextUrl.searchParams.get("days") || 7);
-  const days = allowedDays.includes(requestedDays) ? requestedDays : 7;
-  const to = new Date();
-  const from = new Date(to);
-  from.setUTCDate(from.getUTCDate() - (days - 1));
-  from.setUTCHours(0, 0, 0, 0);
+  const startParam = request.nextUrl.searchParams.get("from");
+  const endParam = request.nextUrl.searchParams.get("to");
+  let from: Date;
+  let to = new Date();
+  let days: number;
+
+  if (startParam || endParam) {
+    const customFrom = parseDate(startParam);
+    const customTo = parseDate(endParam, true);
+    if (!customFrom || !customTo || customFrom > customTo) {
+      return NextResponse.json({ error: "Selecione um intervalo de datas válido." }, { status: 400 });
+    }
+    days = Math.floor((customTo.getTime() - customFrom.getTime()) / 86_400_000) + 1;
+    if (days > 365) return NextResponse.json({ error: "O período personalizado pode ter no máximo 365 dias." }, { status: 400 });
+    from = customFrom;
+    to = customTo;
+  } else {
+    const allowedDays = [1, 7, 30, 90];
+    const requestedDays = Number(request.nextUrl.searchParams.get("days") || 7);
+    days = allowedDays.includes(requestedDays) ? requestedDays : 7;
+    from = new Date(to);
+    from.setUTCDate(from.getUTCDate() - (days - 1));
+    from.setUTCHours(0, 0, 0, 0);
+  }
 
   const envUrl = process.env.SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SECRET_KEY;
@@ -47,6 +70,6 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     period: { days, from: from.toISOString(), to: to.toISOString() },
     ...summary,
-    updatedAt: to.toISOString(),
+    updatedAt: new Date().toISOString(),
   }, { headers: { "Cache-Control": "private, no-store, max-age=0" } });
 }
