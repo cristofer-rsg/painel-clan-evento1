@@ -1,2 +1,99 @@
-/* Estilos locais da aba Tempo de Clã */
+/* Estilos locais da aba Tempo de Clã — padrão dourado do Ghost Hunt */
 .tenure-content>h1{margin-bottom:10px}
+
+/* Cartões de resumo */
+.tenure-summary{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+.tenure-summary article{
+  position:relative;
+  overflow:hidden;
+  min-height:112px;
+  padding:16px;
+  border:1px solid #8e6a32;
+  border-radius:15px;
+  background:linear-gradient(145deg,#302514 0%,#1b160e 100%);
+  box-shadow:inset 0 1px rgba(255,224,160,.08),0 8px 20px rgba(0,0,0,.18);
+}
+.tenure-summary article:after{
+  content:"";
+  position:absolute;
+  width:105px;height:105px;
+  right:-38px;top:-48px;
+  border:1px solid rgba(240,193,91,.14);
+  border-radius:50%;
+  box-shadow:0 0 0 10px rgba(240,193,91,.025),0 0 0 22px rgba(240,193,91,.018);
+  pointer-events:none;
+}
+.tenure-summary small{
+  position:relative;z-index:1;
+  color:#e5d1a8;
+  font-size:10px;
+  letter-spacing:.65px;
+}
+.tenure-summary strong{
+  position:relative;z-index:1;
+  color:#ffd779;
+  font:800 32px 'Barlow Condensed';
+}
+
+/* Cartões individuais do ranking */
+.tenure-player-card{
+  padding:16px;
+  border:1px solid #76582d;
+  border-radius:15px;
+  background:linear-gradient(145deg,#292115 0%,#17130d 82%);
+  box-shadow:inset 0 1px rgba(255,224,160,.055),0 8px 20px rgba(0,0,0,.2);
+}
+.tenure-position{
+  border:1px solid #c49a4b88;
+  background:linear-gradient(145deg,#4a3517,#241b0e);
+  color:#ffdc91;
+}
+.tenure-identity strong{color:#fff3d8}
+.tenure-identity small{color:#c0a879}
+.tenure-duration strong{color:#ffd779}
+.tenure-duration small{color:#c7b58f}
+.tenure-status{
+  border-color:#a98447;
+  background:linear-gradient(135deg,#49351866,#241a0d);
+  color:#f4d18a;
+}
+.tenure-status.inactive{
+  border-color:#74634a;
+  background:#332a1d;
+  color:#c8b99e;
+}
+.tenure-meta span{
+  border-color:#5c4729;
+  background:rgba(12,10,7,.48);
+  color:#d0c2a7;
+}
+.tenure-meta b{color:#f0d69e}
+.tenure-history{border-top-color:#6b512b}
+.tenure-history summary{color:#ffd779}
+.tenure-history-item{
+  border:1px solid #4d3b22;
+  background:#17120b;
+  color:#d0c2a7;
+}
+.tenure-history-item strong{color:#f2d69e}
+.tenure-notice{
+  border-color:#9d7b3e99;
+  background:linear-gradient(135deg,#382a15 0%,#1c160d 100%);
+  color:#efdbb4;
+}
+.tenure-empty{
+  border-color:#8b6a37;
+  background:#211a10;
+  color:#e0cfad;
+}
+@media(max-width:560px){
+  .tenure-summary{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .tenure-summary article{min-height:104px;padding:12px 10px}
+  .tenure-summary small{font-size:9px;line-height:1.35}
+  .tenure-summary strong{font-size:27px}
+  .tenure-player-card{padding:13px 11px}
+  .tenure-meta span{background:rgba(12,10,7,.62)}
+}
