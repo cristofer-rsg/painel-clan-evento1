@@ -43,16 +43,18 @@ export default async function ClanTenurePage() {
       <div className="tenure-list">
         {data.players.map((player, index) => <article className="tenure-player-card" key={player.tag}>
           <div className="tenure-player-top">
-            <span className="tenure-position">{index + 1}</span>
-            <div className="tenure-identity"><strong>{player.name}</strong><small>{player.tag}</small></div>
+            <div className="tenure-player-heading">
+              <span className="tenure-position">{index + 1}</span>
+              <div className="tenure-identity"><strong>{player.name}</strong><small>{player.tag}</small></div>
+            </div>
+            <span className={player.active ? "tenure-status" : "tenure-status inactive"}>{player.active ? "● NO CLÃ" : "○ FORA DO CLÃ"}</span>
             <div className="tenure-duration"><strong>{duration(player.totalMilliseconds)}</strong><small>TEMPO ACUMULADO</small></div>
           </div>
-          <span className={player.active ? "tenure-status" : "tenure-status inactive"}>{player.active ? "● NO CLÃ" : "○ FORA DO CLÃ"}</span>
           <div className="tenure-meta">
-            <span><b>Primeira entrada registrada</b>{date(player.firstJoinedAt)}</span>
-            <span><b>Entrada mais recente</b>{date(player.latestJoinedAt)}</span>
-            <span><b>Períodos registrados</b>{player.periods.length}</span>
-            <span><b>Última saída</b>{player.latestLeftAt ? date(player.latestLeftAt) : "Ainda no clã"}</span>
+            <span><b>Primeira entrada</b><strong>{date(player.firstJoinedAt)}</strong></span>
+            <span><b>Entrada mais recente</b><strong>{date(player.latestJoinedAt)}</strong></span>
+            <span><b>Períodos registrados</b><strong>{player.periods.length}</strong></span>
+            <span><b>Última saída</b><strong>{player.latestLeftAt ? date(player.latestLeftAt) : "Ainda no clã"}</strong></span>
           </div>
           <details className="tenure-history"><summary>Ver histórico de permanência ({player.periods.length})</summary>
             <div className="tenure-history-list">{player.periods.map((period, periodIndex) => <div className="tenure-history-item" key={period.joined_at + periodIndex}>
