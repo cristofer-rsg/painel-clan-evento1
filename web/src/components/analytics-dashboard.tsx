@@ -12,7 +12,6 @@ type Summary = {
   devices: Item[];
   locations: Item[];
   updatedAt: string;
-  capped: boolean;
 };
 
 const periods = [{ value: 1, label: "Hoje" }, { value: 7, label: "7 dias" }, { value: 30, label: "30 dias" }, { value: 90, label: "90 dias" }];
@@ -94,7 +93,6 @@ export default function AnalyticsDashboard() {
         <DataList title="Dispositivos" items={data.devices.map((item) => ({ ...item, label: ({ mobile: "Celular", desktop: "Computador", tablet: "Tablet", unknown: "Não identificado" } as Record<string, string>)[item.label] || item.label }))} empty="Sem dados de dispositivos." />
         <DataList title="Regiões aproximadas" items={data.locations} empty="A localização ainda não está disponível." />
       </div>
-      {data.capped ? <p className="analytics-note">A consulta atingiu o limite de 50 mil registros. Os totais podem estar subestimados neste período.</p> : null}
       <p className="analytics-updated">Dados atualizados em {new Date(data.updatedAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}. A coleta começa após esta versão entrar no ar.</p>
     </> : null}
   </div>;
