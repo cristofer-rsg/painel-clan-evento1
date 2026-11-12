@@ -1198,3 +1198,24 @@ body{
  .performance-player-stat-tile b{font-size:14px}
  .performance-player-stat-tile small{font-size:10px}
 }
+
+
+/* Restaurar o mini botão de detalhes do ranking */
+.ranking-details-button{
+ display:inline-flex;align-items:center;justify-content:center;gap:6px;
+ min-height:29px;padding:5px 10px;border:1px solid rgba(201,164,92,.48);
+ border-radius:9px;background:linear-gradient(145deg,#302514,#17120b);
+ color:#f0d9a7;font-size:10px;font-weight:800;line-height:1;
+ box-shadow:0 3px 9px rgba(0,0,0,.2),inset 0 1px rgba(255,224,160,.07);
+ transition:background .18s ease,border-color .18s ease,transform .18s ease,box-shadow .18s ease
+}
+.ranking-details-button i{color:#ffd779;font-size:14px;font-style:normal;line-height:1}
+.ranking-details-button:hover{
+ border-color:#d8ad5b;background:linear-gradient(145deg,#49351a,#24190d);
+ box-shadow:0 0 12px rgba(201,164,92,.16);transform:translateY(-1px)
+}
+.ranking-details-button:focus-visible{outline:2px solid #ffd779;outline-offset:3px}
+@media(max-width:560px){
+ .ranking-details-button{min-height:30px;padding:6px 9px;font-size:10px}
+}
+@media(prefers-reduced-motion:reduce){.ranking-details-button{transition:none}}
