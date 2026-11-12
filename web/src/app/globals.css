@@ -87,7 +87,7 @@ button{font:inherit}
 .performance-card-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .performance-card-grid span{display:flex;justify-content:space-between;gap:4px;padding:7px 8px;border-radius:7px;background:#102139;color:#8fa3ba;font-size:9px}
 .performance-card-grid b{color:#e7edf5;font-size:10px}
-.performance-status{display:block;margin-top:10px;color:#d5a18c;font-size:9px;letter-spacing:.7px}.performance-status.active{color:#8bc59c}
+.performance-status{display:block;margin-top:10px;color:#d5a18c;font-size:9px;letter-spacing:.7px}.performance-status.active{color:#8bc59c}.performance-status.penalty{display:inline-flex;align-items:center;width:max-content;max-width:100%;padding:7px 10px;border:1px solid #ef444477;border-radius:8px;background:#7f1d1d55;color:#ff7777;font-size:10px;font-weight:900;letter-spacing:.35px}
 @media(max-width:560px){.performance-content{margin:24px auto;padding:20px 14px}.performance-totals{grid-template-columns:repeat(2,minmax(0,1fr))}.performance-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 .history-content{max-width:920px;margin:34px auto;padding:26px}
