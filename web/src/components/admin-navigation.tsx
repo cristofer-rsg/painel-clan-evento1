@@ -3,6 +3,7 @@ const links = [
   { href: "/admin/players", label: "Jogadores", icon: "♟" },
   { href: "/admin/events", label: "Lançamentos", icon: "✎" },
   { href: "/admin/performance", label: "Desempenho", icon: "◈" },
+  { href: "/admin/history", label: "Histórico", icon: "▤" },
 ];
 export default function AdminNavigation({ current }: { current: string }) {
   return <nav className="admin-navigation" aria-label="Navegação administrativa">

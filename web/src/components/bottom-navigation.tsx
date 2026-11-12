@@ -9,7 +9,7 @@ const items = [
   { href: "/ranking", icon: "♛", label: "Ranking" },
   { href: "/performance", icon: "◈", label: "Desempenho" },
   { href: "/rules", icon: "⚖", label: "Regras" },
-  { href: "/history", icon: "▤", label: "Histórico" },
+  { href: "/tempo-de-cla", icon: "◷", label: "Tempo de Clã" },
 ];
 
 export default function BottomNavigation() {
