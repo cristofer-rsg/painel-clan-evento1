@@ -28,11 +28,21 @@ export default function RulesPage() {
       </article>
 
       <div className="rules-grid">
-        {categories.map((category) => <article className="rules-card" key={category.title}>
-          <div className="rules-card-heading"><span className="rules-icon">{category.icon}</span><div><h2>{category.title}</h2><p>Meta: {category.target}</p></div></div>
-          <div className="rules-points"><div className="rules-point-row"><span>Máximo no ranking</span><b>{category.weight}</b></div></div>
-          <p className="rules-note">{category.note}</p>
-        </article>)}
+        <article className="rules-card">
+          <div className="rules-card-heading"><span className="rules-icon">⚔️</span><div><h2>Guerras normais</h2><p>Objetivo: Participar das guerras e realizar os ataques.</p></div></div>
+          <div className="rules-points"><div className="rules-point-row"><span>Máximo no ranking</span><b>200 pontos</b></div></div>
+          <div className="rules-table"><div className="rules-table-head"><span>Ação (Objetivo)</span><b>Pontos</b></div><div className="rules-point-row"><span>Participar da guerra</span><b>+5</b></div><div className="rules-point-row"><span>Realizar os dois ataques</span><b>+10</b></div><div className="rules-point-row"><span>Acertar o espelho (por ataque)</span><b>+5</b></div><div className="rules-subrow">Bônus por estrelas (por ataque)</div><div className="rules-point-row"><span>• 1 estrela</span><b>+1</b></div><div className="rules-point-row"><span>• 2 estrelas</span><b>+2</b></div><div className="rules-point-row"><span>• 3 estrelas</span><b>+3</b></div></div>
+          <div className="rules-table rules-penalties"><div className="rules-table-head"><span>Penalidades</span><b>Pontos</b></div><div className="rules-point-row"><span>Não realizar nenhum ataque</span><b>−10</b></div><div className="rules-point-row"><span>Realizar apenas um ataque</span><b>−5</b></div><div className="rules-point-row"><span>Realizar o segundo ataque antes das 12 horas finais</span><b>−5</b></div><div className="rules-point-row"><span>Atacar fora do espelho</span><b>−5</b></div></div>
+          <div className="rules-timing"><b>◷ Regra dos ataques</b><p>Antes de faltarem 12 horas para o término da guerra, o jogador pode realizar apenas 1 ataque. O segundo ataque só pode ser realizado quando faltarem 12 horas ou menos.</p></div>
+        </article>
+        <article className="rules-card">
+          <div className="rules-card-heading"><span className="rules-icon">🏆</span><div><h2>Liga dos Clãs</h2><p>Objetivo: Realizar os 7 ataques da Liga.</p></div></div>
+          <div className="rules-points"><div className="rules-point-row"><span>Máximo no ranking</span><b>200 pontos</b></div></div>
+          <div className="rules-table"><div className="rules-table-head"><span>Ação (Objetivo)</span><b>Pontos</b></div><div className="rules-point-row"><span>Realizar um ataque</span><b>+5</b></div><div className="rules-point-row"><span>Acertar o espelho (por ataque)</span><b>+5</b></div><div className="rules-subrow">Bônus por estrelas (por ataque)</div><div className="rules-point-row"><span>• 1 estrela</span><b>+1</b></div><div className="rules-point-row"><span>• 2 estrelas</span><b>+2</b></div><div className="rules-point-row"><span>• 3 estrelas</span><b>+3</b></div><div className="rules-point-row"><span>Concluir os 7 ataques da Liga</span><b>+10</b></div></div>
+          <div className="rules-table rules-penalties"><div className="rules-table-head"><span>Penalidades</span><b>Pontos</b></div><div className="rules-point-row"><span>Não realizar o ataque do dia</span><b>−5</b></div><div className="rules-point-row"><span>Atacar fora do espelho</span><b>−5</b></div></div>
+          <p className="rules-note">A penalidade por ataque diário não realizado é aplicada após o encerramento daquela guerra da Liga.</p>
+        </article>
+        {categories.slice(2).map((category) => <article className="rules-card" key={category.title}><div className="rules-card-heading"><span className="rules-icon">{category.icon}</span><div><h2>{category.title}</h2><p>Objetivo: {category.target}</p></div></div><div className="rules-points"><div className="rules-point-row"><span>Máximo no ranking</span><b>{category.weight}</b></div></div><p className="rules-note">{category.note}</p></article>)}
       </div>
 
       <section className="rules-card rules-final">
