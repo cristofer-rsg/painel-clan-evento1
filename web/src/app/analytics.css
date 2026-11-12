@@ -55,3 +55,7 @@
   .analytics-chart { height:210px; }
   .analytics-bar-column > i { height:150px; }
 }
+
+.analytics-custom-range { display:flex; flex-wrap:wrap; gap:10px; margin:0 0 14px; }
+.analytics-custom-range label { display:flex; flex-direction:column; gap:5px; color:#aaa39a; font-size:11px; }
+.analytics-custom-range input { min-height:38px; border:1px solid rgba(214,170,76,.25); border-radius:9px; padding:7px 9px; background:#26221b; color:#f4ead4; color-scheme:dark; font:inherit; }
