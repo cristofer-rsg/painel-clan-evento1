@@ -46,7 +46,12 @@ export default function RankingList({ players }: { players: RankingPlayer[] }) {
           <span className="ranking-score"><strong>{number(player.total)} pts</strong>
             <button className="ranking-details-button" type="button" aria-expanded={isExpanded}
               aria-label={`${isExpanded ? "Ocultar" : "Ver"} pontuação por categoria de ${player.player}`}
-              onClick={() => setExpanded(current => {\n                const next = new Set(current);\n                if (next.has(player.player)) next.delete(player.player);\n                else next.add(player.player);\n                return next;\n              })}>
+              onClick={() => setExpanded(current => {
+                const next = new Set(current);
+                if (next.has(player.player)) next.delete(player.player);
+                else next.add(player.player);
+                return next;
+              })}>
               {isExpanded ? "Recolher" : "Detalhes"} <i>{isExpanded ? "−" : "+"}</i>
             </button>
           </span>
