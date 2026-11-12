@@ -9,15 +9,13 @@ const items = [
   { href: "/performance", icon: "◈", label: "Desempenho" },
   { href: "/tempo-de-cla", icon: "◷", label: "Tempo de Clã" },
   { href: "/rules", icon: "⚖", label: "Regras" },
-  { href: "/history", icon: "▤", label: "Histórico" },
 ];
 
 export default function PublicNavigation() {
   const pathname = usePathname();
   return <nav className="public-page-navigation" aria-label="Navegação pública">
     {items.map(item => {
-      const active = item.href === "/history" ? pathname === "/history"
-        : item.href === "/rules" ? pathname === "/rules"
+      const active = item.href === "/rules" ? pathname === "/rules"
         : item.href === "/performance" ? pathname === "/performance"
         : item.href === "/tempo-de-cla" ? pathname === "/tempo-de-cla"
         : item.href === "/#ranking" ? pathname.startsWith("/player/")
