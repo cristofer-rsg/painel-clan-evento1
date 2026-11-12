@@ -33,8 +33,9 @@ export default async function ClanTenurePage() {
       {!data.connected && <div className="connection-alert"><b>Não foi possível carregar o Tempo de Clã.</b><span>{data.error || "Verifique a conexão com o banco de dados."}</span></div>}
 
       <div className="tenure-summary">
-        <article><small>Jogadores registrados</small><strong>{data.players.length}</strong></article>
-        <article><small>No clã agora</small><strong>{data.activeCount}</strong></article>
+        <article className="tenure-summary-registered"><small>Jogadores registrados</small><strong>{data.players.length}</strong></article>
+        <article className="tenure-summary-active"><small>No clã agora</small><strong>{data.activeCount}</strong></article>
+        <article className="tenure-summary-inactive"><small>Fora do clã (saíram)</small><strong>{Math.max(0, data.players.length - data.activeCount)}</strong></article>
       </div>
 
       {data.trackedFrom && <div className="tenure-notice">Base histórica disponível a partir de <b>{date(data.trackedFrom)}</b>. O tempo anterior a esse primeiro registro não é estimado. As entradas e saídas passam a ser contabilizadas pelas sincronizações automáticas do clã.</div>}
