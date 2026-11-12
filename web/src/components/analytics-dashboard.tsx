@@ -14,7 +14,14 @@ type Summary = {
   updatedAt: string;
 };
 
-const periods = [{ value: 1, label: "Hoje" }, { value: 7, label: "7 dias" }, { value: 30, label: "30 dias" }, { value: 90, label: "90 dias" }];
+const periods = [{ value: "1", label: "Hoje" }, { value: "7", label: "7 dias" }, { value: "30", label: "30 dias" }, { value: "90", label: "90 dias" }, { value: "custom", label: "Personalizado" }];
+
+function dateInputValue(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
 
 function formatNumber(value: number) {
   return new Intl.NumberFormat("pt-BR").format(value);
@@ -32,16 +39,27 @@ function DataList({ title, items, empty }: { title: string; items: Item[]; empty
 }
 
 export default function AnalyticsDashboard() {
-  const [days, setDays] = useState(7);
+  const [range, setRange] = useState("7");
   const [data, setData] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const today = dateInputValue(new Date());
+  const weekAgo = new Date();
+  weekAgo.setDate(weekAgo.getDate() - 6);
+  const [customFrom, setCustomFrom] = useState(dateInputValue(weekAgo));
+  const [customTo, setCustomTo] = useState(today);
+  const query = range === "custom" ? `from=${customFrom}&to=${customTo}` : `days=${range}`;
+  const customRangeInvalid = range === "custom" && (!customFrom || !customTo || customFrom > customTo);
 
   const load = useCallback(async (showLoading = false) => {
     if (showLoading) setLoading(true);
     try {
-      const response = await fetch(`/api/site-analytics/summary?days=${days}`, { cache: "no-store" });
-      if (!response.ok) throw new Error(response.status === 401 ? "Sua sessão expirou. Entre novamente." : "Não foi possível carregar as estatísticas.");
+      if (customRangeInvalid) throw new Error("Informe uma data inicial e final válidas.");
+      const response = await fetch(`/api/site-analytics/summary?${query}`, { cache: "no-store" });
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        throw new Error(body.error || (response.status === 401 ? "Sua sessão expirou. Entre novamente." : "Não foi possível carregar as estatísticas."));
+      }
       setData(await response.json() as Summary);
       setError("");
     } catch (err) {
@@ -49,7 +67,7 @@ export default function AnalyticsDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [days]);
+  }, [query, customRangeInvalid]);
 
   useEffect(() => { void load(true); }, [load]);
   useEffect(() => {
@@ -61,9 +79,13 @@ export default function AnalyticsDashboard() {
   return <div className="analytics-dashboard">
     <div className="analytics-toolbar">
       <div><span className="analytics-live-dot" /> Atualização automática a cada minuto</div>
-      <label>Período <select value={days} onChange={(event) => setDays(Number(event.target.value))}>{periods.map((period) => <option key={period.value} value={period.value}>{period.label}</option>)}</select></label>
-      <button type="button" onClick={() => void load(true)} disabled={loading}>↻ Atualizar</button>
+      <label>Período <select value={range} onChange={(event) => setRange(event.target.value)}>{periods.map((period) => <option key={period.value} value={period.value}>{period.label}</option>)}</select></label>
+      <button type="button" onClick={() => void load(true)} disabled={loading || customRangeInvalid}>↻ Atualizar</button>
     </div>
+    {range === "custom" ? <div className="analytics-custom-range">
+      <label>De <input type="date" value={customFrom} max={customTo || today} onChange={(event) => setCustomFrom(event.target.value)} /></label>
+      <label>Até <input type="date" value={customTo} min={customFrom} max={today} onChange={(event) => setCustomTo(event.target.value)} /></label>
+    </div> : null}
 
     {error ? <div className="analytics-error" role="alert">{error}</div> : null}
     {loading && !data ? <div className="analytics-loading">Carregando dados de acesso…</div> : null}
