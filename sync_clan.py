@@ -152,7 +152,7 @@ def main():
                 "player_tag": player_tag,
                 "active": True,
                 "eligible": "Elegível",
-                "whatsapp": "Sim",
+                "whatsapp": "Não",
             }).execute()
             novos += 1
 
