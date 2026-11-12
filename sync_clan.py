@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, timezone
 import os
 import sys
 import urllib.error
@@ -55,6 +56,48 @@ def buscar_membros(token):
         resultado[player_tag] = {"name": nome.strip(), "player_tag": player_tag}
 
     return list(resultado.values())
+
+
+def sincronizar_periodos_permanencia(db, membros_api):
+    """Reconcilia o roster da API somente com a tabela isolada de permanência."""
+    agora = datetime.now(timezone.utc).isoformat()
+    tags_atuais = {membro["player_tag"].strip().upper() for membro in membros_api}
+
+    periodos_abertos = (
+        db.table("clan_membership_periods")
+        .select("id,player_tag")
+        .is_("left_at", "null")
+        .execute()
+        .data or []
+    )
+
+    encerrados = 0
+    tags_com_periodo_aberto = set()
+    for periodo in periodos_abertos:
+        tag = periodo["player_tag"].strip().upper()
+        tags_com_periodo_aberto.add(tag)
+        if tag not in tags_atuais:
+            db.table("clan_membership_periods").update({
+                "left_at": agora,
+                "exit_source": "clan_api",
+                "updated_at": agora,
+            }).eq("id", periodo["id"]).is_("left_at", "null").execute()
+            encerrados += 1
+
+    iniciados = 0
+    for membro in membros_api:
+        tag = membro["player_tag"].strip().upper()
+        if tag in tags_com_periodo_aberto:
+            continue
+        db.table("clan_membership_periods").insert({
+            "player_tag": tag,
+            "player_name": membro["name"],
+            "joined_at": agora,
+            "entry_source": "clan_api",
+        }).execute()
+        iniciados += 1
+
+    return iniciados, encerrados
 
 
 def main():
@@ -160,11 +203,15 @@ def main():
         }).execute()
         historico_inseridos += 1
 
+    periodos_iniciados, periodos_encerrados = sincronizar_periodos_permanencia(db, membros_api)
+
     print(f"Membros retornados pela API: {len(membros_api)}")
     print(f"Cadastros atualizados: {atualizados}")
     print(f"Jogadores reativados: {reativados}")
     print(f"Novos jogadores cadastrados: {novos}")
     print(f"Novas entradas registradas no histórico: {historico_inseridos}")
+    print(f"Períodos de permanência iniciados: {periodos_iniciados}")
+    print(f"Períodos de permanência encerrados: {periodos_encerrados}")
     print(f"Nomes diferentes preservados por vínculo histórico: {nomes_divergentes}")
     print("Jogadores ausentes do clã marcados como inativos.")
     print("Nenhum cadastro ou lançamento histórico foi excluído.")
