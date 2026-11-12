@@ -4,6 +4,7 @@ import "./home-community.css";
 import "./gold-theme.css";
 import "./readability-polish.css";
 import "./rules.css";
+import "./tempo-de-cla/tempo-de-cla.css";
 import BottomNavigation from "@/components/bottom-navigation";
 
 const siteUrl = "https://ghosthunt.com.br";
