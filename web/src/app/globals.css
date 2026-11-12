@@ -932,7 +932,7 @@ body{
 /* Mobile bottom navigation: keep all five destinations on one balanced row */
 @media(max-width:900px){
   .mobile-bottom-nav{
-    grid-template-columns:repeat(5,minmax(0,1fr));
+    grid-template-columns:repeat(6,minmax(0,1fr));
     align-items:stretch;
     gap:4px;
     padding:7px 6px;
@@ -1025,7 +1025,7 @@ body{
 .mobile-nav-swipe-arrow{display:none}
 @media(max-width:900px){
   .mobile-bottom-nav{
-    grid-template-columns:18px repeat(5,minmax(0,1fr)) 18px;
+    grid-template-columns:18px repeat(6,minmax(0,1fr)) 18px;
     align-items:center;
     gap:2px;
   }
@@ -1278,3 +1278,34 @@ body{
   outline:2px solid #f4d58e;
   outline-offset:3px;
 }
+
+
+/* Tempo de Clã — nova página isolada */
+.tenure-intro{margin:0 0 20px;color:#aebed0;line-height:1.65}
+.tenure-notice{margin:18px 0;padding:13px 15px;border:1px solid #9d7b3e66;border-radius:12px;background:linear-gradient(135deg,#382a153d,#111d2b);color:#e8d6ad;font-size:12px;line-height:1.6}
+.tenure-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:20px 0}
+.tenure-summary article{min-width:0;padding:14px;border:1px solid #30465f;border-radius:14px;background:linear-gradient(145deg,#14283d,#0c1929)}
+.tenure-summary small{display:block;color:#9bacc0;font-size:10px;font-weight:800;letter-spacing:.7px;text-transform:uppercase}
+.tenure-summary strong{display:block;margin-top:7px;color:#f1d18a;font:800 27px 'Barlow Condensed';line-height:1.1}
+.tenure-list{display:grid;gap:12px;margin-top:14px}
+.tenure-player-card{padding:15px;border:1px solid #34465b;border-radius:15px;background:linear-gradient(145deg,#13263a,#0b1726);box-shadow:0 8px 20px #0002}
+.tenure-player-top{display:grid;grid-template-columns:34px minmax(0,1fr) auto;align-items:center;gap:10px}
+.tenure-position{display:grid;place-items:center;width:32px;height:32px;border:1px solid #b9924c66;border-radius:9px;background:#b9924c17;color:#f1d18a;font-weight:900}
+.tenure-identity{min-width:0;display:grid;gap:4px}
+.tenure-identity strong{overflow-wrap:anywhere;color:#f2f5fa;font-size:14px}
+.tenure-identity small{color:#91a5bd;font-size:10px;letter-spacing:.4px}
+.tenure-duration{text-align:right;white-space:nowrap}
+.tenure-duration strong{display:block;color:#f2cb78;font:800 23px 'Barlow Condensed';line-height:1}
+.tenure-duration small{display:block;margin-top:4px;color:#a9b7c8;font-size:9px}
+.tenure-status{display:inline-flex;align-items:center;gap:5px;margin-top:12px;padding:5px 8px;border:1px solid #2f9d7966;border-radius:999px;background:#123b303b;color:#8ee0bb;font-size:9px;font-weight:900;letter-spacing:.5px}
+.tenure-status.inactive{border-color:#66788a66;background:#28334166;color:#bdc8d5}
+.tenure-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:13px}
+.tenure-meta span{padding:9px;border:1px solid #283d54;border-radius:9px;background:#08162580;color:#9eb0c5;font-size:10px;line-height:1.5}
+.tenure-meta b{display:block;margin-bottom:3px;color:#e6d2a7;font-size:9px;text-transform:uppercase;letter-spacing:.45px}
+.tenure-history{margin-top:12px;border-top:1px solid #34465b;padding-top:10px}
+.tenure-history summary{cursor:pointer;color:#e2c47f;font-size:11px;font-weight:800}
+.tenure-history-list{display:grid;gap:7px;margin-top:10px}
+.tenure-history-item{display:flex;justify-content:space-between;gap:10px;padding:9px;border-radius:8px;background:#081625;color:#aebed0;font-size:10px}
+.tenure-history-item strong{color:#e9d6ad;text-align:right}
+.tenure-empty{padding:24px;text-align:center;color:#aebed0;border:1px dashed #43566c;border-radius:13px}
+@media(max-width:560px){.tenure-summary{gap:7px}.tenure-summary article{padding:11px 9px}.tenure-summary small{font-size:8px}.tenure-summary strong{font-size:23px}.tenure-player-card{padding:12px}.tenure-player-top{grid-template-columns:30px minmax(0,1fr) auto;gap:8px}.tenure-position{width:29px;height:29px}.tenure-duration strong{font-size:21px}.tenure-meta{gap:6px}.tenure-meta span{padding:8px 7px;font-size:9px}}
