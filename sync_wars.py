@@ -142,7 +142,7 @@ def build_war_events(war, players_by_tag):
                     "Acertou o espelho (+5)",
                     5,
                 )
-            else:
+            elif defender_tag and defender_position is not None and own_position is not None:
                 order = attack.get("order", attack_number)
                 add(f"{war_key}:{player_tag}:penalty:off-mirror:{order}",
                     player_name, player_tag,

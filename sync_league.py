@@ -196,7 +196,7 @@ def make_war_events(war, players_by_tag):
                     enemy_positions.get(defender_tag) == member.get("mapPosition")):
                 add(f"mirror:{order}",
                     f"Acertou o espelho no ataque {order} (+5)", 5)
-            else:
+            elif defender_tag and enemy_positions.get(defender_tag) is not None and member.get("mapPosition") is not None:
                 add(f"penalty:off-mirror:{order}",
                     "Penalidade: atacou fora do espelho na Liga (−5)", -5)
     return events, stat_sources
