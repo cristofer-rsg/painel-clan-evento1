@@ -1,0 +1,29 @@
+/* Analytics admin page — mobile-first, matching the Ghost Hunt dark/gold theme */
+.analytics-content { max-width: 980px; }
+.analytics-content > p { color: var(--muted, #aaa); }
+.analytics-status {
+  display:flex; align-items:flex-start; gap:12px; padding:16px;
+  margin:22px 0; border:1px solid rgba(214,170,76,.28);
+  border-radius:14px; background:rgba(214,170,76,.07);
+}
+.analytics-status-dot { width:10px; height:10px; margin-top:5px; flex:0 0 10px; border-radius:50%; background:#d6aa4c; box-shadow:0 0 12px rgba(214,170,76,.45); }
+.analytics-status b,.analytics-status small { display:block; }
+.analytics-status b { color:#f2d28a; font-size:14px; }
+.analytics-status small { margin-top:5px; color:#b8b0a1; line-height:1.5; }
+.analytics-metrics { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin:18px 0; }
+.analytics-metrics article { min-width:0; padding:15px; border:1px solid rgba(255,255,255,.09); border-radius:13px; background:rgba(255,255,255,.025); }
+.analytics-metrics article > span { display:block; color:#d6aa4c; font-size:22px; margin-bottom:9px; }
+.analytics-metrics b,.analytics-metrics small { display:block; }
+.analytics-metrics b { color:#f4f0e7; font-size:13px; }
+.analytics-metrics small { margin-top:6px; color:#aaa39a; font-size:11px; line-height:1.45; }
+.analytics-dashboard-link { display:flex; flex-direction:column; gap:18px; padding:18px; margin-top:20px; border:1px solid rgba(214,170,76,.3); border-radius:16px; background:linear-gradient(145deg,rgba(214,170,76,.10),rgba(255,255,255,.025)); }
+.analytics-dashboard-link h2 { margin:8px 0; color:#f5e7c7; font-size:20px; }
+.analytics-dashboard-link p { margin:0; color:#b8b0a1; font-size:13px; line-height:1.6; }
+.analytics-dashboard-link a { display:inline-flex; justify-content:center; align-items:center; gap:10px; padding:13px 16px; border-radius:10px; background:#d6aa4c; color:#17130b; font-weight:800; text-decoration:none; }
+.analytics-privacy { margin:18px 0; font-size:12px; line-height:1.6; }
+@media (min-width:700px) {
+  .analytics-metrics { grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; }
+  .analytics-dashboard-link { flex-direction:row; align-items:center; justify-content:space-between; padding:22px; }
+  .analytics-dashboard-link > div { max-width:620px; }
+  .analytics-dashboard-link a { flex:0 0 auto; }
+}

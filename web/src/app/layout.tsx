@@ -4,8 +4,10 @@ import "./home-community.css";
 import "./gold-theme.css";
 import "./readability-polish.css";
 import "./rules.css";
+import "./analytics.css";
 import "./tempo-de-cla/tempo-de-cla.css";
 import BottomNavigation from "@/components/bottom-navigation";
+import AnalyticsTracker from "@/components/analytics-tracker";
 
 const siteUrl = "https://ghosthunt.com.br";
 
@@ -43,7 +45,11 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="pt-BR">
-      <body>{children}<BottomNavigation /></body>
+      <body>
+        {children}
+        <BottomNavigation />
+        <AnalyticsTracker />
+      </body>
     </html>
   );
 }
