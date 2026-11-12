@@ -6,6 +6,7 @@ type Player = {
   name: string;
   player_tag?: string | null;
   whatsapp?: string | null;
+  eligible?: string | null;
   active?: boolean | null;
 };
 
@@ -135,9 +136,8 @@ export async function getDashboardData(): Promise<DashboardData> {
       .order("entered_at", { ascending: false }).limit(3);
     const recentMembers = recentResult.error ? [] : (recentResult.data ?? []).map((row) => ({ player_name: row.player_name, player_tag: row.player_tag, first_seen_at: row.entered_at })) as RecentMember[];
 
-    const players = ((playerData ?? []) as Player[]).filter((player) => player.active !== false && (player.whatsapp ?? "Não") === "Sim");
-    const excludedLeaderTags = new Set(["#L8GV8C2Y", "#P8CCGYU0", "#QU0GC0VLU", "#9CLLGV8CC"]);
-    const competitors = players.filter((player) => !excludedLeaderTags.has((player.player_tag ?? "").trim().toUpperCase()));
+    // WhatsApp é uma configuração de contato; não determina presença no ranking nem elegibilidade.
+    const competitors = ((playerData ?? []) as Player[]).filter((player) => player.active !== false);
     const totals = new Map<string, {
       warsRaw: number; leagueRaw: number; donatedTroops: number;
       gamesRaw: number; raidRaw: number; capitalCoins: number; penalties: number;
@@ -190,8 +190,8 @@ export async function getDashboardData(): Promise<DashboardData> {
         capitalCoins: bucket.capitalCoins,
         capitalPoints,
         penalties: bucket.penalties,
-        eligible: true,
-        eligibilityStatus: "Elegível",
+        eligible: (player.eligible ?? "").trim().toLocaleLowerCase("pt-BR") === "elegível",
+        eligibilityStatus: (player.eligible ?? "").trim().toLocaleLowerCase("pt-BR") === "elegível" ? "Elegível" : "Inelegível",
         whatsapp: player.whatsapp ?? "Sim",
       };
     }).sort((a, b) => b.total - a.total || b.wars - a.wars || b.league - a.league || b.raid - a.raid || b.capitalPoints - a.capitalPoints || b.donations - a.donations || b.games - a.games || a.player.localeCompare(b.player, "pt-BR"))
