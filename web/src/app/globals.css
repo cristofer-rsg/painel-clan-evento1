@@ -1219,3 +1219,21 @@ body{
  .ranking-details-button{min-height:30px;padding:6px 9px;font-size:10px}
 }
 @media(prefers-reduced-motion:reduce){.ranking-details-button{transition:none}}
+
+
+/* Botões Detalhes + preenchidos em dourado nas listas do ranking */
+.ranking-details-button{
+  border:1px solid #e2b95f;
+  background:linear-gradient(145deg,#f5d78b 0%,#d5a743 58%,#b98227 100%);
+  color:#21180a;
+  box-shadow:0 3px 10px rgba(0,0,0,.24),inset 0 1px rgba(255,255,255,.38);
+}
+.ranking-details-button i{color:#21180a}
+.ranking-details-button:hover{
+  border-color:#ffe6a6;
+  background:linear-gradient(145deg,#ffe9ad 0%,#e8bd5b 58%,#c99232 100%);
+  color:#171006;
+  box-shadow:0 0 14px rgba(230,184,86,.3),0 3px 10px rgba(0,0,0,.24);
+}
+.ranking-details-button:hover i{color:#171006}
+.ranking-details-button:focus-visible{outline-color:#ffe6a6}
