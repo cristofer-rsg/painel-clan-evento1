@@ -112,7 +112,7 @@ export async function getPerformanceData(requestedMonth?: string, useManualDonat
       const donationsPoints = score(donations, WEIGHTS.donations.target, WEIGHTS.donations.max);
       const gamesPoints = score(games, WEIGHTS.games.target, WEIGHTS.games.max);
       const capitalPoints = score(raw.capital, WEIGHTS.capital.target, WEIGHTS.capital.max);
-      const totalPoints = Math.max(0, warsPoints + leaguePoints + raidPoints + donationsPoints + gamesPoints + capitalPoints - raw.penalties);
+      const totalPoints = warsPoints + leaguePoints + raidPoints + donationsPoints + gamesPoints + capitalPoints - raw.penalties;
       const index = Math.round(totalPoints / 10);
       return {
         player: player.name, tag: player.player_tag || "", wars: stat?.war_attacks == null ? raw.warAttacks : Number(stat.war_attacks), league: raw.leagueAttacks, raid: raw.raidAttacks,
