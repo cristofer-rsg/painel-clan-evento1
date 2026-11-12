@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import json
 import os
 import sys
@@ -33,6 +33,12 @@ def api_get(path, token):
         ) from error
 
 
+def parse_coc_time(value):
+    if not value:
+        return None
+    return datetime.strptime(value[:15], "%Y%m%dT%H%M%S").replace(tzinfo=timezone.utc)
+
+
 def build_war_events(war, players_by_tag):
     state = war.get("state")
 
@@ -43,6 +49,7 @@ def build_war_events(war, players_by_tag):
     clan = war.get("clan") or {}
     opponent = war.get("opponent") or {}
     war_start = war.get("startTime") or war.get("endTime")
+    war_end = parse_coc_time(war.get("endTime"))
 
     if not war_start:
         raise RuntimeError("A API não informou startTime/endTime.")
@@ -87,10 +94,17 @@ def build_war_events(war, players_by_tag):
             key=lambda attack: int(attack.get("order") or 0),
         )
 
+        player_name = player["name"]
+
         if not attacks:
+            if state == "warEnded":
+                add(f"{war_key}:{player_tag}:penalty:no-attacks", player_name, player_tag,
+                    "Penalidade: não realizou nenhum ataque (−10)", -10)
             continue
 
-        player_name = player["name"]
+        if state == "warEnded" and len(attacks) == 1:
+            add(f"{war_key}:{player_tag}:penalty:one-attack", player_name, player_tag,
+                "Penalidade: realizou apenas um ataque (−5)", -5)
 
         add(
             f"{war_key}:{player_tag}:participation",
@@ -128,6 +142,19 @@ def build_war_events(war, players_by_tag):
                     "Acertou o espelho (+5)",
                     5,
                 )
+            else:
+                order = attack.get("order", attack_number)
+                add(f"{war_key}:{player_tag}:penalty:off-mirror:{order}",
+                    player_name, player_tag,
+                    "Penalidade: atacou fora do espelho (−5)", -5)
+
+            if int(attack.get("order") or attack_number) >= 2 and war_end:
+                battle_time = parse_coc_time(attack.get("battleTime"))
+                if battle_time and battle_time < war_end - timedelta(hours=12):
+                    order = attack.get("order", attack_number)
+                    add(f"{war_key}:{player_tag}:penalty:early-second:{order}",
+                        player_name, player_tag,
+                        "Penalidade: segundo ataque antes das 12 horas finais (−5)", -5)
 
         # Soma as estrelas de cada ataque separadamente.
         for attack_number, attack in enumerate(attacks, start=1):
