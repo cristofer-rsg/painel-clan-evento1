@@ -326,3 +326,15 @@
  .history-event-filter-results article{gap:8px;padding:12px 10px}
  .history-event-filter-results article>strong{font-size:12px}
 }
+
+/* Ranking: restore a clear gold highlight for each player's best category.
+   Higher specificity keeps this state above the generic ranking card polish. */
+.ranking-panel .ranking-breakdown-grid > span.is-best{
+  border:1px solid #f2c14e;
+  background:linear-gradient(135deg,rgba(242,193,78,.28),rgba(64,43,12,.78) 58%,#17130f);
+  box-shadow:inset 0 0 0 1px rgba(255,215,112,.22),0 0 0 1px rgba(242,193,78,.28),0 0 13px rgba(242,193,78,.42);
+}
+.ranking-panel .ranking-breakdown-grid > span.is-best small,
+.ranking-panel .ranking-breakdown-grid > span.is-best .ranking-best-star{
+  color:#ffe29a;
+}
