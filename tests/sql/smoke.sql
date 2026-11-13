@@ -204,7 +204,7 @@ END $$;
 -- Expanded negative-path, atomicity and payload-integrity tests.
 
 -- League: an invalid later item must roll back an earlier valid item in the same call.
-DO $
+DO $$
 DECLARE rejected boolean := false;
 BEGIN
   BEGIN
@@ -219,10 +219,10 @@ BEGIN
      OR EXISTS (SELECT 1 FROM clash_league_automation WHERE source_key='atomic-league-ok') THEN
     RAISE EXCEPTION 'Liga: lote inválido deixou gravação parcial';
   END IF;
-END $;
+END $$;
 
 -- Donations: a negative later item must roll back the first player's write.
-DO $
+DO $$
 DECLARE rejected boolean := false;
 BEGIN
   BEGIN
@@ -236,10 +236,10 @@ BEGIN
   IF EXISTS (SELECT 1 FROM clash_donation_totals WHERE month_key='2026-10') THEN
     RAISE EXCEPTION 'Doações: lote inválido deixou acumulado parcial';
   END IF;
-END $;
+END $$;
 
 -- Manual Clan Games baseline: a duplicate tag in one snapshot must not leave a partial baseline.
-DO $
+DO $$
 DECLARE rejected boolean := false;
 BEGIN
   BEGIN
@@ -253,10 +253,10 @@ BEGIN
   IF EXISTS (SELECT 1 FROM clash_games_tracking WHERE month_key='2026-10') THEN
     RAISE EXCEPTION 'Jogos do Clã: baseline duplicado deixou gravação parcial';
   END IF;
-END $;
+END $$;
 
 -- Monthly sources: invalid later row must reject the entire batch before writes.
-DO $
+DO $$
 DECLARE rejected boolean := false;
 BEGIN
   BEGIN
@@ -270,10 +270,10 @@ BEGIN
   IF EXISTS (SELECT 1 FROM player_monthly_stat_sources WHERE source_key IN ('atomic-source-ok','atomic-source-bad')) THEN
     RAISE EXCEPTION 'Fontes mensais: lote inválido deixou gravação parcial';
   END IF;
-END $;
+END $$;
 
 -- Monthly sources: duplicate source keys in one payload must be rejected atomically.
-DO $
+DO $$
 DECLARE rejected boolean := false;
 BEGIN
   BEGIN
@@ -287,10 +287,10 @@ BEGIN
   IF EXISTS (SELECT 1 FROM player_monthly_stat_sources WHERE source_key='duplicate-source') THEN
     RAISE EXCEPTION 'Fontes mensais: chave duplicada deixou gravação parcial';
   END IF;
-END $;
+END $$;
 
 -- Monthly donation projection rejects duplicate player tags and invalid calendar months.
-DO $
+DO $$
 DECLARE rejected_duplicate boolean := false; rejected_month boolean := false;
 BEGIN
   BEGIN
@@ -307,10 +307,10 @@ BEGIN
   IF NOT rejected_duplicate OR NOT rejected_month THEN
     RAISE EXCEPTION 'Doações mensais: não rejeitou duplicidade ou mês impossível';
   END IF;
-END $;
+END $$;
 
 -- Capital: negative totals must not create snapshots or points.
-DO $
+DO $$
 DECLARE rejected boolean := false;
 BEGIN
   BEGIN
@@ -321,10 +321,10 @@ BEGIN
   IF EXISTS (SELECT 1 FROM capital_gold_sync_snapshots WHERE player_tag='#TESTA' AND api_total < 0) THEN
     RAISE EXCEPTION 'Capital: gravou total negativo';
   END IF;
-END $;
+END $$;
 
 -- Monthly Clan Games projection rejects impossible calendar months.
-DO $
+DO $$
 DECLARE rejected boolean := false;
 BEGIN
   BEGIN
@@ -332,7 +332,7 @@ BEGIN
   EXCEPTION WHEN OTHERS THEN rejected := true;
   END;
   IF NOT rejected THEN RAISE EXCEPTION 'Projeção de Jogos do Clã: aceitou mês impossível'; END IF;
-END $;
+END $$;
 
 -- Explicitly verify all test writes are discarded.
 ROLLBACK;
