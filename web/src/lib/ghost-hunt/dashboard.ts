@@ -159,8 +159,8 @@ export async function getDashboardData(): Promise<DashboardData> {
             category: event.category?.trim() || "Outros",
             description: (event.activity ?? "Motivo não informado")
               .trim()
-              .replace(/^Penalidade:\\s*/i, "")
-              .replace(/\\s*\\([−-]\\s*\\d+\\)\\s*$/, "") || "Motivo não informado",
+              .replace(/^Penalidade:\s*/i, "")
+              .replace(/\s*\([−-]\s*\d+\)\s*$/, "") || "Motivo não informado",
             points: Math.abs(Number(event.points ?? 0)),
           })),
         eligible: true,
