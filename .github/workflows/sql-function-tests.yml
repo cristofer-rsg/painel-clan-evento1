@@ -1,5 +1,5 @@
 name: SQL function tests (isolated)
-# Triggered for the expanded isolated Clan Games and trigger smoke coverage.
+# Isolated PostgreSQL 16 suite: production SQL snapshots, negative paths and concurrency.
 on:
   pull_request:
     paths:
