@@ -93,7 +93,6 @@ export default async function PerformancePage({ searchParams }: Props) {
         <p className="performance-result-count">{visibleRows.length} de {activityRows.length} jogador(es){hasEventFilter ? ` • ${eventFilter === "war" ? "Última Guerra" : eventFilter === "league" ? "Última batalha da Liga" : "Última Raide"}` : " • Classificação geral"}</p>
         {visibleRows.map(row => {
           const attacks = eventFilter === "league" ? row.lastLeagueAttacks : eventFilter === "raid" ? row.lastRaidAttacks : row.lastWarAttacks;
-          const eventLabel = eventFilter === "league" ? "Liga" : eventFilter === "raid" ? "Raide" : "Guerra";
           return <article className={hasEventFilter ? "performance-card performance-card-event" : "performance-card"} key={row.player}>
             <div className="performance-card-head">
               <b><span className="performance-position-badge">{row.position}</span><span className="performance-player-name">{row.player}</span>{row.role && <small className="performance-leader-role">{row.role}</small>}</b>
