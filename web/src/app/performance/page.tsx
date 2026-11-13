@@ -40,7 +40,8 @@ export default async function PerformancePage({ searchParams }: Props) {
   ).map((row, index) => ({ ...row, position: index + 1 }));
   const eventFilter = ["war", "league", "raid"].includes(params.event || "") ? params.event! : "";
   const hasEventFilter = eventFilter !== "";
-  const situationFilter = hasEventFilter && ["attacked", "no-attack", "no-data"].includes(params.situation || "") ? params.situation! : "";
+  const allowedSituations = eventFilter === "raid" ? ["attacked", "no-attack"] : ["attacked", "no-attack", "no-data"];
+  const situationFilter = hasEventFilter && allowedSituations.includes(params.situation || "") ? params.situation! : "";
   // Liga: a fonte registra apenas os membros relacionados à batalha; ausência significa não participação.
   // Raide: não há inscrição; ausência de ataque registrado equivale a zero ataques.
   const attackValue = (row: (typeof rankedRows)[number]) =>
@@ -94,7 +95,8 @@ export default async function PerformancePage({ searchParams }: Props) {
         <div className="performance-section-heading"><h2>Desempenho dos jogadores</h2><span>{visibleRows.length} JOGADORES</span></div>
         <p className="performance-result-count">{visibleRows.length} de {activityRows.length} jogador(es){hasEventFilter ? ` • ${eventFilter === "war" ? "Última Guerra" : eventFilter === "league" ? "Última batalha da Liga" : "Última Raide"}` : " • Classificação geral"}</p>
         {visibleRows.map(row => {
-          const attacks = eventFilter === "league" ? row.lastLeagueAttacks : eventFilter === "raid" ? row.lastRaidAttacks : row.lastWarAttacks;
+          // Na Raide não há inscrição: ausência de fonte individual significa zero ataques.
+          const attacks = eventFilter === "league" ? row.lastLeagueAttacks : eventFilter === "raid" ? (row.lastRaidAttacks ?? 0) : row.lastWarAttacks;
           return <article className={hasEventFilter ? "performance-card performance-card-event" : "performance-card"} key={row.player}>
             <div className="performance-card-head">
               <b><span className="performance-position-badge">{row.position}</span><span className="performance-player-name">{row.player}</span>{row.role && <small className="performance-leader-role">{row.role}</small>}</b>

@@ -18,7 +18,7 @@ export default function PerformanceFilters({ months, monthKey, query, event, sit
 
   function changeEvent(value: string) {
     setSelectedEvent(value);
-    if (!value) setSelectedSituation("");
+    if (!value || (value === "raid" && selectedSituation === "no-data")) setSelectedSituation("");
   }
 
   return (
@@ -39,9 +39,9 @@ export default function PerformanceFilters({ months, monthKey, query, event, sit
       <label htmlFor="situation">Situação</label>
       <select id="situation" name="situation" value={selectedSituation} onChange={e => setSelectedSituation(e.target.value)} disabled={!selectedEvent}>
         <option value="">Todas as situações</option>
-        <option value="attacked">Realizou ataques</option>
-        <option value="no-attack">Não realizou ataques</option>
-        <option value="no-data">{selectedEvent === "war" ? "Não Participou" : "Sem dados confiáveis"}</option>
+        <option value="attacked">{selectedEvent === "raid" ? "Com ataques" : "Realizou ataques"}</option>
+        <option value="no-attack">{selectedEvent === "raid" ? "Sem ataques" : "Não realizou ataques"}</option>
+        {selectedEvent !== "raid" && <option value="no-data">{selectedEvent === "war" ? "Não Participou" : "Sem dados confiáveis"}</option>}
       </select>
       <label htmlFor="order">Ordenação</label>
       <select id="order" name="order" defaultValue={order}>
