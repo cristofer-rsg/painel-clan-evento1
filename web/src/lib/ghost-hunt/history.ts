@@ -135,6 +135,7 @@ export async function archivePreviousMonthIfNeeded(): Promise<boolean> {
     donations: row.donations,
     games: row.games,
     raid: row.raid,
+    capital_points: row.capitalPoints,
     penalties: row.penalties,
     total: row.total,
   }));
