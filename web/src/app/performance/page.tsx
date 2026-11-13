@@ -41,8 +41,10 @@ export default async function PerformancePage({ searchParams }: Props) {
   const eventFilter = ["war", "league", "raid"].includes(params.event || "") ? params.event! : "";
   const hasEventFilter = eventFilter !== "";
   const situationFilter = hasEventFilter && ["attacked", "no-attack", "no-data"].includes(params.situation || "") ? params.situation! : "";
+  // Liga: a fonte registra apenas os membros relacionados à batalha; ausência significa não participação.
+  // Raide: não há inscrição; ausência de ataque registrado equivale a zero ataques.
   const attackValue = (row: (typeof rankedRows)[number]) =>
-    eventFilter === "league" ? row.lastLeagueAttacks : eventFilter === "raid" ? row.lastRaidAttacks : row.lastWarAttacks;
+    eventFilter === "league" ? row.lastLeagueAttacks : eventFilter === "raid" ? (row.lastRaidAttacks ?? 0) : row.lastWarAttacks;
   const eventRows = rankedRows;
   const activityRows = hasEventFilter ? eventRows.filter(row => {
     const attacks = attackValue(row);
@@ -83,10 +85,10 @@ export default async function PerformancePage({ searchParams }: Props) {
       <div className="performance-period">{data.monthLabel}</div>
       <div className="performance-section-heading"><h2>Desempenho do clã</h2><span>{activeRows.length} JOGADORES</span></div>
       {!hasEventFilter && <div className="performance-totals">{totals.map(metric => <article key={metric.key}><small>{metric.label}</small><b>{fmt(metric.value)}</b><span>{metric.unit}</span></article>)}</div>}
-      {hasEventFilter && <div className="performance-activity-summary" aria-label={`Resumo de ${eventFilter === "war" ? "última Guerra" : eventFilter === "league" ? "última batalha da Liga" : "última Raide"}`}>
+      {hasEventFilter && <div className={`performance-activity-summary${eventFilter === "raid" ? " performance-activity-summary-raid" : ""}`} aria-label={`Resumo de ${eventFilter === "war" ? "última Guerra" : eventFilter === "league" ? "última batalha da Liga" : "última Raide"}`}>
         <article className="activity-summary-attacked"><small>Com ataques</small><b>{eventCounts.attacked}</b><span>Jogadores</span></article>
         <article className="activity-summary-no-attack"><small>Sem ataques</small><b>{eventCounts.noAttack}</b><span>Registro confirmado</span></article>
-        <article className="activity-summary-no-data"><small>{eventFilter === "war" ? "Não Participou" : "Sem dados"}</small><b>{eventCounts.noData}</b><span>{eventFilter === "war" ? "Ficou fora da guerra" : "Não classificado"}</span></article>
+        {eventFilter !== "raid" && <article className="activity-summary-no-data"><small>Não Participou</small><b>{eventCounts.noData}</b><span>{eventFilter === "war" ? "Ficou fora da guerra" : "Ficou fora da Liga"}</span></article>}
       </div>}
       <div className="performance-list">
         <div className="performance-section-heading"><h2>Desempenho dos jogadores</h2><span>{visibleRows.length} JOGADORES</span></div>
@@ -97,7 +99,7 @@ export default async function PerformancePage({ searchParams }: Props) {
             <div className="performance-card-head">
               <b><span className="performance-position-badge">{row.position}</span><span className="performance-player-name">{row.player}</span>{row.role && <small className="performance-leader-role">{row.role}</small>}</b>
               {hasEventFilter
-                ? <span className={attacks === null ? "performance-event-inline no-data" : attacks === 0 ? "performance-event-inline no-attack" : "performance-event-inline attacked"}>{attacks === null ? (eventFilter === "war" ? "Não Participou" : "Sem dados") : `${fmt(attacks)} ${attacks === 1 ? "ataque" : "ataques"}`}</span>
+                ? <span className={attacks === null ? "performance-event-inline no-data" : attacks === 0 ? "performance-event-inline no-attack" : "performance-event-inline attacked"}>{attacks === null ? "Não Participou" : `${fmt(attacks)} ${attacks === 1 ? "ataque" : "ataques"}`}</span>
                 : <strong>{fmt(row.index)}%</strong>}
             </div>
             {!hasEventFilter && <>
