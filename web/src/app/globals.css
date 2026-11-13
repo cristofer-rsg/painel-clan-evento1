@@ -1407,3 +1407,19 @@ body{
 .performance-event-inline.attacked{color:#a9dfb7;border-color:#39865a;background:#102d20}
 .performance-event-inline.no-attack{color:#f0b0b0;border-color:#a84949;background:#321919}
 .performance-event-inline.no-data{color:#b7d7f4;border-color:#3976a8;background:#14283b}
+
+/* Corrige a largura do selo para sempre envolver todo o texto */
+.performance-card-event .performance-card-head{display:flex;align-items:center;justify-content:space-between}
+.performance-card-event .performance-card-head>b{flex:1 1 auto;width:auto;min-width:0}
+.performance-card-event .performance-event-inline{
+  display:inline-flex!important;
+  flex:0 0 auto!important;
+  width:max-content!important;
+  min-width:max-content!important;
+  max-width:none!important;
+  box-sizing:border-box!important;
+  padding:6px 10px!important;
+  overflow:visible!important;
+  white-space:nowrap!important;
+  line-height:1.2!important;
+}
