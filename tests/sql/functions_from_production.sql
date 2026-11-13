@@ -936,4 +936,4 @@ BEGIN
         'sources_received', jsonb_array_length(p_sources)
     );
 END;
-$function$
+$function$;
