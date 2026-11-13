@@ -32,8 +32,8 @@ export default function RulesPage() {
           <div className="rules-card-heading"><span className="rules-icon">⚔️</span><div><h2>Guerras normais</h2><p>Objetivo: Participar das guerras e realizar os ataques.</p></div></div>
           <div className="rules-points"><div className="rules-point-row"><span>Máximo no ranking</span><b>200 pontos</b></div></div>
           <div className="rules-table"><div className="rules-table-head"><span>Ação (Objetivo)</span><b>Pontos</b></div><div className="rules-point-row"><span>Participar da guerra</span><b>+5</b></div><div className="rules-point-row"><span>Realizar os dois ataques</span><b>+10</b></div><div className="rules-point-row"><span>Acertar o espelho (por ataque)</span><b>+5</b></div><div className="rules-subrow">Bônus por estrelas (por ataque)</div><div className="rules-point-row"><span>• 1 estrela</span><b>+1</b></div><div className="rules-point-row"><span>• 2 estrelas</span><b>+2</b></div><div className="rules-point-row"><span>• 3 estrelas</span><b>+3</b></div></div>
-          <div className="rules-table rules-penalties"><div className="rules-table-head"><span>Penalidades</span><b>Pontos</b></div><div className="rules-point-row"><span>Não realizar nenhum ataque</span><b>−10</b></div><div className="rules-point-row"><span>Realizar apenas um ataque</span><b>−5</b></div><div className="rules-point-row"><span>Realizar o segundo ataque antes das 12 horas finais</span><b>−5</b></div><div className="rules-point-row"><span>Atacar fora do espelho</span><b>−5</b></div></div>
-          <div className="rules-timing"><b>◷ Regra dos ataques</b><p>Antes de faltarem 12 horas para o término da guerra, o jogador pode realizar apenas 1 ataque. O segundo ataque só pode ser realizado quando faltarem 12 horas ou menos.</p></div>
+          <div className="rules-table rules-penalties"><div className="rules-table-head"><span>Penalidades</span><b>Pontos</b></div><div className="rules-point-row"><span>Não realizar nenhum ataque</span><b>−10</b></div><div className="rules-point-row"><span>Realizar apenas um ataque</span><b>−5</b></div><div className="rules-point-row"><span>Realizar o segundo ataque antes das 12 horas finais</span><b>−5</b></div><div className="rules-point-row"><span>Primeiro ataque fora do espelho antes das 12 horas finais</span><b>−5</b></div></div>
+          <div className="rules-timing"><b>◷ Regra dos ataques</b><p>Antes das 12 horas finais, o primeiro ataque deve respeitar o espelho. O segundo ataque pode ser feito fora do espelho quando faltarem 12 horas ou menos. Se o jogador não tiver realizado nenhum ataque antes desse período, poderá fazer os dois ataques fora do espelho nas 12 horas finais.</p></div>
         </article>
         <article className="rules-card">
           <div className="rules-card-heading"><span className="rules-icon">🏆</span><div><h2>Liga dos Clãs</h2><p>Objetivo: Realizar os 7 ataques da Liga.</p></div></div>
@@ -46,16 +46,17 @@ export default function RulesPage() {
       </div>
 
       <section className="rules-card rules-final">
-        <div className="rules-card-heading"><span className="rules-icon">⚔️</span><div><h2>Regras obrigatórias das guerras</h2><p>Prazo dos ataques e única penalidade</p></div></div>
+        <div className="rules-card-heading"><span className="rules-icon">⚔️</span><div><h2>Regras obrigatórias das guerras</h2><p>Prazo dos ataques e regra do espelho</p></div></div>
         <div className="rules-points">
-          <div className="rules-point-row"><span>Primeiro ataque</span><b>Respeitar o espelho definido</b></div>
-          <div className="rules-point-row"><span>Segundo ataque</span><b>Somente nas últimas 12 horas da guerra</b></div>
-          <div className="rules-point-row"><span>Atacar fora do espelho</span><b>−5 pontos por ataque</b></div>
+          <div className="rules-point-row"><span>Primeiro ataque antes das 12 horas finais</span><b>Deve respeitar o espelho</b></div>
+          <div className="rules-point-row"><span>Segundo ataque</span><b>Liberado nas últimas 12 horas, inclusive fora do espelho</b></div>
+          <div className="rules-point-row"><span>Dois ataques guardados</span><b>Podem ser feitos fora do espelho nas últimas 12 horas</b></div>
+          <div className="rules-point-row"><span>Primeiro ataque fora do espelho antes das 12 horas finais</span><b>−5 pontos</b></div>
           <div className="rules-point-row"><span>Não realizar nenhum ataque</span><b>−10 pontos</b></div>
           <div className="rules-point-row"><span>Realizar apenas um ataque</span><b>−5 pontos</b></div>
           <div className="rules-point-row"><span>Pontuação final</span><b>Pode ficar negativa</b></div>
         </div>
-        <p className="rules-note">A ausência dos dois ataques gera penalidade de −10 pontos. A realização de apenas um ataque gera penalidade de −5 pontos. Cada ataque realizado fora do espelho gera −5 pontos. O segundo ataque só pode ser realizado quando faltarem 12 horas ou menos para o encerramento da guerra. As penalidades são aplicadas conforme as infrações identificadas, sem duplicar a mesma penalidade pelo mesmo fato.</p>
+        <p className="rules-note">A ausência dos dois ataques gera penalidade de −10 pontos e a realização de apenas um ataque gera penalidade de −5 pontos. A exigência do espelho vale somente para o primeiro ataque realizado antes das 12 horas finais. O segundo ataque pode ser feito em qualquer alvo quando faltarem 12 horas ou menos. Se o jogador guardar os dois ataques, poderá realizar ambos fora do espelho nesse período. A penalidade de −5 por sair do espelho aplica-se somente ao primeiro ataque feito antes das 12 horas finais. O segundo ataque realizado antes desse período continua sujeito à penalidade de horário.</p>
       </section>
 
       <section className="rules-card rules-final">
