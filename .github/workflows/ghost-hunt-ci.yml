@@ -30,6 +30,19 @@ jobs:
       - name: Baixar código
         uses: actions/checkout@v4
 
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Instalar dependências Python dos testes
+        working-directory: .
+        run: python -m pip install requests
+
+      - name: Executar testes das automações
+        working-directory: .
+        run: python -m unittest discover -s tests -v
+
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
