@@ -19,7 +19,8 @@ const shortcuts = [
 
 export default async function HomePage() {
   const data = await getDashboardData();
-  const topThree = data.ranking.slice(0, 3);
+  const eligibleRanking = data.ranking.filter((player) => player.eligible);
+  const topThree = eligibleRanking.slice(0, 3);
   const metrics = [
     { icon: "♛", label: "PONTOS DO LÍDER", value: number(data.leaderPoints), note: "No mês atual", tone: "gold" },
     { icon: "♟", label: "JOGADORES ATIVOS", value: number(data.activePlayers), note: "Membros do clã", tone: "neutral" },
@@ -147,7 +148,7 @@ export default async function HomePage() {
             <div className="gh-v2-section-head"><div><small>DISPUTA DO MÊS</small><h2>Ranking em destaque</h2></div><a href="/ranking">VER TUDO ↗</a></div>
             <div className="gh-v2-podium">
               {topThree.length ? [topThree[1], topThree[0], topThree[2]].filter(Boolean).map((player) => {
-                const place = data.ranking.findIndex(item => item.player === player.player) + 1;
+                const place = eligibleRanking.findIndex(item => item.player === player.player) + 1;
                 return <a className={`gh-v2-podium-card rank-${place}`} href={player.tag ? `/player/${encodeURIComponent(player.tag)}` : "/ranking"} key={player.player}>
                   <span className="gh-v2-medal">{place === 1 ? "👑" : place === 2 ? "🥈" : "🥉"}</span>
                   <span className="gh-v2-player-avatar">{player.player.slice(0,1).toUpperCase()}</span>
