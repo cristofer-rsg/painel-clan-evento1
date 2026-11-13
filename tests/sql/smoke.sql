@@ -47,7 +47,7 @@ DO $$ BEGIN
 END $$;
 
 -- Identity validation: a valid tag cannot be paired with another player's name.
-DO $
+DO $$
 DECLARE rejected boolean;
 BEGIN
   rejected := false;
@@ -63,7 +63,7 @@ BEGIN
   END IF;
 END $;
 
-DO $
+DO $$
 DECLARE rejected boolean;
 BEGIN
   rejected := false;
@@ -79,7 +79,7 @@ BEGIN
   END IF;
 END $;
 
-DO $
+DO $$
 DECLARE rejected boolean;
 BEGIN
   rejected := false;
@@ -95,7 +95,7 @@ BEGIN
   END IF;
 END $;
 
-DO $
+DO $$
 DECLARE rejected boolean;
 BEGIN
   rejected := false;
