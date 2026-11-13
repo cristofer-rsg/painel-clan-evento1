@@ -178,7 +178,7 @@ DO $$ DECLARE rejected boolean:=false; BEGIN
   BEGIN PERFORM public.sync_player_monthly_stat_sources('[{"month_key":"2026-11","source_key":"identity-mismatch-source","player_tag":"#TESTA","player":"Teste Beta","war_attacks":1,"league_attacks":0,"raid_attacks":0}]'::jsonb);
   EXCEPTION WHEN OTHERS THEN rejected:=true; END;
   IF NOT rejected OR EXISTS(SELECT 1 FROM player_monthly_stat_sources WHERE source_key='identity-mismatch-source') THEN RAISE EXCEPTION 'Fontes mensais: identidade divergente não foi bloqueada'; END IF;
-END $$; the supplied name from the tag, rather than trusting it.
+END $;
 DO $$
 BEGIN
   PERFORM public.sync_capital_gold_contribution('#TESTA','Teste Beta',200);
