@@ -1,0 +1,59 @@
+name: SQL function tests (isolated)
+# Isolated PostgreSQL 16 suite: exact production snapshots, negative paths, preservation and concurrency. 
+on:
+  pull_request:
+    paths:
+      - 'tests/sql/**'
+      - 'tests/sql/functions_from_production.sql'
+      - '.github/workflows/sql-function-tests.yml'
+  push:
+    branches: [test/sql-validation-harness]
+    paths:
+      - 'tests/sql/**'
+      - 'tests/sql/functions_from_production.sql'
+      - '.github/workflows/sql-function-tests.yml'
+jobs:
+  postgres-tests:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: tester
+          POSTGRES_PASSWORD: tester
+          POSTGRES_DB: ghosthunt_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U tester -d ghosthunt_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Create disposable fixture
+        env:
+          PGPASSWORD: tester
+        run: psql -h localhost -U tester -d ghosthunt_test -v ON_ERROR_STOP=1 -f tests/sql/schema.sql
+      - name: Install captured SQL functions
+        env:
+          PGPASSWORD: tester
+        run: psql -h localhost -U tester -d ghosthunt_test -v ON_ERROR_STOP=1 -f tests/sql/functions_from_production.sql
+      - name: Install hardened candidate functions
+        env:
+          PGPASSWORD: tester
+        run: psql -h localhost -U tester -d ghosthunt_test -v ON_ERROR_STOP=1 -f tests/sql/functions_hardened.sql
+      - name: Attach production trigger function to fixture
+        env:
+          PGPASSWORD: tester
+        run: psql -h localhost -U tester -d ghosthunt_test -v ON_ERROR_STOP=1 -f tests/sql/triggers.sql
+      - name: Run isolated SQL tests
+        env:
+          PGPASSWORD: tester
+        run: psql -h localhost -U tester -d ghosthunt_test -v ON_ERROR_STOP=1 -f tests/sql/smoke.sql
+      - name: Run concurrent SQL tests
+        env:
+          PGPASSWORD: tester
+        run: bash tests/sql/concurrency.sh
