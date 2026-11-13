@@ -90,7 +90,7 @@ CREATE TABLE public.clash_war_automation (
 );
 CREATE TABLE public.raid_point_awards (
   player_tag text NOT NULL, player text NOT NULL REFERENCES public.players(name) ON UPDATE CASCADE ON DELETE RESTRICT,
-  weekend_key date NOT NULL, month_key text NOT NULL CHECK (month_key ~ '^\\d{4}-\\d{2}$'),
+  weekend_key date NOT NULL, month_key text NOT NULL CHECK (month_key ~ '^[0-9]{4}-[0-9]{2}$'),
   points integer NOT NULL DEFAULT 5 CHECK (points = 5), attacks integer NOT NULL CHECK (attacks >= 5),
   event_id bigint NOT NULL UNIQUE REFERENCES public.events(id) ON DELETE RESTRICT,
   created_at timestamptz NOT NULL DEFAULT now(),
