@@ -1398,13 +1398,12 @@ body{
 .performance-activity-summary .activity-summary-no-data b{color:#9bcfff}
 .performance-filter select:disabled{opacity:.48;cursor:not-allowed}
 
-/* Cartões compactos quando a consulta está filtrada por evento */
-.performance-card-event{padding:10px 13px;border-radius:10px}
-.performance-card-event .performance-card-head{margin:0;min-height:34px}
-.performance-card-event .performance-card-head>b{gap:8px;font-size:13px}
-.performance-event-result{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px;padding:8px 10px;border:1px solid;border-radius:8px;font-size:12px}
-.performance-event-result>span{font-weight:700;opacity:.85}
-.performance-event-result>strong{font-size:13px}
-.performance-event-result.attacked{color:#a9dfb7;border-color:#39865a;background:#102d20}
-.performance-event-result.no-attack{color:#f0b0b0;border-color:#a84949;background:#321919}
-.performance-event-result.no-data{color:#b7d7f4;border-color:#3976a8;background:#14283b}
+/* Cartões compactos com resultado do evento ao lado do nome */
+.performance-card-event{padding:8px 11px;border-radius:10px}
+.performance-card-event .performance-card-head{margin:0;min-height:32px;gap:8px}
+.performance-card-event .performance-card-head>b{gap:7px;font-size:13px;min-width:0}
+.performance-card-event .performance-player-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.performance-event-inline{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;max-width:45%;padding:5px 8px;border:1px solid;border-radius:7px;font-size:11px;font-weight:800;line-height:1.15;text-align:center;white-space:nowrap}
+.performance-event-inline.attacked{color:#a9dfb7;border-color:#39865a;background:#102d20}
+.performance-event-inline.no-attack{color:#f0b0b0;border-color:#a84949;background:#321919}
+.performance-event-inline.no-data{color:#b7d7f4;border-color:#3976a8;background:#14283b}
