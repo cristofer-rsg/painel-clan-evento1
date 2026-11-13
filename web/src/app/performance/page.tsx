@@ -2,7 +2,7 @@ import { getPerformanceData } from "@/lib/ghost-hunt/performance";
 import PublicNavigation from "@/components/public-navigation";
 
 export const dynamic = "force-dynamic";
-type Props = { searchParams: Promise<{ month?: string; q?: string; category?: string; order?: string }> };
+type Props = { searchParams: Promise<{ month?: string; q?: string; category?: string; order?: string; activity?: string }> };
 function fmt(value: number) { return new Intl.NumberFormat("pt-BR").format(value); }
 const metrics = [
   { key: "wars", label: "Guerras", max: 200, unit: "Ataques", pointsKey: "warsPoints", percentKey: "warsPercent" },
@@ -37,9 +37,17 @@ export default async function PerformancePage({ searchParams }: Props) {
     || b.gamesPoints - a.gamesPoints
     || a.player.localeCompare(b.player, "pt-BR")
   ).map((row, index) => ({ ...row, position: index + 1 }));
+  const activityFilter = params.activity || "all";
+  const activityRows = rankedRows.filter(row => {
+    if (activityFilter === "war-participated") return row.lastWarAttacks > 0;
+    if (activityFilter === "war-two-attacks") return row.lastWarAttacks >= 2;
+    if (activityFilter === "league-attacked") return row.lastLeagueAttacks > 0;
+    if (activityFilter === "raid-attacked") return row.lastRaidAttacks > 0;
+    return true;
+  });
   const visibleRows = searchTerm
-    ? rankedRows.filter(row => row.player.toLocaleLowerCase("pt-BR").includes(searchTerm) || row.tag.toLocaleLowerCase("pt-BR").includes(searchTerm))
-    : rankedRows;
+    ? activityRows.filter(row => row.player.toLocaleLowerCase("pt-BR").includes(searchTerm) || row.tag.toLocaleLowerCase("pt-BR").includes(searchTerm))
+    : activityRows;
   const selectedMetric = metrics.find(metric => metric.key === params.category) || metrics[0];
   const hasCategorySearch = Boolean(params.category && params.category !== "general" && metrics.some(metric => metric.key === params.category));
   const sortOrder = params.order === "asc" ? "asc" : "desc";
@@ -62,6 +70,13 @@ export default async function PerformancePage({ searchParams }: Props) {
         <label htmlFor="month">Mês de referência</label><select id="month" name="month" defaultValue={data.monthKey}>{data.months.map(month => <option value={month} key={month}>{new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric", timeZone: "America/Sao_Paulo" }).format(new Date(month + "-15T12:00:00-03:00"))}</option>)}</select>
         <label htmlFor="q">Buscar jogador</label><input id="q" name="q" type="search" placeholder="Nome ou tag" defaultValue={params.q || ""}/>
         <label htmlFor="category">Classificar por categoria</label><select id="category" name="category" defaultValue={params.category || "general"}><option value="general">Geral</option>{metrics.map(metric => <option value={metric.key} key={metric.key}>{metric.label}</option>)}</select>
+        <label htmlFor="activity">Filtrar atividade recente</label><select id="activity" name="activity" defaultValue={activityFilter}>
+          <option value="all">Todas as atividades</option>
+          <option value="war-participated">Participou da última Guerra</option>
+          <option value="war-two-attacks">Fez os 2 ataques da última Guerra</option>
+          <option value="league-attacked">Atacou na última batalha da Liga</option>
+          <option value="raid-attacked">Realizou ataques na última Raide</option>
+        </select>
         <label htmlFor="order">Ordenação</label><select id="order" name="order" defaultValue={sortOrder}><option value="desc">Maior para menor</option><option value="asc">Menor para maior</option></select>
         <button type="submit">Consultar</button>
       </form>
@@ -72,7 +87,7 @@ export default async function PerformancePage({ searchParams }: Props) {
       <div className="performance-totals">{totals.map(metric => <article key={metric.key}><small>{metric.label}</small><b>{fmt(metric.value)}</b><span>{metric.unit}</span></article>)}</div>
       <div className="performance-list">
         <div className="performance-section-heading"><h2>Desempenho dos jogadores</h2><span>{visibleRows.length} JOGADORES</span></div>
-        <p className="performance-result-count">{visibleRows.length} de {rankedRows.length} jogador(es)</p>
+        <p className="performance-result-count">{visibleRows.length} de {activityRows.length} jogador(es)</p>
         {visibleRows.map(row => <article className="performance-card" key={row.player}>
           <div className="performance-card-head">
             <b><span className="performance-position-badge">{row.position}</span><span className="performance-player-name">{row.player}</span>{row.role && <small className="performance-leader-role">{row.role}</small>}</b>
