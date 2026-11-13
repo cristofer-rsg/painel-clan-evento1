@@ -8,13 +8,13 @@ DO $$ BEGIN
   IF (SELECT count(*) FROM events WHERE category='Liga dos Clãs' AND points=-5) <> 1 THEN
     RAISE EXCEPTION 'Liga: evento negativo não foi registrado exatamente uma vez';
   END IF;
-END $$$;
+END $$;
 SELECT public.record_clash_league_events('[{"source_key":"test-war-1","player_tag":"#TESTA","player":"Teste Alpha","war_key":"war-test","activity":"Penalidade de teste","points":-5}]'::jsonb);
 DO $$ BEGIN
   IF (SELECT count(*) FROM events WHERE category='Liga dos Clãs' AND points=-5) <> 1 THEN
     RAISE EXCEPTION 'Liga: replay duplicou evento';
   END IF;
-END $$$;
+END $$;
 -- Capital: first call establishes baseline; only positive delta creates points.
 SELECT public.sync_capital_gold_contribution('#TESTA','Teste Alpha',100);
 SELECT public.sync_capital_gold_contribution('#TESTA','Teste Alpha',130);
@@ -22,7 +22,7 @@ DO $$ BEGIN
   IF (SELECT count(*) FROM events WHERE category='Capital do Clã' AND points=30 AND player='Teste Alpha') <> 1 THEN
     RAISE EXCEPTION 'Capital: delta/canonical player incorreto';
   END IF;
-END $$$;
+END $$;
 -- Monthly source aggregation is repeatable for the same source key.
 SELECT public.sync_player_monthly_stat_sources(
  '[{"month_key":"2026-11","source_key":"war:test:1","player_tag":"#TESTA","player":"Teste Alpha","war_attacks":2,"league_attacks":0,"raid_attacks":0}]'::jsonb
@@ -34,7 +34,7 @@ DO $$ BEGIN
   IF (SELECT war_attacks FROM player_monthly_stats WHERE month_key='2026-11' AND player_tag='#TESTA') <> 2 THEN
     RAISE EXCEPTION 'Fontes mensais: replay duplicou soma';
   END IF;
-END $$$;
+END $$;
 -- Donation counter reset: 10 -> 3 adds 3 to accumulated total (13).
 SELECT public.sync_clash_donations('2026-11',
  '[{"player_tag":"#TESTA","player":"Teste Alpha","donations":10}]'::jsonb);
@@ -44,7 +44,7 @@ DO $$ BEGIN
   IF (SELECT total_donated FROM clash_donation_totals WHERE month_key='2026-11' AND player_tag='#TESTA') <> 13 THEN
     RAISE EXCEPTION 'Doações: reinício do contador calculado incorretamente';
   END IF;
-END $$$;
+END $$;
 
 -- Identity validation: a valid tag cannot be paired with another player's name.
 DO $$
