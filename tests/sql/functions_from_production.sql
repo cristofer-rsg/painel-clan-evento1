@@ -949,11 +949,11 @@ BEGIN
         updated_at = now();
 
     FOR v_month, v_tag, v_player IN
-        SELECT DISTINCT value->>'month_key', value->>'player_tag', p.name
-        FROM jsonb_array_elements(p_sources)
+        SELECT DISTINCT src.value->>'month_key', src.value->>'player_tag', p.name
+        FROM jsonb_array_elements(p_sources) AS src(value)
         JOIN public.players p
-          ON upper(btrim(p.player_tag)) = upper(btrim(value->>'player_tag'))
-         AND lower(btrim(p.name)) = lower(btrim(value->>'player'))
+          ON upper(btrim(p.player_tag)) = upper(btrim(src.value->>'player_tag'))
+         AND lower(btrim(p.name)) = lower(btrim(src.value->>'player'))
     LOOP
         INSERT INTO public.player_monthly_stats (
             month_key, player_tag, player,
