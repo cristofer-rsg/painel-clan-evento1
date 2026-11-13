@@ -9,6 +9,11 @@ from zoneinfo import ZoneInfo
 
 from supabase import create_client
 
+from scripts.war_rules import (
+    should_penalize_early_second_attack,
+    should_penalize_off_mirror,
+)
+
 CLAN_TAG = "#2GCGP0RQ9"
 API_URL = "https://cocproxy.royaleapi.dev/v1"
 TZ = ZoneInfo("America/Sao_Paulo")
@@ -123,18 +128,20 @@ def build_war_events(war, players_by_tag):
                 10,
             )
 
-        # Verifica o espelho individualmente em cada ataque.
+        # O espelho só é obrigatório no primeiro ataque, antes da janela final.
+        # Quando restarem 12 horas ou menos, o jogador pode fazer os ataques
+        # ainda disponíveis em qualquer alvo, inclusive os dois se não atacou antes.
         for attack_number, attack in enumerate(attacks, start=1):
             defender_tag = attack.get("defenderTag")
             own_position = member.get("mapPosition")
             defender_position = enemy_position_by_tag.get(defender_tag)
+            battle_time = parse_coc_time(attack.get("battleTime"))
+            order = attack.get("order", attack_number)
 
             if (
                 own_position is not None
                 and defender_position == own_position
             ):
-                order = attack.get("order", attack_number)
-
                 add(
                     f"{war_key}:{player_tag}:mirror:{order}",
                     player_name,
@@ -142,19 +149,35 @@ def build_war_events(war, players_by_tag):
                     "Acertou o espelho (+5)",
                     5,
                 )
-            elif defender_tag and defender_position is not None and own_position is not None:
-                order = attack.get("order", attack_number)
-                add(f"{war_key}:{player_tag}:penalty:off-mirror:{order}",
-                    player_name, player_tag,
-                    "Penalidade: atacou fora do espelho (−5)", -5)
+            elif (
+                defender_tag
+                and defender_position is not None
+                and own_position is not None
+                and should_penalize_off_mirror(
+                    attack_number, battle_time, war_end
+                )
+            ):
+                add(
+                    f"{war_key}:{player_tag}:penalty:off-mirror:{order}",
+                    player_name,
+                    player_tag,
+                    "Penalidade: primeiro ataque fora do espelho antes das 12 horas finais (−5)",
+                    -5,
+                )
 
-            if int(attack.get("order") or attack_number) >= 2 and war_end:
-                battle_time = parse_coc_time(attack.get("battleTime"))
-                if battle_time and battle_time < war_end - timedelta(hours=12):
-                    order = attack.get("order", attack_number)
-                    add(f"{war_key}:{player_tag}:penalty:early-second:{order}",
-                        player_name, player_tag,
-                        "Penalidade: segundo ataque antes das 12 horas finais (−5)", -5)
+            # Mantém a regra existente de guardar o segundo ataque para
+            # as 12 horas finais. A ordem é individual do jogador (1º/2º),
+            # não o número global do ataque na guerra retornado pela API.
+            if should_penalize_early_second_attack(
+                attack_number, battle_time, war_end
+            ):
+                add(
+                    f"{war_key}:{player_tag}:penalty:early-second:{order}",
+                    player_name,
+                    player_tag,
+                    "Penalidade: segundo ataque antes das 12 horas finais (−5)",
+                    -5,
+                )
 
         # Soma as estrelas de cada ataque separadamente.
         for attack_number, attack in enumerate(attacks, start=1):
