@@ -66,7 +66,11 @@ export async function getClanTenureData(): Promise<ClanTenureData> {
         active: latest.left_at === null,
         periods,
       };
-    }).sort((a, b) => b.totalMilliseconds - a.totalMilliseconds || a.name.localeCompare(b.name, "pt-BR"));
+    }).sort((a, b) =>
+      Number(b.active) - Number(a.active) ||
+      b.totalMilliseconds - a.totalMilliseconds ||
+      a.name.localeCompare(b.name, "pt-BR")
+    );
 
     return {
       players,
