@@ -149,7 +149,7 @@ INSERT INTO public.events(player,category,activity,points)
 VALUES ('Teste Alpha','Doações','Lançamento manual preservado',7);
 SELECT public.sync_clash_donations('2026-11',
  '[{"player_tag":"#TESTA","player":"Teste Alpha","donations":3}]'::jsonb);
-DO $ BEGIN
+DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM events WHERE activity='Lançamento manual preservado' AND points=7) THEN
     RAISE EXCEPTION 'Doações: sincronização removeu evento manual';
   END IF;
