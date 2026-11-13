@@ -318,7 +318,7 @@ END $$;
 
 
 -- Additional production-gap probes: these assert and report the current behavior.
-DO $
+DO $$
 BEGIN
   PERFORM public.sync_clash_donations('2026-13',
     '[{"player_tag":"#TESTA","player":"Teste Alpha","donations":1}]'::jsonb
@@ -327,9 +327,9 @@ BEGIN
     RAISE EXCEPTION 'Auditoria Doações: mês impossível não reproduzido';
   END IF;
   RAISE NOTICE 'FINDING: sync_clash_donations aceita mês impossível 2026-13.';
-END $;
+END $$;
 
-DO $
+DO $$
 BEGIN
   PERFORM public.sync_clash_donations('2026-14',
     '[{"player_tag":"#TESTA","player":"Teste Alpha","donations":10},
@@ -339,9 +339,9 @@ BEGIN
     RAISE EXCEPTION 'Auditoria Doações: duplicidade não reproduzida';
   END IF;
   RAISE NOTICE 'FINDING: sync_clash_donations aceita tag duplicada no mesmo snapshot e processa sequencialmente as entradas sem rejeitar o payload duplicado.';
-END $;
+END $$;
 
-DO $
+DO $$
 BEGIN
   PERFORM public.start_clash_games_tracking('2026-13',
     '[{"player_tag":"#TESTC","player":"Inativo","achievement_value":25}]'::jsonb
@@ -350,9 +350,9 @@ BEGIN
     RAISE EXCEPTION 'Auditoria Jogos do Clã: mês/tag inativa não reproduzido';
   END IF;
   RAISE NOTICE 'FINDING: start_clash_games_tracking aceita mês impossível e jogador inativo/sem validação de identidade.';
-END $;
+END $$;
 
-DO $
+DO $$
 BEGIN
   PERFORM public.auto_sync_clash_games('2026-13',
     '[{"player_tag":"#TESTB","player":"Teste Beta","achievement_value":500}]'::jsonb
@@ -364,10 +364,10 @@ BEGIN
     RAISE EXCEPTION 'Auditoria Jogos automáticos: mês impossível não reproduzido';
   END IF;
   RAISE NOTICE 'FINDING: auto_sync_clash_games aceita mês impossível 2026-13 e não valida identidade do jogador.';
-END $;
+END $$;
 
 -- The production Games sync accepts a tag with another player's name.
-DO $
+DO $$
 BEGIN
   PERFORM public.sync_clash_games('2026-11',
     '[{"player_tag":"#TESTB","player":"Teste Alpha","achievement_value":4200}]'::jsonb
@@ -376,17 +376,17 @@ BEGIN
     RAISE EXCEPTION 'Auditoria Jogos do Clã: divergência de identidade não reproduzida';
   END IF;
   RAISE NOTICE 'FINDING: sync_clash_games permite sobrescrever nome canônico com nome divergente.';
-END $;
+END $$;
 
 -- Capital accepts an inactive roster member; record as a business-rule gap.
-DO $
+DO $$
 BEGIN
   PERFORM public.sync_capital_gold_contribution('#TESTC','Inativo',50);
   IF NOT EXISTS (SELECT 1 FROM capital_gold_sync_state WHERE player_tag='#TESTC') THEN
     RAISE EXCEPTION 'Auditoria Capital: comportamento de jogador inativo não reproduzido';
   END IF;
   RAISE NOTICE 'FINDING: sync_capital_gold_contribution aceita jogador inativo.';
-END $;
+END $$;
 
 -- Explicitly verify all test writes are discarded.
 ROLLBACK;
