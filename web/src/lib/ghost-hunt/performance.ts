@@ -1,20 +1,10 @@
 import "server-only";
 import { createSupabaseAdmin } from "@/lib/supabase/admin";
+import { calculatePlayerScore } from "@/lib/ghost-hunt/scoring";
 
 type Player = { name: string; player_tag: string | null; active: boolean | null };
 type Stats = { month_key: string; player_tag: string | null; player: string | null; war_attacks: number | null; donations: number | null; clan_games_points: number | null };
 type EventRow = { player: string | null; category: string | null; activity: string | null; points: number | null };
-const WEIGHTS = {
-  wars: { target: 200, max: 200 },
-  league: { target: 140, max: 200 },
-  raid: { target: 32, max: 150 },
-  donations: { target: 10000, max: 150 },
-  games: { target: 10000, max: 100 },
-  capital: { target: 250000, max: 200 },
-} as const;
-function score(raw: number, target: number, max: number) {
-  return Math.round(Math.min(Math.max(raw, 0) / target, 1) * max);
-}
 export type PerformanceRow = {
   position: number; player: string; tag: string;
   wars: number; league: number; raid: number; donations: number; games: number; capital: number;
@@ -76,7 +66,7 @@ export async function getPerformanceData(requestedMonth?: string, useManualDonat
       const category = (event.category || "").trim().toLocaleLowerCase("pt-BR");
       const activity = (event.activity || "").trim();
       if (points < 0) {
-        if (activity.toLocaleLowerCase("pt-BR").includes("fora do espelho")) bucket.penalties += 50;
+        bucket.penalties += Math.abs(points);
       } else if (category === "guerras") {
         bucket.wars += points;
         if (/^Fez [1-3] estrela/i.test(activity)) bucket.warAttacks += 1;
@@ -104,13 +94,19 @@ export async function getPerformanceData(requestedMonth?: string, useManualDonat
       const recordedDonations = Number(stat?.donations || 0);
       const donations = useManualDonationFallback && recordedDonations <= 0 ? raw.donationsEvents : recordedDonations;
       const games = Math.max(Number(stat?.clan_games_points || 0), raw.gamesEvents);
-      const warsPoints = score(raw.wars, WEIGHTS.wars.target, WEIGHTS.wars.max);
-      const leaguePoints = score(raw.league, WEIGHTS.league.target, WEIGHTS.league.max);
-      const raidPoints = score(raw.raid, WEIGHTS.raid.target, WEIGHTS.raid.max);
-      const donationsPoints = score(donations, WEIGHTS.donations.target, WEIGHTS.donations.max);
-      const gamesPoints = score(games, WEIGHTS.games.target, WEIGHTS.games.max);
-      const capitalPoints = score(raw.capital, WEIGHTS.capital.target, WEIGHTS.capital.max);
-      const totalPoints = Math.max(0, warsPoints + leaguePoints + raidPoints + donationsPoints + gamesPoints + capitalPoints - raw.penalties);
+      const scoring = calculatePlayerScore({
+        playerName: player.name,
+        events,
+        donationsTotal: donations,
+        clanGamesPoints: games,
+      });
+      const warsPoints = scoring.wars;
+      const leaguePoints = scoring.league;
+      const raidPoints = scoring.raid;
+      const donationsPoints = scoring.donations;
+      const gamesPoints = scoring.games;
+      const capitalPoints = scoring.capitalPoints;
+      const totalPoints = scoring.total;
       const index = Math.round(totalPoints / 10);
       return {
         player: player.name, tag: player.player_tag || "", wars: stat?.war_attacks == null ? raw.warAttacks : Number(stat.war_attacks), league: raw.leagueAttacks, raid: raw.raidAttacks,
@@ -119,7 +115,7 @@ export async function getPerformanceData(requestedMonth?: string, useManualDonat
         warsPercent: Math.round(warsPoints / 200 * 100), leaguePercent: Math.round(leaguePoints / 200 * 100),
         raidPercent: Math.round(raidPoints / 150 * 100), donationsPercent: Math.round(donationsPoints / 150 * 100),
         gamesPercent: Math.round(gamesPoints / 100 * 100), capitalPercent: Math.round(capitalPoints / 200 * 100),
-        totalPoints, index, penalties: raw.penalties, active: player.active !== false, position: 0,
+        totalPoints, index, penalties: scoring.penalties, active: player.active !== false, position: 0,
       };
     });
     const totals = {
