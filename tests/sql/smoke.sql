@@ -51,6 +51,20 @@ DO $$ BEGIN
 END;
 $$;
 
+-- Automatic donation reconciliation must preserve manual events in the same category.
+INSERT INTO public.events(player,category,activity,points)
+VALUES ('Teste Alpha','Doações','Lançamento manual preservado',7);
+SELECT public.sync_clash_donations('2026-11',
+ '[{"player_tag":"#TESTA","player":"Teste Alpha","donations":3}]'::jsonb);
+DO $ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM events WHERE activity='Lançamento manual preservado' AND points=7) THEN
+    RAISE EXCEPTION 'Doações: sincronização removeu evento manual';
+  END IF;
+  IF (SELECT count(*) FROM clash_donation_events WHERE month_key='2026-11' AND player_tag='#TESTA') <> 1 THEN
+    RAISE EXCEPTION 'Doações: vínculo automático duplicado';
+  END IF;
+END $;
+
 -- Identity audit against the exact production definitions.
 -- The first three checks deliberately record current unsafe behavior as findings;
 -- they do not disguise these findings as passing security controls.
@@ -111,7 +125,18 @@ DO $$ BEGIN
 END $$;
 SELECT public.sync_clash_games('2026-11',
  '[{"player_tag":"#TESTB","player":"Teste Beta","achievement_value":4100}]'::jsonb);
-DO $$ BEGIN
+INSERT INTO public.events(player,category,activity,points)
+VALUES ('Teste Beta','Jogos do Clã','Lançamento manual preservado',7);
+SELECT public.sync_clash_games('2026-11',
+ '[{"player_tag":"#TESTB","player":"Teste Beta","achievement_value":4100}]'::jsonb);
+DO $ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM events WHERE activity='Lançamento manual preservado' AND player='Teste Beta' AND points=7) THEN
+    RAISE EXCEPTION 'Jogos do Clã: sincronização removeu evento manual';
+  END IF;
+  IF (SELECT count(*) FROM clash_games_events WHERE month_key='2026-11' AND player_tag='#TESTB') <> 1 THEN
+    RAISE EXCEPTION 'Jogos do Clã: vínculo automático duplicado';
+  END IF;
+DO $ BEGIN
   IF (SELECT points_earned FROM clash_games_tracking WHERE month_key='2026-11' AND player_tag='#TESTB') <> 4000 THEN
     RAISE EXCEPTION 'Jogos do Clã: cálculo do progresso incorreto';
   END IF;
