@@ -2,6 +2,99 @@
 BEGIN;
 INSERT INTO public.players(name,player_tag,active) VALUES
  ('Teste Alpha','#TESTA',true),('Teste Beta','#TESTB',true),('Inativo','#TESTC',false);
+-- War automation: negative events, replay idempotency and atomic rejection.
+SELECT public.record_clash_war_events(
+ '[{"source_key":"war-negative-1","war_key":"war-test","player_tag":"#TESTA","player":"Teste Alpha","category":"Guerras","activity":"Penalidade guerra teste","points":-5}]'::jsonb
+);
+SELECT public.record_clash_war_events(
+ '[{"source_key":"war-negative-1","war_key":"war-test","player_tag":"#TESTA","player":"Teste Alpha","category":"Guerras","activity":"Penalidade guerra teste","points":-5}]'::jsonb
+);
+DO $$
+DECLARE rejected boolean := false;
+BEGIN
+  IF (SELECT count(*) FROM events WHERE activity='Penalidade guerra teste' AND points=-5) <> 1 THEN
+    RAISE EXCEPTION 'Guerras: evento negativo duplicado ou ausente';
+  END IF;
+  BEGIN
+    PERFORM public.record_clash_war_events(
+      '[{"source_key":"war-atomic-ok","war_key":"war-test","player_tag":"#TESTA","player":"Teste Alpha","category":"Guerras","activity":"war atomic first","points":5},
+        {"source_key":"war-atomic-bad","war_key":"war-test","player_tag":"#TESTA","player":"Teste Alpha","category":"Guerras","points":5}]'::jsonb
+    );
+  EXCEPTION WHEN OTHERS THEN rejected := true;
+  END;
+  IF NOT rejected THEN RAISE EXCEPTION 'Guerras: aceitou item incompleto'; END IF;
+  IF EXISTS (SELECT 1 FROM clash_war_automation WHERE source_key='war-atomic-ok')
+     OR EXISTS (SELECT 1 FROM events WHERE activity='war atomic first') THEN
+    RAISE EXCEPTION 'Guerras: lote inválido deixou gravação parcial';
+  END IF;
+END $$;
+
+-- Weekend Raid: awards, replay, inactive players, invalid payload and monthly cap.
+SELECT public.apply_automatic_raid_points(
+ '[{"player":"Teste Alpha","player_tag":"#TESTA","weekend_key":"2026-11-07","month_key":"2026-11","attacks":5,"weekend_label":"Fim de semana teste"}]'::jsonb
+);
+SELECT public.apply_automatic_raid_points(
+ '[{"player":"Teste Alpha","player_tag":"#TESTA","weekend_key":"2026-11-07","month_key":"2026-11","attacks":5,"weekend_label":"Replay teste"}]'::jsonb
+);
+DO $$
+DECLARE rejected_attacks boolean := false; rejected_month boolean := false;
+BEGIN
+  IF (SELECT count(*) FROM raid_point_awards WHERE player_tag='#TESTA' AND weekend_key='2026-11-07') <> 1 THEN
+    RAISE EXCEPTION 'Raide: replay duplicou premiação';
+  END IF;
+  IF (SELECT count(*) FROM events WHERE player='Teste Alpha' AND category='Raide de Fim de Semana' AND activity LIKE 'RAIDE_AUTO:2026-11-07:%') <> 1 THEN
+    RAISE EXCEPTION 'Raide: evento automático duplicado';
+  END IF;
+  IF (SELECT count(*) FROM jsonb_array_elements(public.apply_automatic_raid_points(
+    '[{"player":"Inativo","player_tag":"#TESTC","weekend_key":"2026-11-14","month_key":"2026-11","attacks":5}]'::jsonb
+  )->'results') WHERE value->>'status'='not_active') <> 1 THEN
+    RAISE EXCEPTION 'Raide: jogador inativo não foi ignorado';
+  END IF;
+  BEGIN
+    PERFORM public.apply_automatic_raid_points(
+      '[{"player":"Teste Alpha","player_tag":"#TESTA","weekend_key":"2026-11-14","month_key":"2026-11","attacks":4}]'::jsonb
+    );
+  EXCEPTION WHEN OTHERS THEN rejected_attacks := true;
+  END;
+  BEGIN
+    PERFORM public.apply_automatic_raid_points(
+      '[{"player":"Teste Alpha","player_tag":"#TESTA","weekend_key":"2026-11-14","month_key":"2026-12","attacks":5}]'::jsonb
+    );
+  EXCEPTION WHEN OTHERS THEN rejected_month := true;
+  END;
+  IF NOT rejected_attacks OR NOT rejected_month THEN
+    RAISE EXCEPTION 'Raide: não rejeitou ataques insuficientes ou mês incompatível';
+  END IF;
+END $$;
+
+-- Four previous five-point awards block a fifth award in the same month.
+DO $$
+DECLARE e1 bigint; e2 bigint; e3 bigint; e4 bigint; result_json jsonb;
+BEGIN
+  INSERT INTO events(player,category,activity,points) VALUES
+    ('Teste Beta','Raide de Fim de Semana','legacy raid cap 1',5) RETURNING id INTO e1;
+  INSERT INTO events(player,category,activity,points) VALUES
+    ('Teste Beta','Raide de Fim de Semana','legacy raid cap 2',5) RETURNING id INTO e2;
+  INSERT INTO events(player,category,activity,points) VALUES
+    ('Teste Beta','Raide de Fim de Semana','legacy raid cap 3',5) RETURNING id INTO e3;
+  INSERT INTO events(player,category,activity,points) VALUES
+    ('Teste Beta','Raide de Fim de Semana','legacy raid cap 4',5) RETURNING id INTO e4;
+  INSERT INTO raid_point_awards(player_tag,player,weekend_key,month_key,points,attacks,event_id) VALUES
+    ('#TESTB','Teste Beta','2026-10-31','2026-11',5,5,e1),
+    ('#TESTB','Teste Beta','2026-11-07','2026-11',5,5,e2),
+    ('#TESTB','Teste Beta','2026-11-14','2026-11',5,5,e3),
+    ('#TESTB','Teste Beta','2026-11-21','2026-11',5,5,e4);
+  result_json := public.apply_automatic_raid_points(
+    '[{"player":"Teste Beta","player_tag":"#TESTB","weekend_key":"2026-11-28","month_key":"2026-11","attacks":5}]'::jsonb
+  );
+  IF result_json->'results'->0->>'status' <> 'monthly_limit' THEN
+    RAISE EXCEPTION 'Raide: limite mensal de 20 pontos não foi aplicado';
+  END IF;
+  IF EXISTS (SELECT 1 FROM raid_point_awards WHERE player_tag='#TESTB' AND weekend_key='2026-11-28') THEN
+    RAISE EXCEPTION 'Raide: concedeu quinta premiação no mês';
+  END IF;
+END $$;
+
 -- League: negative events are recorded; replaying a source key is idempotent.
 SELECT public.record_clash_league_events('[{"source_key":"test-war-1","player_tag":"#TESTA","player":"Teste Alpha","war_key":"war-test","activity":"Penalidade de teste","points":-5}]'::jsonb);
 DO $$ BEGIN
