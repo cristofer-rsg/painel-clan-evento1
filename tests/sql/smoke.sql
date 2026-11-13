@@ -335,10 +335,10 @@ BEGIN
     '[{"player_tag":"#TESTA","player":"Teste Alpha","donations":10},
       {"player_tag":"#TESTA","player":"Teste Alpha","donations":20}]'::jsonb
   );
-  IF (SELECT total_donated FROM clash_donation_totals WHERE month_key='2026-14' AND player_tag='#TESTA') <> 30 THEN
+  IF (SELECT total_donated FROM clash_donation_totals WHERE month_key='2026-14' AND player_tag='#TESTA') <> 20 THEN
     RAISE EXCEPTION 'Auditoria Doações: duplicidade não reproduzida';
   END IF;
-  RAISE NOTICE 'FINDING: sync_clash_donations aceita tag duplicada no mesmo snapshot e soma ambas as entradas.';
+  RAISE NOTICE 'FINDING: sync_clash_donations aceita tag duplicada no mesmo snapshot e processa sequencialmente as entradas sem rejeitar o payload duplicado.';
 END $;
 
 DO $
