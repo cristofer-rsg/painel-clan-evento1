@@ -8,15 +8,6 @@ function number(value: number) {
   return new Intl.NumberFormat("pt-BR").format(value);
 }
 
-const shortcuts = [
-  { icon: "⚔", label: "Guerras", detail: "Confrontos do clã", href: "/history" },
-  { icon: "🛡", label: "Liga do Clã", detail: "Temporada competitiva", href: "/history" },
-  { icon: "🏰", label: "Capital", detail: "Raides e melhorias", href: "/history" },
-  { icon: "📋", label: "Jogos do Clã", detail: "Desafios coletivos", href: "/history" },
-  { icon: "🤝", label: "Doações", detail: "Ajude seus aliados", href: "/performance" },
-  { icon: "🏆", label: "Ranking", detail: "Ver classificação", href: "/ranking" },
-];
-
 export default async function HomePage() {
   const data = await getDashboardData();
   const topThree = data.ranking.slice(0, 3);
@@ -95,15 +86,6 @@ export default async function HomePage() {
               <span className="gh-v2-stat-icon">{metric.icon}</span>
               <div><small>{metric.label}</small><strong>{metric.value}</strong><span>{metric.note}</span></div>
             </article>)}
-          </section>
-
-          <section className="gh-v2-section">
-            <div className="gh-v2-section-head"><div><small>NAVEGUE PELO CLÃ</small><h2>Central de atividades</h2></div><span>ATALHOS</span></div>
-            <nav className="gh-v2-activity-grid" aria-label="Atividades do clã">
-              {shortcuts.map(item => <a href={item.href} className="gh-v2-activity" key={item.label}>
-                <span className="gh-v2-activity-icon">{item.icon}</span><b>{item.label}</b><small>{item.detail}</small><i>↗</i>
-              </a>)}
-            </nav>
           </section>
 
           <section className="gh-v2-season-strip">
