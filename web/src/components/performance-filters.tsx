@@ -41,7 +41,7 @@ export default function PerformanceFilters({ months, monthKey, query, event, sit
         <option value="">Todas as situações</option>
         <option value="attacked">{selectedEvent === "raid" ? "Com ataques" : "Realizou ataques"}</option>
         <option value="no-attack">{selectedEvent === "raid" ? "Sem ataques" : "Não realizou ataques"}</option>
-        {selectedEvent !== "raid" && <option value="no-data">{selectedEvent === "war" ? "Não Participou" : "Sem dados confiáveis"}</option>}
+        {selectedEvent !== "raid" && <option value="no-data">Não Participou</option>}
       </select>
       <label htmlFor="order">Ordenação</label>
       <select id="order" name="order" defaultValue={order}>
