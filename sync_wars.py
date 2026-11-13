@@ -72,7 +72,7 @@ def build_war_events(war, players_by_tag):
     events = []
     missing_players = set()
 
-    def add(source_key, player_name, player_tag, activity, points):
+    def add(source_key, player_name, player_tag, activity, points, battle_time=None):
         events.append({
             "source_key": source_key,
             "war_key": war_key,
@@ -81,6 +81,7 @@ def build_war_events(war, players_by_tag):
             "category": "Guerras",
             "activity": activity,
             "points": int(points),
+            "battle_time": battle_time.isoformat() if battle_time else None,
         })
 
     for member in own_members:
@@ -137,6 +138,16 @@ def build_war_events(war, players_by_tag):
             defender_position = enemy_position_by_tag.get(defender_tag)
             battle_time = parse_coc_time(attack.get("battleTime"))
             order = attack.get("order", attack_number)
+
+            if battle_time is not None:
+                add(
+                    f"{war_key}:{player_tag}:attack:{order}:battle-time",
+                    player_name,
+                    player_tag,
+                    f"Ataque realizado — horário oficial: {battle_time.astimezone(TZ).strftime('%d/%m/%Y %H:%M:%S')} (Brasília)",
+                    0,
+                    battle_time,
+                )
 
             if (
                 own_position is not None
@@ -204,6 +215,7 @@ def build_war_events(war, players_by_tag):
                 player_tag,
                 activity,
                 points,
+                parse_coc_time(attack.get("battleTime")),
             )
 
     return events, missing_players
