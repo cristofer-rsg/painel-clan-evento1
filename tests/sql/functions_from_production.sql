@@ -880,85 +880,15 @@ BEGIN
         RAISE EXCEPTION 'p_sources precisa ser uma lista JSON';
     END IF;
 
-    -- Valida todo o lote antes de qualquer gravação.
+    -- Validate the complete payload before any write.
     IF EXISTS (
         SELECT 1
         FROM jsonb_to_recordset(p_sources) AS x(
             month_key text, source_key text, player_tag text, player text,
             war_attacks integer, league_attacks integer, raid_attacks integer
         )
-        WHERE x.month_key IS NULL OR x.month_key !~ '^[0-9]{4}-(0[1-9]|1[0-2])
-        month_key, source_key, player_tag, player,
-        war_attacks, league_attacks, raid_attacks, updated_at
-    )
-    SELECT
-        x.month_key,
-        x.source_key,
-        x.player_tag,
-        x.player,
-        x.war_attacks,
-        x.league_attacks,
-        x.raid_attacks,
-        now()
-    FROM jsonb_to_recordset(p_sources) AS x(
-        month_key text,
-        source_key text,
-        player_tag text,
-        player text,
-        war_attacks integer,
-        league_attacks integer,
-        raid_attacks integer
-    )
-    ON CONFLICT (month_key, source_key)
-    DO UPDATE SET
-        player_tag = EXCLUDED.player_tag,
-        player = EXCLUDED.player,
-        war_attacks = EXCLUDED.war_attacks,
-        league_attacks = EXCLUDED.league_attacks,
-        raid_attacks = EXCLUDED.raid_attacks,
-        updated_at = now();
-
-    FOR v_month, v_tag, v_player IN
-        SELECT DISTINCT month_key, player_tag, player
-        FROM public.player_monthly_stat_sources
-        WHERE (month_key, player_tag) IN (
-            SELECT DISTINCT
-                value->>'month_key',
-                value->>'player_tag'
-            FROM jsonb_array_elements(p_sources)
-        )
-    LOOP
-        INSERT INTO public.player_monthly_stats (
-            month_key, player_tag, player,
-            war_attacks, league_attacks, raid_attacks, updated_at
-        )
-        SELECT
-            v_month,
-            v_tag,
-            v_player,
-            COALESCE(SUM(war_attacks), 0),
-            COALESCE(SUM(league_attacks), 0),
-            COALESCE(SUM(raid_attacks), 0),
-            now()
-        FROM public.player_monthly_stat_sources
-        WHERE month_key = v_month
-          AND player_tag = v_tag
-        ON CONFLICT (month_key, player_tag)
-        DO UPDATE SET
-            player = EXCLUDED.player,
-            war_attacks = EXCLUDED.war_attacks,
-            league_attacks = EXCLUDED.league_attacks,
-            raid_attacks = EXCLUDED.raid_attacks,
-            updated_at = now();
-    END LOOP;
-
-    RETURN jsonb_build_object(
-        'success', true,
-        'sources_received', jsonb_array_length(p_sources)
-    );
-END;
-$function$;
-
+        WHERE x.month_key IS NULL
+           OR x.month_key !~ '^[0-9]{4}-(0[1-9]|1[0-2])$'
            OR x.source_key IS NULL OR btrim(x.source_key) = ''
            OR x.player_tag IS NULL OR btrim(x.player_tag) = ''
            OR x.player IS NULL OR btrim(x.player) = ''
@@ -968,6 +898,7 @@ $function$;
     ) THEN
         RAISE EXCEPTION 'Lote mensal contém campos ou valores inválidos.';
     END IF;
+
     IF EXISTS (
         SELECT 1
         FROM jsonb_to_recordset(p_sources) AS x(
@@ -981,6 +912,7 @@ $function$;
     ) THEN
         RAISE EXCEPTION 'Lote mensal contém tag/nome divergente ou jogador inexistente.';
     END IF;
+
     IF EXISTS (
         SELECT 1
         FROM jsonb_to_recordset(p_sources) AS x(
@@ -998,23 +930,15 @@ $function$;
         war_attacks, league_attacks, raid_attacks, updated_at
     )
     SELECT
-        x.month_key,
-        x.source_key,
-        x.player_tag,
-        x.player,
-        x.war_attacks,
-        x.league_attacks,
-        x.raid_attacks,
-        now()
+        x.month_key, x.source_key, x.player_tag, p.name,
+        x.war_attacks, x.league_attacks, x.raid_attacks, now()
     FROM jsonb_to_recordset(p_sources) AS x(
-        month_key text,
-        source_key text,
-        player_tag text,
-        player text,
-        war_attacks integer,
-        league_attacks integer,
-        raid_attacks integer
+        month_key text, source_key text, player_tag text, player text,
+        war_attacks integer, league_attacks integer, raid_attacks integer
     )
+    JOIN public.players p
+      ON upper(btrim(p.player_tag)) = upper(btrim(x.player_tag))
+     AND lower(btrim(p.name)) = lower(btrim(x.player))
     ON CONFLICT (month_key, source_key)
     DO UPDATE SET
         player_tag = EXCLUDED.player_tag,
@@ -1025,30 +949,23 @@ $function$;
         updated_at = now();
 
     FOR v_month, v_tag, v_player IN
-        SELECT DISTINCT month_key, player_tag, player
-        FROM public.player_monthly_stat_sources
-        WHERE (month_key, player_tag) IN (
-            SELECT DISTINCT
-                value->>'month_key',
-                value->>'player_tag'
-            FROM jsonb_array_elements(p_sources)
-        )
+        SELECT DISTINCT value->>'month_key', value->>'player_tag', p.name
+        FROM jsonb_array_elements(p_sources)
+        JOIN public.players p
+          ON upper(btrim(p.player_tag)) = upper(btrim(value->>'player_tag'))
+         AND lower(btrim(p.name)) = lower(btrim(value->>'player'))
     LOOP
         INSERT INTO public.player_monthly_stats (
             month_key, player_tag, player,
             war_attacks, league_attacks, raid_attacks, updated_at
         )
         SELECT
-            v_month,
-            v_tag,
-            v_player,
+            v_month, v_tag, v_player,
             COALESCE(SUM(war_attacks), 0),
             COALESCE(SUM(league_attacks), 0),
-            COALESCE(SUM(raid_attacks), 0),
-            now()
+            COALESCE(SUM(raid_attacks), 0), now()
         FROM public.player_monthly_stat_sources
-        WHERE month_key = v_month
-          AND player_tag = v_tag
+        WHERE month_key = v_month AND player_tag = v_tag
         ON CONFLICT (month_key, player_tag)
         DO UPDATE SET
             player = EXCLUDED.player,
