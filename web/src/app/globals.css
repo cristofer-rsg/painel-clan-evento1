@@ -1355,3 +1355,11 @@ body{
   margin-left:0!important;
   align-self:center;
 }
+
+
+/* Performance: penalidades em vermelho, mantendo o status ativo em verde */
+.performance-status.penalty{
+  border-color:#b83232!important;
+  background:#6f171b55!important;
+  color:#ffaaa8!important;
+}
