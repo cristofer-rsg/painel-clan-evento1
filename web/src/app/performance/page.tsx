@@ -46,7 +46,15 @@ export default async function PerformancePage({ searchParams }: Props) {
   // Raide: não há inscrição; ausência de ataque registrado equivale a zero ataques.
   const attackValue = (row: (typeof rankedRows)[number]) =>
     eventFilter === "league" ? row.lastLeagueAttacks : eventFilter === "raid" ? (row.lastRaidAttacks ?? 0) : row.lastWarAttacks;
-  const eventRows = rankedRows;
+  // Nos filtros de evento, prioriza mais ataques; ausência de dados fica por último.
+  // Empates são ordenados pelo nome, sem alterar a classificação geral do ranking.
+  const eventRows = hasEventFilter ? [...rankedRows].sort((a, b) => {
+    const aAttacks = attackValue(a);
+    const bAttacks = attackValue(b);
+    if (aAttacks === null) return bAttacks === null ? a.player.localeCompare(b.player, "pt-BR") : 1;
+    if (bAttacks === null) return -1;
+    return bAttacks - aAttacks || a.player.localeCompare(b.player, "pt-BR");
+  }) : rankedRows;
   const activityRows = hasEventFilter ? eventRows.filter(row => {
     const attacks = attackValue(row);
     if (situationFilter === "attacked") return attacks !== null && attacks > 0;
