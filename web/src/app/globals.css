@@ -1423,3 +1423,18 @@ body{
   white-space:nowrap!important;
   line-height:1.2!important;
 }
+
+/* Detailed penalty reasons in the expanded ranking card */
+.ranking-penalties{margin-top:12px;padding:10px;border:1px solid #8f494333;border-radius:10px;background:#251717}
+.ranking-penalties-heading,.ranking-penalties-total{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.ranking-penalties-heading{color:#e6b2a8;font-size:10px;letter-spacing:.08em}
+.ranking-penalties-heading strong,.ranking-penalties-total b{color:#f0a19a;font-size:12px;white-space:nowrap}
+.ranking-penalties-list{display:grid;gap:7px;margin:9px 0;padding:0;list-style:none}
+.ranking-penalties-list li{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px;border:1px solid #ffffff0c;border-radius:8px;background:#160f0f}
+.ranking-penalties-list li>div{display:grid;gap:3px;min-width:0}
+.ranking-penalties-list small{color:#c58e84;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}
+.ranking-penalties-list span{color:#ead8d2;font-size:11px;overflow-wrap:anywhere}
+.ranking-penalties-list li>b{color:#f0a19a;font-size:11px;white-space:nowrap}
+.ranking-penalties-unavailable{margin:9px 0;color:#bda8a1;font-size:10px;line-height:1.5}
+.ranking-penalties-total{padding-top:8px;border-top:1px solid #ffffff12;color:#d8c5bf;font-size:10px;font-weight:700}
+@media(max-width:560px){.ranking-penalties{padding:9px}.ranking-penalties-list li{gap:8px;padding:7px}}
