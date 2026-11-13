@@ -16,6 +16,7 @@ DO $$ BEGIN
   END IF;
 END $$;
 -- Capital: first call establishes baseline; only positive delta creates points.
+SELECT public.sync_capital_gold_contribution('#TESTA','Teste Alpha',100);
 SELECT public.sync_capital_gold_contribution('#TESTA','Teste Alpha',130);
 DO $$ BEGIN
   IF (SELECT count(*) FROM events WHERE category='Capital do Clã' AND points=30 AND player='Teste Alpha') <> 1 THEN
