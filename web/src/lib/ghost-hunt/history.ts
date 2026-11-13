@@ -30,11 +30,9 @@ async function pages<T>(query: any): Promise<T[]> {
   return result;
 }
 function calculate(players: Player[], events: EventRow[], stats: MonthlyStat[] = []): HistoryRanking[] {
-  const excludedLeaderTags = new Set(["#L8GV8C2Y", "#P8CCGYU0", "#QU0GC0VLU", "#9CLLGV8CC"]);
   const gamesByTag = new Map(stats.filter(row => row.player_tag).map(row => [String(row.player_tag).trim().toUpperCase(), Number(row.clan_games_points || 0)]));
   const gamesByName = new Map(stats.filter(row => row.player).map(row => [String(row.player).trim().toLocaleLowerCase("pt-BR"), Number(row.clan_games_points || 0)]));
-  return players.filter(player => !excludedLeaderTags.has((player.player_tag || "").trim().toUpperCase())).map(player => {
-    const eligible = isRankingEligible(player);
+  return players.filter(isRankingEligible).map(player => {
     const scoring = calculatePlayerScore({
       playerName: player.name,
       events,
@@ -55,7 +53,7 @@ function calculate(players: Player[], events: EventRow[], stats: MonthlyStat[] =
       raid: scoring.raid,
       capitalPoints: scoring.capitalPoints,
       penalties: scoring.penalties,
-      total: eligible ? scoring.total : 0,
+      total: scoring.total,
     };
   }).sort((a, b) => b.total - a.total || b.wars - a.wars || b.league - a.league || b.raid - a.raid || b.capitalPoints - a.capitalPoints || b.donations - a.donations || b.games - a.games || a.player.localeCompare(b.player, "pt-BR"))
     .map((row, i) => ({ ...row, position: i + 1 }));
