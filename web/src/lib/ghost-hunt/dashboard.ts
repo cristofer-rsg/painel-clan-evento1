@@ -21,7 +21,10 @@ type EventRow = {
   created_at: string;
 };
 
-// Tags dos quatro cargos de liderança, excluídos exclusivamente da premiação.\nconst LEADERSHIP_TAGS = new Set(["#L8GV8C2Y", "#P8CCGYU0", "#QU0GC0VLU", "#9CLLGV8CC"]);\n\nconst WEIGHTS = {
+// Tags dos quatro cargos de liderança, excluídos exclusivamente da premiação.
+const LEADERSHIP_TAGS = new Set(["#L8GV8C2Y", "#P8CCGYU0", "#QU0GC0VLU", "#9CLLGV8CC"]);
+
+const WEIGHTS = {
   wars: { target: 200, max: 200 },
   league: { target: 140, max: 200 },
   raid: { target: 32, max: 150 },
