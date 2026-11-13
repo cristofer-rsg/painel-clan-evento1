@@ -55,7 +55,10 @@ export async function getPerformanceData(requestedMonth?: string, useManualDonat
     const stats = allStats.filter(row => row.month_key === monthKey);
     // Fontes individuais mais recentes; bônus mensal da Liga não é batalha.
     const latestWarKey = activitySources.map(row => row.source_key.match(/^war:(#[^:]+:\d{8}T\d{6}\.\d+Z):/)?.[1] || "").sort().at(-1) || "";
-    const latestLeagueKey = activitySources.map(row => row.source_key.match(/^league:(\d{8}T\d{6}\.\d+Z):/)?.[1] || "").sort().at(-1) || "";
+    const latestLeagueDay = activitySources.map(row => row.source_key.match(/^league:(\d{8})T\d{6}\.\d+Z:/)?.[1] || "").sort().at(-1) || "";
+    const latestLeagueStartDay = latestLeagueDay
+      ? new Date(Date.UTC(Number(latestLeagueDay.slice(0, 4)), Number(latestLeagueDay.slice(4, 6)) - 1, Number(latestLeagueDay.slice(6, 8)) - 6)).toISOString().slice(0, 10).replace(/-/g, "")
+      : "";
     const raidRows = activitySources.filter(row => /^raid:\d{4}-\d{2}-\d{2}:/.test(row.source_key));
     const latestRaidSync = raidRows.reduce((latest, row) => row.updated_at && row.updated_at > latest ? row.updated_at : latest, "");
     const latestRaidAnchor = raidRows.find(row => row.updated_at === latestRaidSync)?.source_key.match(/^raid:(\d{4}-\d{2}-\d{2}):/)?.[1] || "";
@@ -65,7 +68,10 @@ export async function getPerformanceData(requestedMonth?: string, useManualDonat
       if (!tag) continue;
       const current = lastActivityByTag.get(tag) || { war: null, league: null, raid: null };
       if (latestWarKey && source.source_key.startsWith("war:" + latestWarKey + ":")) current.war = source.war_attacks == null ? null : Number(source.war_attacks);
-      if (latestLeagueKey && source.source_key.startsWith("league:" + latestLeagueKey + ":")) current.league = source.league_attacks == null ? null : Number(source.league_attacks);
+      const leagueDay = source.source_key.match(/^league:(\d{8})T\d{6}\.\d+Z:/)?.[1] || "";
+      if (latestLeagueDay && leagueDay >= latestLeagueStartDay && leagueDay <= latestLeagueDay) {
+        current.league = (current.league ?? 0) + Number(source.league_attacks || 0);
+      }
       if (latestRaidAnchor && source.source_key.startsWith("raid:" + latestRaidAnchor + ":")) current.raid = source.raid_attacks == null ? null : Number(source.raid_attacks);
       lastActivityByTag.set(tag, current);
     }
