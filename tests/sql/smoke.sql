@@ -129,19 +129,19 @@ INSERT INTO public.events(player,category,activity,points)
 VALUES ('Teste Beta','Jogos do Clã','Lançamento manual preservado',7);
 SELECT public.sync_clash_games('2026-11',
  '[{"player_tag":"#TESTB","player":"Teste Beta","achievement_value":4100}]'::jsonb);
-DO $ BEGIN
+DO $$
+BEGIN
   IF NOT EXISTS (SELECT 1 FROM events WHERE activity='Lançamento manual preservado' AND player='Teste Beta' AND points=7) THEN
     RAISE EXCEPTION 'Jogos do Clã: sincronização removeu evento manual';
   END IF;
   IF (SELECT count(*) FROM clash_games_events WHERE month_key='2026-11' AND player_tag='#TESTB') <> 1 THEN
     RAISE EXCEPTION 'Jogos do Clã: vínculo automático duplicado';
   END IF;
-DO $ BEGIN
   IF (SELECT points_earned FROM clash_games_tracking WHERE month_key='2026-11' AND player_tag='#TESTB') <> 4000 THEN
     RAISE EXCEPTION 'Jogos do Clã: cálculo do progresso incorreto';
   END IF;
   IF (SELECT count(*) FROM events WHERE category='Jogos do Clã' AND player='Teste Beta' AND points=10) <> 1 THEN
-    RAISE EXCEPTION 'Jogos do Clã: faixa de 4.000 pontos não gerou +10';
+    RAISE EXCEPTION 'Jogos do Clã: faixa de 4.000 pontos não gerou exatamente +10';
   END IF;
 END $$;
 SELECT public.sync_player_monthly_clan_games('2026-11');
