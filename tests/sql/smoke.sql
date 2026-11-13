@@ -122,29 +122,29 @@ $$;
 -- Clan Games: manual baseline, threshold award, monthly projection and replay.
 SELECT public.start_clash_games_tracking('2026-11',
  '[{"player_tag":"#TESTB","player":"Teste Beta","achievement_value":100}]'::jsonb);
-DO $ BEGIN
+DO $$ BEGIN
   IF (SELECT baseline_value FROM clash_games_tracking WHERE month_key='2026-11' AND player_tag='#TESTB') <> 100 THEN
     RAISE EXCEPTION 'Jogos do Clã: baseline inicial incorreto';
   END IF;
-END $;
+END $$;
 SELECT public.sync_clash_games('2026-11',
  '[{"player_tag":"#TESTB","player":"Teste Beta","achievement_value":4100}]'::jsonb);
-DO $ BEGIN
+DO $$ BEGIN
   IF (SELECT points_earned FROM clash_games_tracking WHERE month_key='2026-11' AND player_tag='#TESTB') <> 4000 THEN
     RAISE EXCEPTION 'Jogos do Clã: cálculo do progresso incorreto';
   END IF;
   IF (SELECT count(*) FROM events WHERE category='Jogos do Clã' AND player='Teste Beta' AND points=10) <> 1 THEN
     RAISE EXCEPTION 'Jogos do Clã: faixa de 4.000 pontos não gerou +10';
   END IF;
-END $;
+END $$;
 SELECT public.sync_player_monthly_clan_games('2026-11');
 SELECT public.sync_player_monthly_clan_games('2026-11');
-DO $ BEGIN
+DO $$ BEGIN
   IF (SELECT clan_games_points FROM player_monthly_stats WHERE month_key='2026-11' AND player_tag='#TESTB') <> 4000 THEN
     RAISE EXCEPTION 'Jogos do Clã: projeção mensal incorreta ou duplicada';
   END IF;
-END $;
-DO $ DECLARE rejected boolean := false; BEGIN
+END $$;
+DO $$ DECLARE rejected boolean := false; BEGIN
   BEGIN
     PERFORM public.start_clash_games_tracking('2026-11',
       '[{"player_tag":"#TESTB","player":"Teste Beta","achievement_value":200}]'::jsonb);
@@ -154,19 +154,19 @@ DO $ DECLARE rejected boolean := false; BEGIN
   IF (SELECT baseline_value FROM clash_games_tracking WHERE month_key='2026-11' AND player_tag='#TESTB') <> 100 THEN
     RAISE EXCEPTION 'Jogos do Clã: tentativa de reinício alterou baseline';
   END IF;
-END $;
+END $$;
 
 -- Automatic Clan Games: observer baseline, automatic start on first increase.
 SELECT public.auto_sync_clash_games('2026-12',
  '[{"player_tag":"#TESTA","player":"Teste Alpha","achievement_value":500}]'::jsonb);
-DO $ BEGIN
+DO $$ BEGIN
   IF (SELECT last_value FROM clash_games_observer WHERE player_tag='#TESTA') <> 500 THEN
     RAISE EXCEPTION 'Jogos automáticos: baseline de observação ausente';
   END IF;
-END $;
+END $$;
 SELECT public.auto_sync_clash_games('2026-12',
  '[{"player_tag":"#TESTA","player":"Teste Alpha","achievement_value":4500}]'::jsonb);
-DO $ BEGIN
+DO $$ BEGIN
   IF (SELECT active_month FROM clash_games_auto_state WHERE singleton=true) <> '2026-12' THEN
     RAISE EXCEPTION 'Jogos automáticos: início não detectado';
   END IF;
@@ -176,29 +176,29 @@ DO $ BEGIN
   IF (SELECT points_earned FROM clash_games_tracking WHERE month_key='2026-12' AND player_tag='#TESTA') <> 4000 THEN
     RAISE EXCEPTION 'Jogos automáticos: progresso inicial incorreto';
   END IF;
-END $;
+END $$;
 
 -- Monthly donations projection uses accumulated total, not current API counter.
 SELECT public.sync_player_monthly_donations('2026-11',
  '[{"player_tag":"#TESTA","player":"Teste Alpha","donations":3}]'::jsonb);
-DO $ BEGIN
+DO $$ BEGIN
   IF (SELECT donations FROM player_monthly_stats WHERE month_key='2026-11' AND player_tag='#TESTA') <> 13 THEN
     RAISE EXCEPTION 'Doações mensais: não utilizou o acumulado preservado';
   END IF;
-END $;
+END $$;
 
 -- Trigger: fills a unique name match, but leaves ambiguous names untouched.
 INSERT INTO public.players(name,player_tag,active) VALUES ('Homônimo','#TESTD',true),('Homônimo','#TESTE',true);
 INSERT INTO public.events(player,category,activity,points)
 VALUES ('Teste Beta','Teste trigger','tag única',1),('Homônimo','Teste trigger','nome ambíguo',1);
-DO $ BEGIN
+DO $$ BEGIN
   IF (SELECT player_tag FROM events WHERE activity='tag única') <> '#TESTB' THEN
     RAISE EXCEPTION 'Trigger: não preencheu tag de nome único';
   END IF;
   IF (SELECT player_tag FROM events WHERE activity='nome ambíguo') IS NOT NULL THEN
     RAISE EXCEPTION 'Trigger: escolheu tag para nome ambíguo';
   END IF;
-END $;
+END $$;
 
 -- Explicitly verify all test writes are discarded.
 ROLLBACK;
