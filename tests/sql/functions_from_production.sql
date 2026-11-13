@@ -249,7 +249,7 @@ begin
         'started_now', started_now
     );
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.fill_event_player_tag()
@@ -276,7 +276,7 @@ begin
   end if;
   return new;
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.record_clash_league_events(p_events jsonb)
@@ -356,7 +356,7 @@ BEGIN
 
     RETURN jsonb_build_object('inserted', v_inserted, 'skipped', v_skipped);
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.start_clash_games_tracking(p_month_key text, p_snapshot jsonb)
@@ -408,7 +408,7 @@ begin
         'players_started', inserted_count
     );
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.sync_capital_gold_contribution(p_player_tag text, p_player text, p_total bigint)
@@ -470,7 +470,7 @@ begin
 
   return jsonb_build_object('status', 'synced', 'player', v_canonical_player, 'total', p_total, 'points', v_delta);
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.sync_clash_donations(p_month_key text, p_snapshot jsonb)
@@ -608,7 +608,7 @@ BEGIN
         'events_created', events_count
     );
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.sync_clash_games(p_month_key text, p_snapshot jsonb)
@@ -714,7 +714,7 @@ begin
         'events_created', event_count
     );
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.sync_player_monthly_clan_games(p_month_key text)
@@ -761,7 +761,7 @@ BEGIN
         'players_updated', v_count
     );
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.sync_player_monthly_donations(p_month_key text, p_snapshot jsonb)
@@ -848,7 +848,7 @@ BEGIN
         'players_updated', v_players_updated
     );
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.sync_player_monthly_stat_sources(p_sources jsonb)
