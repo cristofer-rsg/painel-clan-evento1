@@ -289,6 +289,18 @@ def main():
         f"{api_attack_total} ataques individuais retornados pela API."
     )
 
+    # Registra a conclusão oficial da guerra sem alterar fontes ou estatísticas.
+    if war.get("state") == "warEnded":
+        ended_at = parse_coc_time(war.get("endTime"))
+        if ended_at is None:
+            raise RuntimeError("A API não informou endTime para a guerra encerrada.")
+        db.table("clan_war_completions").upsert({
+            "war_key": war_key,
+            "started_at": war_started.isoformat(),
+            "ended_at": ended_at.isoformat(),
+        }, on_conflict="war_key").execute()
+        print(f"Guerra concluída registrada: {war_key}")
+
     # Estatística mensal: uma origem por jogador e guerra. A mesma chave
     # é atualizada nas próximas execuções, sem somar ataques em duplicidade.
     month_key = war_started.astimezone(TZ).strftime("%Y-%m")
