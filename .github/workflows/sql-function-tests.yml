@@ -49,3 +49,7 @@ jobs:
         env:
           PGPASSWORD: tester
         run: psql -h localhost -U tester -d ghosthunt_test -v ON_ERROR_STOP=1 -f tests/sql/smoke.sql
+      - name: Run concurrent SQL tests
+        env:
+          PGPASSWORD: tester
+        run: bash tests/sql/concurrency.sh
