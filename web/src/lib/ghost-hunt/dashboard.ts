@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createSupabaseAdmin } from "@/lib/supabase/admin";
+import { calculatePlayerScore, isRankingEligible } from "@/lib/ghost-hunt/scoring";
 
 type Player = {
   name: string;
