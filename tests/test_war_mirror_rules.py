@@ -8,6 +8,7 @@ from scripts.war_rules import (
 
 
 class WarMirrorRuleTests(unittest.TestCase):
+    """Confere a regra de espelho no início e na janela final da guerra."""
     def setUp(self):
         self.war_end = datetime(2026, 11, 13, 9, 6, tzinfo=timezone.utc)
         self.before_window = self.war_end - timedelta(hours=13)
