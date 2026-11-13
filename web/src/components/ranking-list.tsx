@@ -6,6 +6,7 @@ type RankingPlayer = {
   position: number; player: string; tag: string; total: number; eligible: boolean;
   wars: number; league: number; donations: number; games: number;
   raid: number; capitalCoins: number; capitalPoints: number; penalties: number;
+  penaltyDetails: { category: string; description: string; points: number }[];
 };
 function number(value: number) { return new Intl.NumberFormat("pt-BR").format(value); }
 
@@ -69,7 +70,16 @@ export default function RankingList({ players }: { players: RankingPlayer[] }) {
             </span>;
           })}</div>
           <div className="ranking-comparison-legend"><span><i className="legend-up">↑</i> Acima do líder</span><span><i className="legend-down">↓</i> Abaixo do líder</span><span><i className="legend-equal">=</i> Empatado</span><span><i className="legend-star">★</i> Melhor categoria</span></div>
-          {player.penalties > 0 && <div className="ranking-penalty">Penalidades aplicadas: <b>−{number(player.penalties)} pts</b></div>}
+          {player.penalties > 0 && <section className="ranking-penalties" aria-label={`Detalhamento das penalidades de ${player.player}`}>
+            <div className="ranking-penalties-heading"><b>PENALIDADES APLICADAS</b><strong>−{number(player.penalties)} pts</strong></div>
+            {player.penaltyDetails.length ? <ul className="ranking-penalties-list">
+              {player.penaltyDetails.map((penalty, index) => <li key={`${penalty.category}-${index}`}>
+                <div><small>{penalty.category}</small><span>{penalty.description}</span></div>
+                <b>−{number(penalty.points)} pts</b>
+              </li>)}
+            </ul> : <p className="ranking-penalties-unavailable">O total foi aplicado, mas não há descrição individual registrada para estas ocorrências.</p>}
+            <div className="ranking-penalties-total"><span>Total descontado</span><b>−{number(player.penalties)} pts</b></div>
+          </section>}
         </div>}
       </article>;
     })}
