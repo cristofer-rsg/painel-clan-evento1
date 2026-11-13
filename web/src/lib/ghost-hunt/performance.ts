@@ -54,7 +54,22 @@ export async function getPerformanceData(requestedMonth?: string, useManualDonat
       ? requestedMonth : fallbackMonth;
     const stats = allStats.filter(row => row.month_key === monthKey);
     // Fontes individuais mais recentes; bônus mensal da Liga não é batalha.
-    const latestWarKey = activitySources.map(row => row.source_key.match(/^war:(#[^:]+:\d{8}T\d{6}\.\d+Z):/)?.[1] || "").sort().at(-1) || "";
+    // Ignora guerras ainda em preparação: a API já cria a origem com zero ataques,
+    // mas isso não deve substituir a última guerra que efetivamente começou.
+    const latestWarKey = activitySources
+      .map(row => {
+        const key = row.source_key.match(/^war:(#[^:]+):(\d{8}T\d{6}\.\d+Z):/);
+        if (!key) return null;
+        const stamp = key[2];
+        const startedAt = Date.parse(
+          `${stamp.slice(0, 4)}-${stamp.slice(4, 6)}-${stamp.slice(6, 8)}T${stamp.slice(9, 11)}:${stamp.slice(11, 13)}:${stamp.slice(13, 15)}.${stamp.slice(16, 19)}Z`
+        );
+        return Number.isFinite(startedAt) && startedAt <= Date.now()
+          ? { key: `${key[1]}:${stamp}`, startedAt }
+          : null;
+      })
+      .filter((item): item is { key: string; startedAt: number } => item !== null)
+      .sort((a, b) => b.startedAt - a.startedAt)[0]?.key || "";
     const latestLeagueDay = activitySources.map(row => row.source_key.match(/^league:(\d{8})T\d{6}\.\d+Z:/)?.[1] || "").sort().at(-1) || "";
     const latestLeagueStartDay = latestLeagueDay
       ? new Date(Date.UTC(Number(latestLeagueDay.slice(0, 4)), Number(latestLeagueDay.slice(4, 6)) - 1, Number(latestLeagueDay.slice(6, 8)) - 6)).toISOString().slice(0, 10).replace(/-/g, "")
