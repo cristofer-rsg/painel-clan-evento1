@@ -21,7 +21,7 @@ type EventRow = {
   created_at: string;
 };
 
-const WEIGHTS = {
+// Tags dos quatro cargos de liderança, excluídos exclusivamente da premiação.\nconst LEADERSHIP_TAGS = new Set(["#L8GV8C2Y", "#P8CCGYU0", "#QU0GC0VLU", "#9CLLGV8CC"]);\n\nconst WEIGHTS = {
   wars: { target: 200, max: 200 },
   league: { target: 140, max: 200 },
   raid: { target: 32, max: 150 },
@@ -191,8 +191,8 @@ export async function getDashboardData(): Promise<DashboardData> {
         capitalCoins: bucket.capitalCoins,
         capitalPoints,
         penalties: bucket.penalties,
-        eligible: player.eligible === "Elegível",
-        eligibilityStatus: player.eligible === "Elegível" ? "Elegível" : "Inelegível",
+        eligible: player.eligible === "Elegível" && !LEADERSHIP_TAGS.has((player.player_tag ?? "").trim().toUpperCase()),
+        eligibilityStatus: player.eligible === "Elegível" && !LEADERSHIP_TAGS.has((player.player_tag ?? "").trim().toUpperCase()) ? "Elegível" : "Inelegível",
         whatsapp: player.whatsapp ?? "Sim",
       };
     }).sort((a, b) => b.total - a.total || b.wars - a.wars || b.league - a.league || b.raid - a.raid || b.capitalPoints - a.capitalPoints || b.donations - a.donations || b.games - a.games || a.player.localeCompare(b.player, "pt-BR"))
