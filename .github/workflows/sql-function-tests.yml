@@ -1,4 +1,5 @@
 name: SQL function tests (isolated)
+# Triggered for the expanded isolated Clan Games and trigger smoke coverage.
 on:
   pull_request:
     paths:
