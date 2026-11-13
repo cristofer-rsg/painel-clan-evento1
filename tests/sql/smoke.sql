@@ -263,8 +263,8 @@ END $$;
 SELECT public.sync_player_monthly_donations('2026-11',
  '[{"player_tag":"#TESTA","player":"Teste Alpha","donations":3}]'::jsonb);
 DO $$ BEGIN
-  IF (SELECT donations FROM player_monthly_stats WHERE month_key='2026-11' AND player_tag='#TESTA') <> 17 THEN
-    RAISE EXCEPTION 'Doações mensais: não utilizou o acumulado preservado após teste de divergência de identidade';
+  IF (SELECT donations FROM player_monthly_stats WHERE month_key='2026-11' AND player_tag='#TESTA') <> 13 THEN
+    RAISE EXCEPTION 'Doações mensais: não utilizou o acumulado preservado após rejeição da divergência de identidade';
   END IF;
 END $$;
 
