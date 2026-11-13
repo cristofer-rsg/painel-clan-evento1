@@ -37,18 +37,19 @@ export default async function PerformancePage({ searchParams }: Props) {
     || b.gamesPoints - a.gamesPoints
     || a.player.localeCompare(b.player, "pt-BR")
   ).map((row, index) => ({ ...row, position: index + 1 }));
-  const eventFilter = ["war", "league", "raid"].includes(params.event || "") ? params.event! : "war";
-  const situationFilter = ["all", "attacked", "no-attack", "no-data"].includes(params.situation || "") ? params.situation! : "all";
+  const eventFilter = ["war", "league", "raid"].includes(params.event || "") ? params.event! : "";
+  const hasEventFilter = eventFilter !== "";
+  const situationFilter = hasEventFilter && ["attacked", "no-attack", "no-data"].includes(params.situation || "") ? params.situation! : "";
   const attackValue = (row: (typeof rankedRows)[number]) =>
     eventFilter === "league" ? row.lastLeagueAttacks : eventFilter === "raid" ? row.lastRaidAttacks : row.lastWarAttacks;
   const eventRows = rankedRows;
-  const activityRows = eventRows.filter(row => {
+  const activityRows = hasEventFilter ? eventRows.filter(row => {
     const attacks = attackValue(row);
     if (situationFilter === "attacked") return attacks !== null && attacks > 0;
     if (situationFilter === "no-attack") return attacks === 0;
     if (situationFilter === "no-data") return attacks === null;
     return true;
-  });
+  }) : eventRows;
   const eventCounts = {
     attacked: eventRows.filter(row => { const n = attackValue(row); return n !== null && n > 0; }).length,
     noAttack: eventRows.filter(row => attackValue(row) === 0).length,
@@ -72,10 +73,10 @@ export default async function PerformancePage({ searchParams }: Props) {
         <label htmlFor="month">Mês de referência</label><select id="month" name="month" defaultValue={data.monthKey}>{data.months.map(month => <option value={month} key={month}>{new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric", timeZone: "America/Sao_Paulo" }).format(new Date(month + "-15T12:00:00-03:00"))}</option>)}</select>
         <label htmlFor="q">Buscar jogador</label><input id="q" name="q" type="search" placeholder="Nome ou tag" defaultValue={params.q || ""}/>
         <label htmlFor="event">Evento recente</label><select id="event" name="event" defaultValue={eventFilter}>
-          <option value="war">Última Guerra</option><option value="league">Última batalha da Liga</option><option value="raid">Última Raide</option>
+          <option value="">Classificação geral</option><option value="war">Última Guerra</option><option value="league">Última batalha da Liga</option><option value="raid">Última Raide</option>
         </select>
-        <label htmlFor="situation">Situação</label><select id="situation" name="situation" defaultValue={situationFilter}>
-          <option value="all">Todas as situações</option><option value="attacked">Realizou ataques</option><option value="no-attack">Não realizou ataques</option><option value="no-data">Sem dados confiáveis</option>
+        <label htmlFor="situation">Situação</label><select id="situation" name="situation" defaultValue={situationFilter} disabled={!hasEventFilter}>
+          <option value="">Todas as situações</option><option value="attacked">Realizou ataques</option><option value="no-attack">Não realizou ataques</option><option value="no-data">Sem dados confiáveis</option>
         </select>
         <label htmlFor="order">Ordenação</label><select id="order" name="order" defaultValue={sortOrder}><option value="desc">Maior para menor</option><option value="asc">Menor para maior</option></select>
         <button type="submit">Consultar</button>
@@ -83,15 +84,15 @@ export default async function PerformancePage({ searchParams }: Props) {
       {!data.connected && <div className="connection-alert"><b>Não foi possível carregar o desempenho.</b><span>Confira a conexão do servidor com o Supabase.</span>{data.error && <small>{data.error}</small>}</div>}
       <div className="performance-period">{data.monthLabel}</div>
       <div className="performance-section-heading"><h2>Desempenho do clã</h2><span>{activeRows.length} JOGADORES</span></div>
-      <div className="performance-totals">{totals.map(metric => <article key={metric.key}><small>{metric.label}</small><b>{fmt(metric.value)}</b><span>{metric.unit}</span></article>)}</div>
-      <div className="performance-activity-summary" aria-label="Resumo do evento selecionado">
-        <article><small>Com ataques</small><b>{eventCounts.attacked}</b><span>Jogadores</span></article>
-        <article><small>Sem ataques</small><b>{eventCounts.noAttack}</b><span>Registro confirmado</span></article>
-        <article><small>Sem dados</small><b>{eventCounts.noData}</b><span>Não classificado</span></article>
-      </div>
+      {!hasEventFilter && <div className="performance-totals">{totals.map(metric => <article key={metric.key}><small>{metric.label}</small><b>{fmt(metric.value)}</b><span>{metric.unit}</span></article>)}</div>}
+      {hasEventFilter && <div className="performance-activity-summary" aria-label={`Resumo de ${eventFilter === "war" ? "última Guerra" : eventFilter === "league" ? "última batalha da Liga" : "última Raide"}`}>
+        <article className="activity-summary-attacked"><small>Com ataques</small><b>{eventCounts.attacked}</b><span>Jogadores</span></article>
+        <article className="activity-summary-no-attack"><small>Sem ataques</small><b>{eventCounts.noAttack}</b><span>Registro confirmado</span></article>
+        <article className="activity-summary-no-data"><small>Sem dados</small><b>{eventCounts.noData}</b><span>Não classificado</span></article>
+      </div>}
       <div className="performance-list">
         <div className="performance-section-heading"><h2>Desempenho dos jogadores</h2><span>{visibleRows.length} JOGADORES</span></div>
-        <p className="performance-result-count">{visibleRows.length} de {activityRows.length} jogador(es) • {eventFilter === "war" ? "Última Guerra" : eventFilter === "league" ? "Última batalha da Liga" : "Última Raide"}</p>
+        <p className="performance-result-count">{visibleRows.length} de {activityRows.length} jogador(es){hasEventFilter ? ` • ${eventFilter === "war" ? "Última Guerra" : eventFilter === "league" ? "Última batalha da Liga" : "Última Raide"}` : " • Classificação geral"}</p>
         {visibleRows.map(row => <article className="performance-card" key={row.player}>
           <div className="performance-card-head">
             <b><span className="performance-position-badge">{row.position}</span><span className="performance-player-name">{row.player}</span>{row.role && <small className="performance-leader-role">{row.role}</small>}</b>
