@@ -39,7 +39,7 @@ export default async function PerformancePage({ searchParams }: Props) {
   ).map((row, index) => ({ ...row, position: index + 1 }));
   const eventFilter = ["war", "league", "raid"].includes(params.event || "") ? params.event! : "";
   const hasEventFilter = eventFilter !== "";
-  const situationFilter = ["attacked", "no-attack", "no-data"].includes(params.situation || "") ? params.situation! : "";
+  const situationFilter = hasEventFilter && ["attacked", "no-attack", "no-data"].includes(params.situation || "") ? params.situation! : "";
   const attackValue = (row: (typeof rankedRows)[number]) =>
     eventFilter === "league" ? row.lastLeagueAttacks : eventFilter === "raid" ? row.lastRaidAttacks : row.lastWarAttacks;
   const eventRows = rankedRows;
@@ -75,7 +75,7 @@ export default async function PerformancePage({ searchParams }: Props) {
         <label htmlFor="event">Evento recente</label><select id="event" name="event" defaultValue={eventFilter}>
           <option value="">Classificação geral</option><option value="war">Última Guerra</option><option value="league">Última batalha da Liga</option><option value="raid">Última Raide</option>
         </select>
-        <label htmlFor="situation">Situação</label><select id="situation" name="situation" defaultValue={situationFilter}>
+        <label htmlFor="situation">Situação</label><select id="situation" name="situation" defaultValue={situationFilter} disabled={!hasEventFilter}>
           <option value="">Todas as situações</option><option value="attacked">Realizou ataques</option><option value="no-attack">Não realizou ataques</option><option value="no-data">Sem dados confiáveis</option>
         </select>
         <label htmlFor="order">Ordenação</label><select id="order" name="order" defaultValue={sortOrder}><option value="desc">Maior para menor</option><option value="asc">Menor para maior</option></select>
