@@ -27,8 +27,16 @@ export default async function PerformancePage({ searchParams }: Props) {
   const rankedRows = activeRows.map(row => {
     const role = leadershipTags.get(row.tag.trim().toUpperCase());
     return { ...row, role };
-  }).sort((a, b) => b.index - a.index || a.player.localeCompare(b.player, "pt-BR"))
-    .map((row, index) => ({ ...row, position: index + 1 }));
+  }).sort((a, b) =>
+    b.totalPoints - a.totalPoints
+    || b.warsPoints - a.warsPoints
+    || b.leaguePoints - a.leaguePoints
+    || b.raidPoints - a.raidPoints
+    || b.capitalPoints - a.capitalPoints
+    || b.donationsPoints - a.donationsPoints
+    || b.gamesPoints - a.gamesPoints
+    || a.player.localeCompare(b.player, "pt-BR")
+  ).map((row, index) => ({ ...row, position: index + 1 }));
   const visibleRows = searchTerm
     ? rankedRows.filter(row => row.player.toLocaleLowerCase("pt-BR").includes(searchTerm) || row.tag.toLocaleLowerCase("pt-BR").includes(searchTerm))
     : rankedRows;
@@ -49,7 +57,7 @@ export default async function PerformancePage({ searchParams }: Props) {
     <PublicNavigation />
     <section className="admin-content performance-content">
       <span className="auth-kicker">CONSULTA PÚBLICA • INDICADORES DO CLÃ</span><h1>Desempenho <em>mensal</em></h1>
-      <p>Consulte os números reais de participação: ataques, pontos, doações e moedas. A pontuação de balanceamento é usada somente no ranking.</p>
+      <p>Consulte os indicadores de participação e o aproveitamento calculado pela mesma pontuação e pelos mesmos critérios de desempate do ranking. Jogadores inelegíveis também aparecem nesta avaliação.</p>
       <form className="history-filter" action="/performance" method="get">
         <label htmlFor="month">Mês de referência</label><select id="month" name="month" defaultValue={data.monthKey}>{data.months.map(month => <option value={month} key={month}>{new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric", timeZone: "America/Sao_Paulo" }).format(new Date(month + "-15T12:00:00-03:00"))}</option>)}</select>
         <label htmlFor="q">Buscar jogador</label><input id="q" name="q" type="search" placeholder="Nome ou tag" defaultValue={params.q || ""}/>

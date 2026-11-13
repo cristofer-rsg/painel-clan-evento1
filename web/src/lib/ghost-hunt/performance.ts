@@ -89,15 +89,16 @@ export async function getPerformanceData(requestedMonth?: string, useManualDonat
     const players = playersResult.data || [];
     const rows = players.map((player: Player) => {
       const key = player.name.trim().toLocaleLowerCase("pt-BR");
-      const stat = (player.player_tag ? byTag.get(player.player_tag.trim().toUpperCase()) : undefined) || byName.get(key);
+      const statByTag = player.player_tag ? byTag.get(player.player_tag.trim().toUpperCase()) : undefined;
+      const statByName = byName.get(key);
+      const stat = statByTag || statByName;
       const raw = rawByPlayer.get(key) ?? { wars: 0, warAttacks: 0, league: 0, leagueAttacks: 0, raid: 0, raidAttacks: 0, donationsEvents: 0, gamesEvents: 0, capital: 0, penalties: 0 };
       const recordedDonations = Number(stat?.donations || 0);
       const donations = useManualDonationFallback && recordedDonations <= 0 ? raw.donationsEvents : recordedDonations;
-      const games = Math.max(Number(stat?.clan_games_points || 0), raw.gamesEvents);
+      const games = Math.max(Number(statByTag?.clan_games_points || 0), Number(statByName?.clan_games_points || 0), raw.gamesEvents);
       const scoring = calculatePlayerScore({
         playerName: player.name,
         events,
-        donationsTotal: donations,
         clanGamesPoints: games,
       });
       const warsPoints = scoring.wars;
