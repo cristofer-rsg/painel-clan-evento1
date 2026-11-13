@@ -12,6 +12,6 @@ INSERT INTO public.clan_war_completions (war_key, started_at, ended_at)
 VALUES (
     '#2GCGP0RQ9:20261112T090651.000Z',
     '2026-11-12T09:06:51Z',
-    '2026-11-13T00:00:00Z'
+    now()
 )
 ON CONFLICT (war_key) DO NOTHING;
