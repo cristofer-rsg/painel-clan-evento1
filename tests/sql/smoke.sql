@@ -200,5 +200,139 @@ DO $$ BEGIN
   END IF;
 END $$;
 
+
+-- Expanded negative-path, atomicity and payload-integrity tests.
+
+-- League: an invalid later item must roll back an earlier valid item in the same call.
+DO $
+DECLARE rejected boolean := false;
+BEGIN
+  BEGIN
+    PERFORM public.record_clash_league_events(
+      '[{"source_key":"atomic-league-ok","player_tag":"#TESTA","player":"Teste Alpha","war_key":"w-atomic","activity":"atomic league first","points":5},
+        {"source_key":"","player_tag":"#TESTA","player":"Teste Alpha","war_key":"w-atomic","activity":"atomic league invalid","points":5}]'::jsonb
+    );
+  EXCEPTION WHEN OTHERS THEN rejected := true;
+  END;
+  IF NOT rejected THEN RAISE EXCEPTION 'Liga: aceitou lote com item inválido'; END IF;
+  IF EXISTS (SELECT 1 FROM events WHERE activity='atomic league first')
+     OR EXISTS (SELECT 1 FROM clash_league_automation WHERE source_key='atomic-league-ok') THEN
+    RAISE EXCEPTION 'Liga: lote inválido deixou gravação parcial';
+  END IF;
+END $;
+
+-- Donations: a negative later item must roll back the first player's write.
+DO $
+DECLARE rejected boolean := false;
+BEGIN
+  BEGIN
+    PERFORM public.sync_clash_donations('2026-10',
+      '[{"player_tag":"#TESTA","player":"Teste Alpha","donations":9},
+        {"player_tag":"#TESTB","player":"Teste Beta","donations":-1}]'::jsonb
+    );
+  EXCEPTION WHEN OTHERS THEN rejected := true;
+  END;
+  IF NOT rejected THEN RAISE EXCEPTION 'Doações: aceitou valor negativo'; END IF;
+  IF EXISTS (SELECT 1 FROM clash_donation_totals WHERE month_key='2026-10') THEN
+    RAISE EXCEPTION 'Doações: lote inválido deixou acumulado parcial';
+  END IF;
+END $;
+
+-- Manual Clan Games baseline: a duplicate tag in one snapshot must not leave a partial baseline.
+DO $
+DECLARE rejected boolean := false;
+BEGIN
+  BEGIN
+    PERFORM public.start_clash_games_tracking('2026-10',
+      '[{"player_tag":"#TESTA","player":"Teste Alpha","achievement_value":10},
+        {"player_tag":"#TESTA","player":"Teste Alpha","achievement_value":20}]'::jsonb
+    );
+  EXCEPTION WHEN OTHERS THEN rejected := true;
+  END;
+  IF NOT rejected THEN RAISE EXCEPTION 'Jogos do Clã: aceitou tag duplicada no baseline'; END IF;
+  IF EXISTS (SELECT 1 FROM clash_games_tracking WHERE month_key='2026-10') THEN
+    RAISE EXCEPTION 'Jogos do Clã: baseline duplicado deixou gravação parcial';
+  END IF;
+END $;
+
+-- Monthly sources: invalid later row must reject the entire batch before writes.
+DO $
+DECLARE rejected boolean := false;
+BEGIN
+  BEGIN
+    PERFORM public.sync_player_monthly_stat_sources(
+      '[{"month_key":"2026-11","source_key":"atomic-source-ok","player_tag":"#TESTA","player":"Teste Alpha","war_attacks":1,"league_attacks":0,"raid_attacks":0},
+        {"month_key":"2026-11","source_key":"atomic-source-bad","player_tag":"#TESTB","player":"Teste Beta","war_attacks":-1,"league_attacks":0,"raid_attacks":0}]'::jsonb
+    );
+  EXCEPTION WHEN OTHERS THEN rejected := true;
+  END;
+  IF NOT rejected THEN RAISE EXCEPTION 'Fontes mensais: aceitou ataque negativo'; END IF;
+  IF EXISTS (SELECT 1 FROM player_monthly_stat_sources WHERE source_key IN ('atomic-source-ok','atomic-source-bad')) THEN
+    RAISE EXCEPTION 'Fontes mensais: lote inválido deixou gravação parcial';
+  END IF;
+END $;
+
+-- Monthly sources: duplicate source keys in one payload must be rejected atomically.
+DO $
+DECLARE rejected boolean := false;
+BEGIN
+  BEGIN
+    PERFORM public.sync_player_monthly_stat_sources(
+      '[{"month_key":"2026-11","source_key":"duplicate-source","player_tag":"#TESTA","player":"Teste Alpha","war_attacks":1,"league_attacks":0,"raid_attacks":0},
+        {"month_key":"2026-11","source_key":"duplicate-source","player_tag":"#TESTA","player":"Teste Alpha","war_attacks":2,"league_attacks":0,"raid_attacks":0}]'::jsonb
+    );
+  EXCEPTION WHEN OTHERS THEN rejected := true;
+  END;
+  IF NOT rejected THEN RAISE EXCEPTION 'Fontes mensais: aceitou chave de origem duplicada'; END IF;
+  IF EXISTS (SELECT 1 FROM player_monthly_stat_sources WHERE source_key='duplicate-source') THEN
+    RAISE EXCEPTION 'Fontes mensais: chave duplicada deixou gravação parcial';
+  END IF;
+END $;
+
+-- Monthly donation projection rejects duplicate player tags and invalid calendar months.
+DO $
+DECLARE rejected_duplicate boolean := false; rejected_month boolean := false;
+BEGIN
+  BEGIN
+    PERFORM public.sync_player_monthly_donations('2026-11',
+      '[{"player_tag":"#TESTA","player":"Teste Alpha","donations":1},
+        {"player_tag":"#TESTA","player":"Teste Alpha","donations":2}]'::jsonb
+    );
+  EXCEPTION WHEN OTHERS THEN rejected_duplicate := true;
+  END;
+  BEGIN
+    PERFORM public.sync_player_monthly_donations('2026-13','[]'::jsonb);
+  EXCEPTION WHEN OTHERS THEN rejected_month := true;
+  END;
+  IF NOT rejected_duplicate OR NOT rejected_month THEN
+    RAISE EXCEPTION 'Doações mensais: não rejeitou duplicidade ou mês impossível';
+  END IF;
+END $;
+
+-- Capital: negative totals must not create snapshots or points.
+DO $
+DECLARE rejected boolean := false;
+BEGIN
+  BEGIN
+    PERFORM public.sync_capital_gold_contribution('#TESTA','Teste Alpha',-1);
+  EXCEPTION WHEN OTHERS THEN rejected := true;
+  END;
+  IF NOT rejected THEN RAISE EXCEPTION 'Capital: aceitou total negativo'; END IF;
+  IF EXISTS (SELECT 1 FROM capital_gold_sync_snapshots WHERE player_tag='#TESTA' AND api_total < 0) THEN
+    RAISE EXCEPTION 'Capital: gravou total negativo';
+  END IF;
+END $;
+
+-- Monthly Clan Games projection rejects impossible calendar months.
+DO $
+DECLARE rejected boolean := false;
+BEGIN
+  BEGIN
+    PERFORM public.sync_player_monthly_clan_games('2026-13');
+  EXCEPTION WHEN OTHERS THEN rejected := true;
+  END;
+  IF NOT rejected THEN RAISE EXCEPTION 'Projeção de Jogos do Clã: aceitou mês impossível'; END IF;
+END $;
+
 -- Explicitly verify all test writes are discarded.
 ROLLBACK;
