@@ -86,7 +86,7 @@ export default async function PerformancePage({ searchParams }: Props) {
       {hasEventFilter && <div className="performance-activity-summary" aria-label={`Resumo de ${eventFilter === "war" ? "última Guerra" : eventFilter === "league" ? "última batalha da Liga" : "última Raide"}`}>
         <article className="activity-summary-attacked"><small>Com ataques</small><b>{eventCounts.attacked}</b><span>Jogadores</span></article>
         <article className="activity-summary-no-attack"><small>Sem ataques</small><b>{eventCounts.noAttack}</b><span>Registro confirmado</span></article>
-        <article className="activity-summary-no-data"><small>Sem dados</small><b>{eventCounts.noData}</b><span>Não classificado</span></article>
+        <article className="activity-summary-no-data"><small>{eventFilter === "war" ? "Fora da guerra" : "Sem dados"}</small><b>{eventCounts.noData}</b><span>{eventFilter === "war" ? "Não participaram" : "Não classificado"}</span></article>
       </div>}
       <div className="performance-list">
         <div className="performance-section-heading"><h2>Desempenho dos jogadores</h2><span>{visibleRows.length} JOGADORES</span></div>
@@ -97,7 +97,7 @@ export default async function PerformancePage({ searchParams }: Props) {
             <div className="performance-card-head">
               <b><span className="performance-position-badge">{row.position}</span><span className="performance-player-name">{row.player}</span>{row.role && <small className="performance-leader-role">{row.role}</small>}</b>
               {hasEventFilter
-                ? <span className={attacks === null ? "performance-event-inline no-data" : attacks === 0 ? "performance-event-inline no-attack" : "performance-event-inline attacked"}>{attacks === null ? "Sem dados" : `${fmt(attacks)} ${attacks === 1 ? "ataque" : "ataques"}`}</span>
+                ? <span className={attacks === null ? "performance-event-inline no-data" : attacks === 0 ? "performance-event-inline no-attack" : "performance-event-inline attacked"}>{attacks === null ? (eventFilter === "war" ? "Fora da guerra" : "Sem dados") : `${fmt(attacks)} ${attacks === 1 ? "ataque" : "ataques"}`}</span>
                 : <strong>{fmt(row.index)}%</strong>}
             </div>
             {!hasEventFilter && <>
