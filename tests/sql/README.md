@@ -1,7 +1,7 @@
 # Auditoria SQL isolada — GhostHunt
 
 ## Execução
-- GitHub Actions: https://github.com/cristofer-rsg/painel-clan-evento1/actions/runs/43344670344
+- GitHub Actions: https://github.com/cristofer-rsg/painel-clan-evento1/actions/runs/43344933173
 - PostgreSQL 16 descartável.
 - Funções carregadas a partir de `pg_get_functiondef` do projeto GhostHunt em 2026-11-13.
 - Todos os testes usam transação com `ROLLBACK`, exceto o script de concorrência, que cria e remove seus próprios dados no banco descartável.
