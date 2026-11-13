@@ -1,5 +1,5 @@
 name: SQL function tests (isolated)
-# Isolated PostgreSQL 16 suite: production SQL snapshots, negative paths and concurrency.
+# Isolated PostgreSQL 16 suite: exact production snapshots, negative paths, preservation and concurrency. 
 on:
   pull_request:
     paths:
