@@ -311,11 +311,12 @@ BEGIN
     IF jsonb_typeof(p_sources) <> 'array' THEN
         RAISE EXCEPTION 'p_sources precisa ser uma lista JSON';
     END IF;
-
-
-    IF EXISTS (SELECT 1 FROM jsonb_to_recordset(p_sources) x(month_key text,source_key text,player_tag text,player text,war_attacks integer,league_attacks integer,raid_attacks integer)
+    IF EXISTS (
+      SELECT 1 FROM jsonb_to_recordset(p_sources) x(month_key text,source_key text,player_tag text,player text,war_attacks integer,league_attacks integer,raid_attacks integer)
       LEFT JOIN public.players p ON upper(trim(p.player_tag))=upper(trim(x.player_tag))
       WHERE x.month_key !~ '^[0-9]{4}-(0[1-9]|1[0-2])
+
+    INSERT INTO public.player_monthly_stat_sources (
         month_key, source_key, player_tag, player,
         war_attacks, league_attacks, raid_attacks, updated_at
     )
@@ -385,13 +386,18 @@ BEGIN
         'sources_received', jsonb_array_length(p_sources)
     );
 END;
-$function$; OR nullif(trim(x.source_key),'') IS NULL
-      OR nullif(trim(x.player_tag),'') IS NULL OR nullif(trim(x.player),'') IS NULL OR p.player_tag IS NULL
-      OR lower(trim(p.name))<>lower(trim(x.player)) OR coalesce(x.war_attacks,0)<0
-      OR coalesce(x.league_attacks,0)<0 OR coalesce(x.raid_attacks,0)<0)
-      THEN RAISE EXCEPTION 'Fontes mensais inválidas ou identidade divergente'; END IF;
-    IF EXISTS (SELECT 1 FROM jsonb_to_recordset(p_sources) x(month_key text,source_key text) GROUP BY month_key,source_key HAVING count(*)>1)
-      THEN RAISE EXCEPTION 'Fonte mensal duplicada no lote'; END IF;
+$function$;
+         OR nullif(trim(x.source_key),'') IS NULL OR nullif(trim(x.player_tag),'') IS NULL
+         OR nullif(trim(x.player),'') IS NULL OR p.player_tag IS NULL
+         OR lower(trim(p.name))<>lower(trim(x.player))
+         OR coalesce(x.war_attacks,0)<0 OR coalesce(x.league_attacks,0)<0 OR coalesce(x.raid_attacks,0)<0
+    ) THEN RAISE EXCEPTION 'Fontes mensais inválidas ou identidade divergente'; END IF;
+    IF EXISTS (
+      SELECT 1 FROM jsonb_to_recordset(p_sources) x(month_key text,source_key text)
+      GROUP BY month_key,source_key HAVING count(*)>1
+    ) THEN RAISE EXCEPTION 'Fonte mensal duplicada no lote'; END IF;
+
+
     INSERT INTO public.player_monthly_stat_sources (
         month_key, source_key, player_tag, player,
         war_attacks, league_attacks, raid_attacks, updated_at
