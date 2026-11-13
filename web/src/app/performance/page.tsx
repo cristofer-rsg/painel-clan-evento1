@@ -2,7 +2,7 @@ import { getPerformanceData } from "@/lib/ghost-hunt/performance";
 import PublicNavigation from "@/components/public-navigation";
 
 export const dynamic = "force-dynamic";
-type Props = { searchParams: Promise<{ month?: string; q?: string; category?: string; order?: string; activity?: string }> };
+type Props = { searchParams: Promise<{ month?: string; q?: string; order?: string; event?: string; situation?: string }> };
 function fmt(value: number) { return new Intl.NumberFormat("pt-BR").format(value); }
 const metrics = [
   { key: "wars", label: "Guerras", max: 200, unit: "Ataques", pointsKey: "warsPoints", percentKey: "warsPercent" },
@@ -37,25 +37,27 @@ export default async function PerformancePage({ searchParams }: Props) {
     || b.gamesPoints - a.gamesPoints
     || a.player.localeCompare(b.player, "pt-BR")
   ).map((row, index) => ({ ...row, position: index + 1 }));
-  const activityFilter = params.activity || "all";
-  const activityRows = rankedRows.filter(row => {
-    if (activityFilter === "war-participated") return row.lastWarAttacks > 0;
-    if (activityFilter === "war-two-attacks") return row.lastWarAttacks >= 2;
-    if (activityFilter === "league-attacked") return row.lastLeagueAttacks > 0;
-    if (activityFilter === "raid-attacked") return row.lastRaidAttacks > 0;
+  const eventFilter = ["war", "league", "raid"].includes(params.event || "") ? params.event! : "war";
+  const situationFilter = ["all", "attacked", "no-attack", "no-data"].includes(params.situation || "") ? params.situation! : "all";
+  const attackValue = (row: (typeof rankedRows)[number]) =>
+    eventFilter === "league" ? row.lastLeagueAttacks : eventFilter === "raid" ? row.lastRaidAttacks : row.lastWarAttacks;
+  const eventRows = rankedRows;
+  const activityRows = eventRows.filter(row => {
+    const attacks = attackValue(row);
+    if (situationFilter === "attacked") return attacks !== null && attacks > 0;
+    if (situationFilter === "no-attack") return attacks === 0;
+    if (situationFilter === "no-data") return attacks === null;
     return true;
   });
+  const eventCounts = {
+    attacked: eventRows.filter(row => { const n = attackValue(row); return n !== null && n > 0; }).length,
+    noAttack: eventRows.filter(row => attackValue(row) === 0).length,
+    noData: eventRows.filter(row => attackValue(row) === null).length,
+  };
   const visibleRows = searchTerm
     ? activityRows.filter(row => row.player.toLocaleLowerCase("pt-BR").includes(searchTerm) || row.tag.toLocaleLowerCase("pt-BR").includes(searchTerm))
     : activityRows;
-  const selectedMetric = metrics.find(metric => metric.key === params.category) || metrics[0];
-  const hasCategorySearch = Boolean(params.category && params.category !== "general" && metrics.some(metric => metric.key === params.category));
   const sortOrder = params.order === "asc" ? "asc" : "desc";
-  const categoryRows = [...visibleRows].sort((a, b) =>
-    sortOrder === "asc"
-      ? a[selectedMetric.key] - b[selectedMetric.key] || a.player.localeCompare(b.player, "pt-BR")
-      : b[selectedMetric.key] - a[selectedMetric.key] || a.player.localeCompare(b.player, "pt-BR")
-  );
   const totals = metrics.map(metric => ({
     ...metric,
     value: activeRows.reduce((sum, row) => sum + row[metric.key], 0),
@@ -66,28 +68,30 @@ export default async function PerformancePage({ searchParams }: Props) {
     <section className="admin-content performance-content">
       <span className="auth-kicker">CONSULTA PÚBLICA • INDICADORES DO CLÃ</span><h1>Desempenho <em>mensal</em></h1>
       <p>Consulte os indicadores de participação e o aproveitamento calculado pela mesma pontuação e pelos mesmos critérios de desempate do ranking. Jogadores inelegíveis também aparecem nesta avaliação.</p>
-      <form className="history-filter" action="/performance" method="get">
+      <form className="history-filter performance-filter" action="/performance" method="get">
         <label htmlFor="month">Mês de referência</label><select id="month" name="month" defaultValue={data.monthKey}>{data.months.map(month => <option value={month} key={month}>{new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric", timeZone: "America/Sao_Paulo" }).format(new Date(month + "-15T12:00:00-03:00"))}</option>)}</select>
         <label htmlFor="q">Buscar jogador</label><input id="q" name="q" type="search" placeholder="Nome ou tag" defaultValue={params.q || ""}/>
-        <label htmlFor="category">Classificar por categoria</label><select id="category" name="category" defaultValue={params.category || "general"}><option value="general">Geral</option>{metrics.map(metric => <option value={metric.key} key={metric.key}>{metric.label}</option>)}</select>
-        <label htmlFor="activity">Filtrar atividade recente</label><select id="activity" name="activity" defaultValue={activityFilter}>
-          <option value="all">Todas as atividades</option>
-          <option value="war-participated">Participou da última Guerra</option>
-          <option value="war-two-attacks">Fez os 2 ataques da última Guerra</option>
-          <option value="league-attacked">Atacou na última batalha da Liga</option>
-          <option value="raid-attacked">Realizou ataques na última Raide</option>
+        <label htmlFor="event">Evento recente</label><select id="event" name="event" defaultValue={eventFilter}>
+          <option value="war">Última Guerra</option><option value="league">Última batalha da Liga</option><option value="raid">Última Raide</option>
+        </select>
+        <label htmlFor="situation">Situação</label><select id="situation" name="situation" defaultValue={situationFilter}>
+          <option value="all">Todas as situações</option><option value="attacked">Realizou ataques</option><option value="no-attack">Não realizou ataques</option><option value="no-data">Sem dados confiáveis</option>
         </select>
         <label htmlFor="order">Ordenação</label><select id="order" name="order" defaultValue={sortOrder}><option value="desc">Maior para menor</option><option value="asc">Menor para maior</option></select>
         <button type="submit">Consultar</button>
       </form>
       {!data.connected && <div className="connection-alert"><b>Não foi possível carregar o desempenho.</b><span>Confira a conexão do servidor com o Supabase.</span>{data.error && <small>{data.error}</small>}</div>}
-      {!hasCategorySearch && <>
       <div className="performance-period">{data.monthLabel}</div>
       <div className="performance-section-heading"><h2>Desempenho do clã</h2><span>{activeRows.length} JOGADORES</span></div>
       <div className="performance-totals">{totals.map(metric => <article key={metric.key}><small>{metric.label}</small><b>{fmt(metric.value)}</b><span>{metric.unit}</span></article>)}</div>
+      <div className="performance-activity-summary" aria-label="Resumo do evento selecionado">
+        <article><small>Com ataques</small><b>{eventCounts.attacked}</b><span>Jogadores</span></article>
+        <article><small>Sem ataques</small><b>{eventCounts.noAttack}</b><span>Registro confirmado</span></article>
+        <article><small>Sem dados</small><b>{eventCounts.noData}</b><span>Não classificado</span></article>
+      </div>
       <div className="performance-list">
         <div className="performance-section-heading"><h2>Desempenho dos jogadores</h2><span>{visibleRows.length} JOGADORES</span></div>
-        <p className="performance-result-count">{visibleRows.length} de {activityRows.length} jogador(es)</p>
+        <p className="performance-result-count">{visibleRows.length} de {activityRows.length} jogador(es) • {eventFilter === "war" ? "Última Guerra" : eventFilter === "league" ? "Última batalha da Liga" : "Última Raide"}</p>
         {visibleRows.map(row => <article className="performance-card" key={row.player}>
           <div className="performance-card-head">
             <b><span className="performance-position-badge">{row.position}</span><span className="performance-player-name">{row.player}</span>{row.role && <small className="performance-leader-role">{row.role}</small>}</b>
@@ -103,21 +107,8 @@ export default async function PerformancePage({ searchParams }: Props) {
           {row.penalties > 0 && <small className="performance-status penalty">Penalidades: −{fmt(row.penalties)} pontos</small>}
           <small className="performance-status active">ATIVO</small>
         </article>)}
-        {!visibleRows.length && data.connected && <p>Nenhum jogador cadastrado neste mês.</p>}
+        {!visibleRows.length && data.connected && <p>Nenhum jogador corresponde aos filtros selecionados.</p>}
       </div>
-      </>}
-      {hasCategorySearch && <section className="performance-list">
-        <div className="performance-section-heading"><h2>Ranking por categoria</h2><span>{selectedMetric.label.toUpperCase()}</span></div>
-        <p className="performance-result-count">Jogadores ordenados por {selectedMetric.label.toLocaleLowerCase("pt-BR")} • {sortOrder === "desc" ? "maior para menor" : "menor para maior"}</p>
-        {categoryRows.map((row, index) => <article className="performance-card" key={`category-${row.player}`}>
-          <div className="performance-card-head">
-            <b><span className="performance-position-badge">{index + 1}</span><span className="performance-player-name">{row.player}</span>{row.role && <small className="performance-leader-role">{row.role}</small>}</b>
-            <div className="performance-stat-tile"><span className="performance-stat-icon" aria-hidden="true">{selectedMetric.key === "capital" ? "🪙" : "✦"}</span><strong className="performance-category-value"><span>{fmt(row[selectedMetric.key])}</span><small>{selectedMetric.key === "wars" || selectedMetric.key === "league" || selectedMetric.key === "raid" ? "Ataques Realizados" : selectedMetric.key === "donations" ? "Tropas Doadas" : selectedMetric.key === "capital" ? "Moedas Doadas" : "Pontos Obtidos"}</small></strong></div>
-          </div>
-          <small className="performance-status active">ATIVO</small>
-        </article>)}
-        {!categoryRows.length && data.connected && <p>Nenhum jogador encontrado para esta consulta.</p>}
-      </section>}
 
       <a className="back-link" href="/">← Voltar ao ranking</a>
     </section>

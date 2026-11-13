@@ -12,7 +12,7 @@ export type PerformanceRow = {
   warsPoints: number; leaguePoints: number; raidPoints: number; donationsPoints: number; gamesPoints: number; capitalPoints: number;
   warsPercent: number; leaguePercent: number; raidPercent: number; donationsPercent: number; gamesPercent: number; capitalPercent: number;
   totalPoints: number; index: number; penalties: number; active: boolean;
-  lastWarAttacks: number; lastLeagueAttacks: number; lastRaidAttacks: number;
+  lastWarAttacks: number | null; lastLeagueAttacks: number | null; lastRaidAttacks: number | null;
 };
 export type PerformanceData = {
   monthKey: string; monthLabel: string; months: string[]; rows: PerformanceRow[];
@@ -59,14 +59,14 @@ export async function getPerformanceData(requestedMonth?: string, useManualDonat
     const raidRows = activitySources.filter(row => /^raid:\d{4}-\d{2}-\d{2}:/.test(row.source_key));
     const latestRaidSync = raidRows.reduce((latest, row) => row.updated_at && row.updated_at > latest ? row.updated_at : latest, "");
     const latestRaidAnchor = raidRows.find(row => row.updated_at === latestRaidSync)?.source_key.match(/^raid:(\d{4}-\d{2}-\d{2}):/)?.[1] || "";
-    const lastActivityByTag = new Map<string, { war: number; league: number; raid: number }>();
+    const lastActivityByTag = new Map<string, { war: number | null; league: number | null; raid: number | null }>();
     for (const source of activitySources) {
       const tag = (source.player_tag || "").trim().toUpperCase();
       if (!tag) continue;
-      const current = lastActivityByTag.get(tag) || { war: 0, league: 0, raid: 0 };
-      if (latestWarKey && source.source_key.startsWith("war:" + latestWarKey + ":")) current.war = Number(source.war_attacks || 0);
-      if (latestLeagueKey && source.source_key.startsWith("league:" + latestLeagueKey + ":")) current.league = Number(source.league_attacks || 0);
-      if (latestRaidAnchor && source.source_key.startsWith("raid:" + latestRaidAnchor + ":")) current.raid = Number(source.raid_attacks || 0);
+      const current = lastActivityByTag.get(tag) || { war: null, league: null, raid: null };
+      if (latestWarKey && source.source_key.startsWith("war:" + latestWarKey + ":")) current.war = source.war_attacks == null ? null : Number(source.war_attacks);
+      if (latestLeagueKey && source.source_key.startsWith("league:" + latestLeagueKey + ":")) current.league = source.league_attacks == null ? null : Number(source.league_attacks);
+      if (latestRaidAnchor && source.source_key.startsWith("raid:" + latestRaidAnchor + ":")) current.raid = source.raid_attacks == null ? null : Number(source.raid_attacks);
       lastActivityByTag.set(tag, current);
     }
     const start = new Date(monthKey + "-01T00:00:00-03:00");
@@ -130,7 +130,7 @@ export async function getPerformanceData(requestedMonth?: string, useManualDonat
       const index = Math.round(totalPoints / 10);
       const latestActivity = player.player_tag ? lastActivityByTag.get(player.player_tag.trim().toUpperCase()) : undefined;
       return {
-        player: player.name, tag: player.player_tag || "", lastWarAttacks: latestActivity?.war || 0, lastLeagueAttacks: latestActivity?.league || 0, lastRaidAttacks: latestActivity?.raid || 0, wars: stat?.war_attacks == null ? raw.warAttacks : Number(stat.war_attacks), league: raw.leagueAttacks, raid: raw.raidAttacks,
+        player: player.name, tag: player.player_tag || "", lastWarAttacks: latestActivity?.war ?? null, lastLeagueAttacks: latestActivity?.league ?? null, lastRaidAttacks: latestActivity?.raid ?? null, wars: stat?.war_attacks == null ? raw.warAttacks : Number(stat.war_attacks), league: raw.leagueAttacks, raid: raw.raidAttacks,
         donations, games, capital: raw.capital,
         warsPoints, leaguePoints, raidPoints, donationsPoints, gamesPoints, capitalPoints,
         warsPercent: Math.round(warsPoints / 200 * 100), leaguePercent: Math.round(leaguePoints / 200 * 100),
