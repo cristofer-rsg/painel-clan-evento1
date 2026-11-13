@@ -63,7 +63,7 @@ DO $ BEGIN
   IF (SELECT count(*) FROM clash_donation_events WHERE month_key='2026-11' AND player_tag='#TESTA') <> 1 THEN
     RAISE EXCEPTION 'Doações: vínculo automático duplicado';
   END IF;
-END $;
+END $$;
 
 -- Identity audit against the exact production definitions.
 -- The first three checks deliberately record current unsafe behavior as findings;
