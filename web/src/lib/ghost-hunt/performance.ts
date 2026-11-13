@@ -54,7 +54,13 @@ export async function getPerformanceData(requestedMonth?: string, useManualDonat
       ? requestedMonth : fallbackMonth;
     const stats = allStats.filter(row => row.month_key === monthKey);
     // Fontes individuais mais recentes; bônus mensal da Liga não é batalha.
-    const latestWarKey = activitySources.map(row => row.source_key.match(/^war:(#[^:]+:\d{8}T\d{6}\.\d+Z):/)?.[1] || "").sort().at(-1) || "";
+    const { data: completedWars, error: completedWarsError } = await db
+      .from("clan_war_completions")
+      .select("war_key, ended_at")
+      .order("ended_at", { ascending: false })
+      .limit(1);
+    if (completedWarsError) throw completedWarsError;
+    const latestWarKey = completedWars?.[0]?.war_key || "";
     const latestLeagueDay = activitySources.map(row => row.source_key.match(/^league:(\d{8})T\d{6}\.\d+Z:/)?.[1] || "").sort().at(-1) || "";
     const latestLeagueStartDay = latestLeagueDay
       ? new Date(Date.UTC(Number(latestLeagueDay.slice(0, 4)), Number(latestLeagueDay.slice(4, 6)) - 1, Number(latestLeagueDay.slice(6, 8)) - 6)).toISOString().slice(0, 10).replace(/-/g, "")
