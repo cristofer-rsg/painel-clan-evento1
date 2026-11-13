@@ -29,6 +29,18 @@ BEGIN
   END IF;
 END $$;
 
+-- War automation identity probe: production function trusts player name, not the tag.
+DO $
+BEGIN
+  PERFORM public.record_clash_war_events(
+    '[{"source_key":"war-identity-mismatch","war_key":"war-test","player_tag":"#TESTA","player":"Teste Beta","category":"Guerras","activity":"War identity mismatch","points":5}]'::jsonb
+  );
+  IF NOT EXISTS (SELECT 1 FROM events WHERE activity='War identity mismatch' AND player='Teste Beta') THEN
+    RAISE EXCEPTION 'Auditoria Guerras: divergência de tag/nome não reproduzida';
+  END IF;
+  RAISE NOTICE 'FINDING: record_clash_war_events aceita tag #TESTA com nome Teste Beta.';
+END $;
+
 -- Weekend Raid: awards, replay, inactive players, invalid payload and monthly cap.
 SELECT public.apply_automatic_raid_points(
  '[{"player":"Teste Alpha","player_tag":"#TESTA","weekend_key":"2026-11-07","month_key":"2026-11","attacks":5,"weekend_label":"Fim de semana teste"}]'::jsonb
