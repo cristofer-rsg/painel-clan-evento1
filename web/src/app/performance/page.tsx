@@ -91,7 +91,7 @@ export default async function PerformancePage({ searchParams }: Props) {
             <b><span className="performance-position-badge">{index + 1}</span><span className="performance-player-name">{row.player}</span>{row.role && <small className="performance-leader-role">{row.role}</small>}</b>
             <div className="performance-stat-tile"><span className="performance-stat-icon" aria-hidden="true">{selectedMetric.key === "capital" ? "🪙" : "✦"}</span><strong className="performance-category-value"><span>{fmt(row[selectedMetric.key])}</span><small>{selectedMetric.key === "wars" || selectedMetric.key === "league" || selectedMetric.key === "raid" ? "Ataques Realizados" : selectedMetric.key === "donations" ? "Tropas Doadas" : selectedMetric.key === "capital" ? "Moedas Doadas" : "Pontos Obtidos"}</small></strong></div>
           </div>
-          <small className="performance-status active">ATIVO {row.tag}</small>
+          <small className="performance-status active">ATIVO</small>
         </article>)}
         {!categoryRows.length && data.connected && <p>Nenhum jogador encontrado para esta consulta.</p>}
       </section>}
