@@ -1,7 +1,9 @@
 import "server-only";
 import { createSupabaseAdmin } from "@/lib/supabase/admin";
+import { calculatePlayerScore, isRankingEligible } from "@/lib/ghost-hunt/scoring";
 
-type Player = { name: string; player_tag: string | null; eligible: string | null; whatsapp: string | null };
+type Player = { name: string; player_tag: string | null; eligible: string | null; whatsapp: string | null; active?: boolean | null };
+type MonthlyStat = { player_tag: string | null; player: string | null; clan_games_points: number | null };
 type EventRow = { id: number; player: string; category: string; activity: string; points: number; created_at: string };
 export type HistoryRanking = { position: number; player: string; eligible: string; whatsapp: string; wars: number; league: number; donations: number; games: number; raid: number; capitalPoints: number; penalties: number; total: number };
 export type HistoryData = { month: string; months: string[]; ranking: HistoryRanking[]; events: EventRow[]; snapshot: boolean; error?: string };
@@ -27,31 +29,31 @@ async function pages<T>(query: any): Promise<T[]> {
   }
   return result;
 }
-function calculate(players: Player[], events: EventRow[]): HistoryRanking[] {
-  const excludedLeaderTags = new Set(["#L8GV8C2Y", "#P8CCGYU0", "#QU0GC0VLU", "#9CLLGV8CC"]);
-  players = players.filter(player => !excludedLeaderTags.has((player.player_tag || "").trim().toUpperCase()));
-  const totals = new Map<string, { wars: number; league: number; donated: number; games: number; raid: number; capital: number; penalties: number }>();
-  for (const event of events) {
-    if (!event.player) continue;
-    const b = totals.get(event.player) || { wars: 0, league: 0, donated: 0, games: 0, raid: 0, capital: 0, penalties: 0 };
-    const points = Number(event.points || 0), category = (event.category || "").trim().toLocaleLowerCase("pt-BR"), activity = event.activity || "";
-    if (points < 0) b.penalties += Math.abs(points);
-    else if (category === "guerras") b.wars += points;
-    else if (category === "liga dos clãs") b.league += points;
-    else if (category === "doações" && activity.startsWith("TROPAS_DOADAS:")) b.donated += Math.max(0, points);
-    else if (category === "jogos do clã") b.games = Math.max(b.games, points);
-    else if (category === "raide de fim de semana") b.raid += points;
-    else if (category === "capital do clã") b.capital += points;
-    totals.set(event.player, b);
-  }
-  return players.map(player => {
-    const b = totals.get(player.name) || { wars: 0, league: 0, donated: 0, games: 0, raid: 0, capital: 0, penalties: 0 };
-    const eligible = (player.eligible || "Elegível") === "Elegível" && (player.whatsapp || "Sim") === "Sim";
+function calculate(players: Player[], events: EventRow[], stats: MonthlyStat[] = []): HistoryRanking[] {
+  const gamesByTag = new Map(stats.filter(row => row.player_tag).map(row => [String(row.player_tag).trim().toUpperCase(), Number(row.clan_games_points || 0)]));
+  const gamesByName = new Map(stats.filter(row => row.player).map(row => [String(row.player).trim().toLocaleLowerCase("pt-BR"), Number(row.clan_games_points || 0)]));
+  return players.filter(isRankingEligible).map(player => {
+    const scoring = calculatePlayerScore({
+      playerName: player.name,
+      events,
+      clanGamesPoints: Math.max(
+        gamesByTag.get((player.player_tag || "").trim().toUpperCase()) ?? 0,
+        gamesByName.get(player.name.trim().toLocaleLowerCase("pt-BR")) ?? 0,
+      ),
+    });
     return {
-      position: 0, player: player.name, eligible: player.eligible || "Elegível", whatsapp: player.whatsapp || "Sim",
-      wars: b.wars, league: b.league, donations: Math.min(50, Math.floor(b.donated / 100)),
-      games: Math.min(25, b.games), raid: b.raid, capitalPoints: Math.floor(b.capital / 2500), penalties: b.penalties,
-      total: eligible ? Math.max(0, b.wars + b.league + Math.min(50, Math.floor(b.donated / 100)) + Math.min(25, b.games) + b.raid + Math.floor(b.capital / 2500) - b.penalties) : 0,
+      position: 0,
+      player: player.name,
+      eligible: player.eligible || "Elegível",
+      whatsapp: player.whatsapp || "Não",
+      wars: scoring.wars,
+      league: scoring.league,
+      donations: scoring.donations,
+      games: scoring.games,
+      raid: scoring.raid,
+      capitalPoints: scoring.capitalPoints,
+      penalties: scoring.penalties,
+      total: scoring.total,
     };
   }).sort((a, b) => b.total - a.total || b.wars - a.wars || b.league - a.league || b.raid - a.raid || b.capitalPoints - a.capitalPoints || b.donations - a.donations || b.games - a.games || a.player.localeCompare(b.player, "pt-BR"))
     .map((row, i) => ({ ...row, position: i + 1 }));
@@ -75,9 +77,12 @@ export async function getHistoryData(requestedMonth?: string): Promise<HistoryDa
       }));
       return { month, months, ranking, events, snapshot: true };
     }
-    const { data: players, error: playerError } = await db.from("players").select("name,player_tag,eligible,whatsapp").order("name", { ascending: true });
+    const [{ data: players, error: playerError }, stats] = await Promise.all([
+      db.from("players").select("name,player_tag,eligible,whatsapp,active").order("name", { ascending: true }),
+      pages<MonthlyStat>(db.from("player_monthly_stats").select("player_tag,player,clan_games_points").eq("month_key", month)),
+    ]);
     if (playerError) throw playerError;
-    return { month, months, ranking: calculate((players || []) as Player[], events), events, snapshot: false };
+    return { month, months, ranking: calculate((players || []) as Player[], events, stats), events, snapshot: false };
   } catch (error) {
     return { month: requestedMonth || currentMonth(), months: [currentMonth()], ranking: [], events: [], snapshot: false, error: error instanceof Error ? error.message : "Falha ao carregar histórico." };
   }
@@ -110,11 +115,13 @@ export async function archivePreviousMonthIfNeeded(): Promise<boolean> {
     .order("created_at", { ascending: false }));
   if (!events.length) return false;
 
-  const players = await pages<Player>(db.from("players")
-    .select("name,player_tag,eligible,whatsapp").order("name", { ascending: true }));
+  const [players, stats] = await Promise.all([
+    pages<Player>(db.from("players").select("name,player_tag,eligible,whatsapp,active").order("name", { ascending: true })),
+    pages<MonthlyStat>(db.from("player_monthly_stats").select("player_tag,player,clan_games_points").eq("month_key", monthKey)),
+  ]);
   if (!players.length) return false;
 
-  const ranking = calculate(players, events);
+  const ranking = calculate(players, events, stats);
   const snapshot = ranking.map(row => ({
     month_key: monthKey,
     player: row.player,
@@ -126,6 +133,7 @@ export async function archivePreviousMonthIfNeeded(): Promise<boolean> {
     donations: row.donations,
     games: row.games,
     raid: row.raid,
+    capital_points: row.capitalPoints,
     penalties: row.penalties,
     total: row.total,
   }));

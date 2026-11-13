@@ -1,5 +1,6 @@
 import "server-only";
 import { createSupabaseAdmin } from "@/lib/supabase/admin";
+import { calculatePlayerScore, isRankingEligible } from "@/lib/ghost-hunt/scoring";
 
 type PlayerRow = {
   name: string;
@@ -8,6 +9,7 @@ type PlayerRow = {
   whatsapp: string | null;
   active: boolean | null;
 };
+type MonthlyStat = { player_tag: string | null; player: string | null; clan_games_points: number | null };
 type EventRow = {
   id: number;
   player: string | null;
@@ -62,7 +64,7 @@ export async function getPlayerProfile(tag: string): Promise<PlayerProfile | nul
   if (player.active === false) return null;
   const monthKey = currentMonth();
   const bounds = monthBounds(monthKey);
-  const [recentResult, events] = await Promise.all([
+  const [recentResult, events, monthlyStatsResult] = await Promise.all([
     db.from("events").select("id,player,category,activity,points,created_at")
       .eq("player", player.name).order("created_at", { ascending: false }).limit(30),
     (async () => {
@@ -79,26 +81,24 @@ export async function getPlayerProfile(tag: string): Promise<PlayerProfile | nul
       }
       return rows;
     })(),
+    db.from("player_monthly_stats").select("player_tag,player,clan_games_points")
+      .eq("month_key", monthKey),
   ]);
   if (recentResult.error) throw new Error("Não foi possível carregar o histórico de pontuação.");
+  if (monthlyStatsResult.error) throw new Error("Não foi possível carregar as estatísticas mensais.");
   const recentEvents = (recentResult.data || []) as EventRow[];
-  let wars = 0, league = 0, donatedTroops = 0, games = 0, raid = 0, capitalCoins = 0, penalties = 0;
-  for (const event of events) {
-    const points = Number(event.points || 0);
-    const category = (event.category || "").trim().toLocaleLowerCase("pt-BR");
-    const activity = event.activity || "";
-    if (points < 0) penalties += Math.abs(points);
-    else if (category === "guerras") wars += points;
-    else if (category === "liga dos clãs") league += points;
-    else if (category === "doações" && activity.startsWith("TROPAS_DOADAS:")) donatedTroops += Math.max(0, points);
-    else if (category === "jogos do clã") games = Math.max(games, points);
-    else if (category === "raide de fim de semana") raid += points;
-    else if (category === "capital do clã") capitalCoins += points;
-  }
-  const donations = Math.min(50, Math.floor(donatedTroops / 100));
-  games = Math.min(25, games);
-  const eligible = (player.eligible || "Elegível") === "Elegível" && (player.whatsapp || "Sim") === "Sim";
-  const total = eligible ? Math.max(0, wars + league + donations + games + raid + Math.floor(capitalCoins / 2500) - penalties) : 0;
+  const matchingStat = ((monthlyStatsResult.data || []) as MonthlyStat[]).find((row) =>
+    (row.player_tag || "").trim().toUpperCase() === player.player_tag.trim().toUpperCase()
+    || (row.player || "").trim().toLocaleLowerCase("pt-BR") === player.name.trim().toLocaleLowerCase("pt-BR")
+  );
+  const eligible = isRankingEligible(player);
+  const scoring = calculatePlayerScore({
+    playerName: player.name,
+    events,
+    clanGamesPoints: matchingStat?.clan_games_points ?? 0,
+  });
+  const { wars, league, donations, games, raid, capitalCoins, penalties } = scoring;
+  const total = eligible ? scoring.total : 0;
   const monthLabel = new Intl.DateTimeFormat("pt-BR", {
     month: "long", year: "numeric", timeZone: "America/Sao_Paulo",
   }).format(new Date(monthKey + "-15T12:00:00-03:00"));

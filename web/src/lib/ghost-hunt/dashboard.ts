@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createSupabaseAdmin } from "@/lib/supabase/admin";
+import { calculatePlayerScore, isRankingEligible } from "@/lib/ghost-hunt/scoring";
 
 type Player = {
   name: string;
@@ -20,18 +21,6 @@ type EventRow = {
   created_at: string;
 };
 
-const WEIGHTS = {
-  wars: { target: 200, max: 200 },
-  league: { target: 140, max: 200 },
-  raid: { target: 32, max: 150 },
-  donations: { target: 10000, max: 150 },
-  games: { target: 10000, max: 100 },
-  capital: { target: 250000, max: 200 },
-} as const;
-
-function score(raw: number, target: number, max: number) {
-  return Math.round(Math.min(Math.max(raw, 0) / target, 1) * max);
-}
 
 export type RankingRow = {
   position: number;
@@ -135,61 +124,31 @@ export async function getDashboardData(): Promise<DashboardData> {
       .order("entered_at", { ascending: false }).limit(3);
     const recentMembers = recentResult.error ? [] : (recentResult.data ?? []).map((row) => ({ player_name: row.player_name, player_tag: row.player_tag, first_seen_at: row.entered_at })) as RecentMember[];
 
-    const players = ((playerData ?? []) as Player[]).filter((player) => player.active !== false && (player.whatsapp ?? "Não") === "Sim");
-    const excludedLeaderTags = new Set(["#L8GV8C2Y", "#P8CCGYU0", "#QU0GC0VLU", "#9CLLGV8CC"]);
-    const competitors = players.filter((player) => !excludedLeaderTags.has((player.player_tag ?? "").trim().toUpperCase()));
-    const totals = new Map<string, {
-      warsRaw: number; leagueRaw: number; donatedTroops: number;
-      gamesRaw: number; raidRaw: number; capitalCoins: number; penalties: number;
-    }>();
-
-    for (const event of events) {
-      if (!event.player) continue;
-      const bucket = totals.get(event.player) ?? {
-        warsRaw: 0, leagueRaw: 0, donatedTroops: 0, gamesRaw: 0,
-        raidRaw: 0, capitalCoins: 0, penalties: 0,
-      };
-      const points = Number(event.points ?? 0);
-      const category = (event.category ?? "").trim().toLocaleLowerCase("pt-BR");
-      const activity = (event.activity ?? "").trim();
-      if (points < 0) {
-        if (activity.toLocaleLowerCase("pt-BR").includes("fora do espelho")) bucket.penalties += 50;
-      } else if (category === "guerras") bucket.warsRaw += points;
-      else if (category === "liga dos clãs") bucket.leagueRaw += points;
-      else if (category === "doações" && activity.startsWith("TROPAS_DOADAS:")) bucket.donatedTroops += Math.max(0, points);
-      else if (category === "jogos do clã") bucket.gamesRaw = Math.max(bucket.gamesRaw, points);
-      else if (category === "raide de fim de semana") bucket.raidRaw += points;
-      else if (category === "capital do clã" && activity === "Doação automática de Ouro da Capital") bucket.capitalCoins += points;
-      totals.set(event.player, bucket);
-    }
-
+    const players = (playerData ?? []) as (Player & { eligible?: string | null })[];
+    const competitors = players.filter((player) => isRankingEligible(player));
     const ranking = competitors.map((player) => {
-      const bucket = totals.get(player.name) ?? {
-        warsRaw: 0, leagueRaw: 0, donatedTroops: 0, gamesRaw: 0,
-        raidRaw: 0, capitalCoins: 0, penalties: 0,
-      };
-      const wars = score(bucket.warsRaw, WEIGHTS.wars.target, WEIGHTS.wars.max);
-      const league = score(bucket.leagueRaw, WEIGHTS.league.target, WEIGHTS.league.max);
-      const donations = score(bucket.donatedTroops, WEIGHTS.donations.target, WEIGHTS.donations.max);
-      const gamesRaw = Math.max(bucket.gamesRaw, gamesByTag.get((player.player_tag ?? "").trim().toUpperCase()) ?? 0, gamesByName.get(player.name.trim().toLocaleLowerCase("pt-BR")) ?? 0);
-      const games = score(gamesRaw, WEIGHTS.games.target, WEIGHTS.games.max);
-      const raid = score(bucket.raidRaw, WEIGHTS.raid.target, WEIGHTS.raid.max);
-      const capitalPoints = score(bucket.capitalCoins, WEIGHTS.capital.target, WEIGHTS.capital.max);
-      const totalBeforePenalty = wars + league + donations + games + raid + capitalPoints;
-      const total = Math.max(0, totalBeforePenalty - bucket.penalties);
+      const gamesRaw = Math.max(
+        gamesByTag.get((player.player_tag ?? "").trim().toUpperCase()) ?? 0,
+        gamesByName.get(player.name.trim().toLocaleLowerCase("pt-BR")) ?? 0,
+      );
+      const calculated = calculatePlayerScore({
+        playerName: player.name,
+        events,
+        clanGamesPoints: gamesRaw,
+      });
       return {
         position: 0,
         player: player.name,
         tag: player.player_tag || "",
-        total,
-        wars,
-        league,
-        donations,
-        games,
-        raid,
-        capitalCoins: bucket.capitalCoins,
-        capitalPoints,
-        penalties: bucket.penalties,
+        total: calculated.total,
+        wars: calculated.wars,
+        league: calculated.league,
+        donations: calculated.donations,
+        games: calculated.games,
+        raid: calculated.raid,
+        capitalCoins: calculated.capitalCoins,
+        capitalPoints: calculated.capitalPoints,
+        penalties: calculated.penalties,
         eligible: true,
         eligibilityStatus: "Elegível",
         whatsapp: player.whatsapp ?? "Sim",
