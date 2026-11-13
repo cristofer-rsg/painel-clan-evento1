@@ -22,6 +22,8 @@ type EventRow = {
 };
 
 
+export type RankingPenaltyDetail = { category: string; description: string; points: number };
+
 export type RankingRow = {
   position: number;
   player: string;
@@ -35,6 +37,7 @@ export type RankingRow = {
   capitalCoins: number;
   capitalPoints: number;
   penalties: number;
+  penaltyDetails: RankingPenaltyDetail[];
   eligible: boolean;
   eligibilityStatus: string;
   whatsapp: string;
@@ -149,6 +152,17 @@ export async function getDashboardData(): Promise<DashboardData> {
         capitalCoins: calculated.capitalCoins,
         capitalPoints: calculated.capitalPoints,
         penalties: calculated.penalties,
+        penaltyDetails: events
+          .filter((event) => (event.player ?? "").trim().toLocaleLowerCase("pt-BR") === player.name.trim().toLocaleLowerCase("pt-BR")
+            && Number(event.points ?? 0) < 0)
+          .map((event) => ({
+            category: event.category?.trim() || "Outros",
+            description: (event.activity ?? "Motivo não informado")
+              .trim()
+              .replace(/^Penalidade:\\s*/i, "")
+              .replace(/\\s*\\([−-]\\s*\\d+\\)\\s*$/, "") || "Motivo não informado",
+            points: Math.abs(Number(event.points ?? 0)),
+          })),
         eligible: true,
         eligibilityStatus: "Elegível",
         whatsapp: player.whatsapp ?? "Sim",
