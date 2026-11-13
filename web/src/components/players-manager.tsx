@@ -1,6 +1,6 @@
 "use client";
 import { FormEvent, useEffect, useState } from "react";
-type Player = { name: string; player_tag: string | null; whatsapp: string; active: boolean };
+type Player = { name: string; player_tag: string | null; whatsapp: string; eligible: string; active: boolean };
 function playerKey(player: Player) { return player.player_tag || player.name; }
 export default function PlayersManager() {
   const [players, setPlayers] = useState<Player[]>([]);
@@ -39,7 +39,7 @@ export default function PlayersManager() {
   async function save(player: Player) {
     setSaving(true); setMessage("");
     try {
-      const response = await fetch("/api/admin/players", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: player.name, player_tag: player.player_tag, whatsapp: player.whatsapp }) });
+      const response = await fetch("/api/admin/players", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: player.name, player_tag: player.player_tag, whatsapp: player.whatsapp, eligible: player.eligible }) });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Falha ao atualizar.");
       setMessage("Cadastro de " + player.name + " atualizado."); await load();
@@ -75,6 +75,7 @@ export default function PlayersManager() {
       <div className="manager-fields">
         
         <label>Está no grupo do WhatsApp?<select value={player.whatsapp || "Não"} onChange={e => setPlayers(rows => rows.map(row => playerKey(row) === playerKey(player) ? { ...row, whatsapp: e.target.value } : row))}><option>Sim</option><option>Não</option></select></label>
+        <label>Elegibilidade para premiação<select value={player.eligible || "Inelegível"} onChange={e => setPlayers(rows => rows.map(row => playerKey(row) === playerKey(player) ? { ...row, eligible: e.target.value } : row))}><option>Elegível</option><option>Inelegível</option></select></label>
       </div>
       <div className="manager-player-actions"><button className="manager-save" type="button" disabled={saving} onClick={() => void save(player)}>Salvar alterações</button><button className="manager-delete" type="button" disabled={saving} onClick={() => void remove(player)}>Excluir jogador</button></div>
     </article>)}{!filteredPlayers.length && <p className="manager-empty">Nenhum jogador encontrado com esses filtros.</p>}</div>}
