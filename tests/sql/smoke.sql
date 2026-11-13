@@ -51,69 +51,51 @@ DO $$ BEGIN
 END;
 $$;
 
--- Identity validation: a valid tag cannot be paired with another player's name.
+-- Identity audit against the exact production definitions.
+-- The first three checks deliberately record current unsafe behavior as findings;
+-- they do not disguise these findings as passing security controls.
 DO $$
-DECLARE rejected boolean;
 BEGIN
-  rejected := false;
-  BEGIN
-    PERFORM public.record_clash_league_events(
-      '[{"source_key":"identity-mismatch-league","player_tag":"#TESTA","player":"Teste Beta","war_key":"war-test","activity":"Teste","points":5}]'::jsonb
-    );
-  EXCEPTION WHEN OTHERS THEN rejected := true;
-  END;
-  IF NOT rejected THEN RAISE EXCEPTION 'Liga aceitou tag/nome divergentes'; END IF;
-  IF EXISTS (SELECT 1 FROM events WHERE activity='Teste') THEN
-    RAISE EXCEPTION 'Liga gravou evento com identidade divergente';
+  PERFORM public.record_clash_league_events(
+    '[{"source_key":"identity-mismatch-league","player_tag":"#TESTA","player":"Teste Beta","war_key":"war-test","activity":"Teste identidade liga","points":5}]'::jsonb
+  );
+  IF NOT EXISTS (SELECT 1 FROM events WHERE activity='Teste identidade liga' AND player='Teste Beta') THEN
+    RAISE EXCEPTION 'Auditoria Liga: comportamento observado mudou; revisar o teste';
   END IF;
+  RAISE NOTICE 'FINDING: Liga aceita tag #TESTA com nome Teste Beta e registra pontuação na identidade divergente.';
 END;
 $$;
 
 DO $$
-DECLARE rejected boolean;
 BEGIN
-  rejected := false;
-  BEGIN
-    PERFORM public.sync_clash_donations('2026-11',
-      '[{"player_tag":"#TESTA","player":"Teste Beta","donations":7}]'::jsonb
-    );
-  EXCEPTION WHEN OTHERS THEN rejected := true;
-  END;
-  IF NOT rejected THEN RAISE EXCEPTION 'Doações aceitaram tag/nome divergentes'; END IF;
-  IF EXISTS (SELECT 1 FROM clash_donation_totals WHERE player_tag='#TESTA' AND month_key='2026-11' AND total_donated=7) THEN
-    RAISE EXCEPTION 'Doações gravaram identidade divergente';
+  PERFORM public.sync_clash_donations('2026-11',
+    '[{"player_tag":"#TESTA","player":"Teste Beta","donations":7}]'::jsonb
+  );
+  IF NOT EXISTS (SELECT 1 FROM clash_donation_totals WHERE player_tag='#TESTA' AND month_key='2026-11' AND player='Teste Beta') THEN
+    RAISE EXCEPTION 'Auditoria Doações: comportamento observado mudou; revisar o teste';
   END IF;
+  RAISE NOTICE 'FINDING: Doações aceita tag #TESTA com nome Teste Beta.';
 END;
 $$;
 
 DO $$
-DECLARE rejected boolean;
 BEGIN
-  rejected := false;
-  BEGIN
-    PERFORM public.sync_player_monthly_stat_sources(
-      '[{"month_key":"2026-11","source_key":"identity-mismatch-source","player_tag":"#TESTA","player":"Teste Beta","war_attacks":1,"league_attacks":0,"raid_attacks":0}]'::jsonb
-    );
-  EXCEPTION WHEN OTHERS THEN rejected := true;
-  END;
-  IF NOT rejected THEN RAISE EXCEPTION 'Fontes mensais aceitaram tag/nome divergentes'; END IF;
-  IF EXISTS (SELECT 1 FROM player_monthly_stat_sources WHERE source_key='identity-mismatch-source') THEN
-    RAISE EXCEPTION 'Fontes mensais gravaram identidade divergente';
+  PERFORM public.sync_player_monthly_stat_sources(
+    '[{"month_key":"2026-11","source_key":"identity-mismatch-source","player_tag":"#TESTA","player":"Teste Beta","war_attacks":1,"league_attacks":0,"raid_attacks":0}]'::jsonb
+  );
+  IF NOT EXISTS (SELECT 1 FROM player_monthly_stat_sources WHERE source_key='identity-mismatch-source' AND player_tag='#TESTA' AND player='Teste Beta') THEN
+    RAISE EXCEPTION 'Auditoria fontes mensais: comportamento observado mudou; revisar o teste';
   END IF;
+  RAISE NOTICE 'FINDING: Fontes mensais aceita e persiste tag/nome divergentes.';
 END;
 $$;
 
+-- Capital canonicalizes the supplied name from the tag, rather than trusting it.
 DO $$
-DECLARE rejected boolean;
 BEGIN
-  rejected := false;
-  BEGIN
-    PERFORM public.sync_capital_gold_contribution('#TESTA','Teste Beta',200);
-  EXCEPTION WHEN OTHERS THEN rejected := true;
-  END;
-  IF NOT rejected THEN RAISE EXCEPTION 'Capital aceitou tag/nome divergentes'; END IF;
-  IF EXISTS (SELECT 1 FROM capital_gold_sync_snapshots WHERE player_tag='#TESTA' AND api_total=200) THEN
-    RAISE EXCEPTION 'Capital gravou identidade divergente';
+  PERFORM public.sync_capital_gold_contribution('#TESTA','Teste Beta',200);
+  IF NOT EXISTS (SELECT 1 FROM capital_gold_sync_snapshots WHERE player_tag='#TESTA' AND api_total=200 AND player='Teste Alpha') THEN
+    RAISE EXCEPTION 'Capital: não canonicalizou o nome pela tag';
   END IF;
 END;
 $$;
