@@ -2,6 +2,34 @@
 -- This file is applied only to the disposable PostgreSQL test service.
 -- It is not a migration and must never be applied to production.
 
+-- Test-only hardening helper: resolves the canonical player and rejects tag/name mismatches.
+CREATE OR REPLACE FUNCTION public.assert_player_identity(
+    p_player_tag text,
+    p_player text,
+    p_require_active boolean DEFAULT false
+) RETURNS text
+LANGUAGE plpgsql
+AS $identity$
+DECLARE
+    v_name text;
+BEGIN
+    IF p_player_tag IS NULL OR btrim(p_player_tag) = ''
+       OR p_player IS NULL OR btrim(p_player) = '' THEN
+        RAISE EXCEPTION 'Identidade do jogador incompleta.';
+    END IF;
+    SELECT p.name INTO v_name
+    FROM public.players p
+    WHERE upper(btrim(p.player_tag)) = upper(btrim(p_player_tag))
+      AND lower(btrim(p.name)) = lower(btrim(p_player))
+      AND (NOT p_require_active OR p.active = TRUE)
+    LIMIT 1;
+    IF v_name IS NULL THEN
+        RAISE EXCEPTION 'Tag e nome não correspondem a um jogador cadastrado: %.', p_player_tag;
+    END IF;
+    RETURN v_name;
+END;
+$identity$;
+
 CREATE OR REPLACE FUNCTION public.auto_sync_clash_games(p_month_key text, p_snapshot jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -316,6 +344,7 @@ BEGIN
            OR COALESCE(v_war, '') = '' THEN
             RAISE EXCEPTION 'Dados incompletos no evento';
         END IF;
+        PERFORM public.assert_player_identity(v_tag, v_player, false);
 
         IF EXISTS (
             SELECT 1 FROM public.clash_league_automation WHERE source_key = v_key
@@ -326,7 +355,7 @@ BEGIN
 
         IF NOT EXISTS (
             SELECT 1 FROM public.players p
-            WHERE p.player_tag = v_tag AND p.active = TRUE
+            WHERE upper(btrim(p.player_tag)) = upper(btrim(v_tag)) AND p.active = TRUE
         ) THEN
             INSERT INTO public.clash_league_automation(source_key, war_key, player_tag, event_id)
             VALUES (v_key, v_war, v_tag, NULL)
@@ -425,14 +454,7 @@ begin
     raise exception 'Dados inválidos para sincronização.';
   end if;
 
-  select name into v_canonical_player
-  from public.players
-  where upper(btrim(player_tag)) = upper(btrim(p_player_tag))
-  limit 1;
-
-  if v_canonical_player is null then
-    raise exception 'Jogador com tag % não encontrado em players; nenhum lançamento foi registrado.', p_player_tag;
-  end if;
+  v_canonical_player := public.assert_player_identity(p_player_tag, p_player, false);
 
   insert into public.capital_gold_sync_snapshots (player_tag, player, api_total)
   values (upper(btrim(p_player_tag)), v_canonical_player, p_total);
@@ -504,6 +526,7 @@ BEGIN
            OR item.donations < 0 THEN
             RAISE EXCEPTION 'Registro de doação inválido.';
         END IF;
+        item.player := public.assert_player_identity(item.player_tag, item.player, false);
 
         INSERT INTO public.clash_donation_totals (
             month_key,
@@ -853,8 +876,121 @@ DECLARE
     v_tag text;
     v_player text;
 BEGIN
-    IF jsonb_typeof(p_sources) <> 'array' THEN
+    IF jsonb_typeof(p_sources) IS DISTINCT FROM 'array' THEN
         RAISE EXCEPTION 'p_sources precisa ser uma lista JSON';
+    END IF;
+
+    -- Valida todo o lote antes de qualquer gravação.
+    IF EXISTS (
+        SELECT 1
+        FROM jsonb_to_recordset(p_sources) AS x(
+            month_key text, source_key text, player_tag text, player text,
+            war_attacks integer, league_attacks integer, raid_attacks integer
+        )
+        WHERE x.month_key IS NULL OR x.month_key !~ '^[0-9]{4}-(0[1-9]|1[0-2])
+        month_key, source_key, player_tag, player,
+        war_attacks, league_attacks, raid_attacks, updated_at
+    )
+    SELECT
+        x.month_key,
+        x.source_key,
+        x.player_tag,
+        x.player,
+        x.war_attacks,
+        x.league_attacks,
+        x.raid_attacks,
+        now()
+    FROM jsonb_to_recordset(p_sources) AS x(
+        month_key text,
+        source_key text,
+        player_tag text,
+        player text,
+        war_attacks integer,
+        league_attacks integer,
+        raid_attacks integer
+    )
+    ON CONFLICT (month_key, source_key)
+    DO UPDATE SET
+        player_tag = EXCLUDED.player_tag,
+        player = EXCLUDED.player,
+        war_attacks = EXCLUDED.war_attacks,
+        league_attacks = EXCLUDED.league_attacks,
+        raid_attacks = EXCLUDED.raid_attacks,
+        updated_at = now();
+
+    FOR v_month, v_tag, v_player IN
+        SELECT DISTINCT month_key, player_tag, player
+        FROM public.player_monthly_stat_sources
+        WHERE (month_key, player_tag) IN (
+            SELECT DISTINCT
+                value->>'month_key',
+                value->>'player_tag'
+            FROM jsonb_array_elements(p_sources)
+        )
+    LOOP
+        INSERT INTO public.player_monthly_stats (
+            month_key, player_tag, player,
+            war_attacks, league_attacks, raid_attacks, updated_at
+        )
+        SELECT
+            v_month,
+            v_tag,
+            v_player,
+            COALESCE(SUM(war_attacks), 0),
+            COALESCE(SUM(league_attacks), 0),
+            COALESCE(SUM(raid_attacks), 0),
+            now()
+        FROM public.player_monthly_stat_sources
+        WHERE month_key = v_month
+          AND player_tag = v_tag
+        ON CONFLICT (month_key, player_tag)
+        DO UPDATE SET
+            player = EXCLUDED.player,
+            war_attacks = EXCLUDED.war_attacks,
+            league_attacks = EXCLUDED.league_attacks,
+            raid_attacks = EXCLUDED.raid_attacks,
+            updated_at = now();
+    END LOOP;
+
+    RETURN jsonb_build_object(
+        'success', true,
+        'sources_received', jsonb_array_length(p_sources)
+    );
+END;
+$function$;
+
+           OR x.source_key IS NULL OR btrim(x.source_key) = ''
+           OR x.player_tag IS NULL OR btrim(x.player_tag) = ''
+           OR x.player IS NULL OR btrim(x.player) = ''
+           OR x.war_attacks IS NULL OR x.war_attacks < 0
+           OR x.league_attacks IS NULL OR x.league_attacks < 0
+           OR x.raid_attacks IS NULL OR x.raid_attacks < 0
+    ) THEN
+        RAISE EXCEPTION 'Lote mensal contém campos ou valores inválidos.';
+    END IF;
+    IF EXISTS (
+        SELECT 1
+        FROM jsonb_to_recordset(p_sources) AS x(
+            month_key text, source_key text, player_tag text, player text,
+            war_attacks integer, league_attacks integer, raid_attacks integer
+        )
+        LEFT JOIN public.players p
+          ON upper(btrim(p.player_tag)) = upper(btrim(x.player_tag))
+         AND lower(btrim(p.name)) = lower(btrim(x.player))
+        WHERE p.name IS NULL
+    ) THEN
+        RAISE EXCEPTION 'Lote mensal contém tag/nome divergente ou jogador inexistente.';
+    END IF;
+    IF EXISTS (
+        SELECT 1
+        FROM jsonb_to_recordset(p_sources) AS x(
+            month_key text, source_key text, player_tag text, player text,
+            war_attacks integer, league_attacks integer, raid_attacks integer
+        )
+        GROUP BY x.month_key, x.source_key
+        HAVING COUNT(*) > 1
+    ) THEN
+        RAISE EXCEPTION 'Lote mensal contém chaves de origem duplicadas.';
     END IF;
 
     INSERT INTO public.player_monthly_stat_sources (
