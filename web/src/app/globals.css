@@ -1375,3 +1375,25 @@ body{
 .performance-filter select,.performance-filter input{width:100%;min-width:0;box-sizing:border-box}
 .performance-filter button{grid-column:1/-1}
 @media(max-width:560px){.performance-activity-summary{gap:7px}.performance-activity-summary article{padding:10px 8px}.performance-activity-summary small{font-size:9px}.performance-activity-summary b{font-size:22px}.performance-activity-summary span{font-size:8px}.performance-filter{grid-template-columns:1fr}}
+
+/* Resumo de atividade por evento: compacto e com cores semânticas */
+.performance-activity-summary article{min-width:0}
+.performance-activity-summary .activity-summary-attacked{
+  border-color:#39865a;background:linear-gradient(145deg,#153d2b,#10291f)
+}
+.performance-activity-summary .activity-summary-attacked small,
+.performance-activity-summary .activity-summary-attacked span{color:#b9e8c8}
+.performance-activity-summary .activity-summary-attacked b{color:#8fe0a9}
+.performance-activity-summary .activity-summary-no-attack{
+  border-color:#a64a4a;background:linear-gradient(145deg,#482323,#301919)
+}
+.performance-activity-summary .activity-summary-no-attack small,
+.performance-activity-summary .activity-summary-no-attack span{color:#f2c1c1}
+.performance-activity-summary .activity-summary-no-attack b{color:#ffaaaa}
+.performance-activity-summary .activity-summary-no-data{
+  border-color:#3976a8;background:linear-gradient(145deg,#193653,#12283e)
+}
+.performance-activity-summary .activity-summary-no-data small,
+.performance-activity-summary .activity-summary-no-data span{color:#c2ddf5}
+.performance-activity-summary .activity-summary-no-data b{color:#9bcfff}
+.performance-filter select:disabled{opacity:.48;cursor:not-allowed}
