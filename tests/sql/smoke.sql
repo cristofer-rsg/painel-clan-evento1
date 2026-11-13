@@ -188,7 +188,7 @@ DO $$ BEGIN
 END $$;
 
 -- Trigger: fills a unique name match, but leaves ambiguous names untouched.
-INSERT INTO public.players(name,player_tag,active) VALUES ('Homônimo','#TESTD',true),('Homônimo','#TESTE',true);
+INSERT INTO public.players(name,player_tag,active) VALUES ('Homônimo','#TESTD',true),(' homônimo ','#TESTE',true);
 INSERT INTO public.events(player,category,activity,points)
 VALUES ('Teste Beta','Teste trigger','tag única',1),('Homônimo','Teste trigger','nome ambíguo',1);
 DO $$ BEGIN
