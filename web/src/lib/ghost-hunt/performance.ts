@@ -2,12 +2,12 @@ import "server-only";
 import { createSupabaseAdmin } from "@/lib/supabase/admin";
 import { calculatePlayerScore } from "@/lib/ghost-hunt/scoring";
 
-type Player = { name: string; player_tag: string | null; active: boolean | null };
+type Player = { name: string; player_tag: string | null; active: boolean | null; role: "leader" | "coLeader" | "elder" | "member" | null };
 type Stats = { month_key: string; player_tag: string | null; player: string | null; war_attacks: number | null; donations: number | null; clan_games_points: number | null };
 type ActivitySource = { source_key: string; player_tag: string | null; war_attacks: number | null; league_attacks: number | null; raid_attacks: number | null; updated_at: string | null };
 type EventRow = { player: string | null; category: string | null; activity: string | null; points: number | null };
 export type PerformanceRow = {
-  position: number; player: string; tag: string;
+  position: number; player: string; tag: string; role: "leader" | "coLeader" | "elder" | "member" | null;
   wars: number; league: number; raid: number; donations: number; games: number; capital: number;
   warsPoints: number; leaguePoints: number; raidPoints: number; donationsPoints: number; gamesPoints: number; capitalPoints: number;
   warsPercent: number; leaguePercent: number; raidPercent: number; donationsPercent: number; gamesPercent: number; capitalPercent: number;
@@ -44,7 +44,7 @@ export async function getPerformanceData(requestedMonth?: string, useManualDonat
   try {
     const db = createSupabaseAdmin();
     const [playersResult, allStats, activitySources] = await Promise.all([
-      db.from("players").select("name,player_tag,active").order("name", { ascending: true }),
+      db.from("players").select("name,player_tag,active,role").order("name", { ascending: true }),
       allRows<Stats>(db.from("player_monthly_stats").select("month_key,player_tag,player,war_attacks,donations,clan_games_points").order("month_key", { ascending: false })),
       allRows<ActivitySource>(db.from("player_monthly_stat_sources").select("source_key,player_tag,war_attacks,league_attacks,raid_attacks,updated_at").order("updated_at", { ascending: false })),
     ]);
@@ -142,7 +142,7 @@ export async function getPerformanceData(requestedMonth?: string, useManualDonat
       const index = Math.round(totalPoints / 10);
       const latestActivity = player.player_tag ? lastActivityByTag.get(player.player_tag.trim().toUpperCase()) : undefined;
       return {
-        player: player.name, tag: player.player_tag || "", lastWarAttacks: latestActivity?.war ?? null, lastLeagueAttacks: latestActivity?.league ?? null, lastRaidAttacks: latestActivity?.raid ?? null, wars: stat?.war_attacks == null ? raw.warAttacks : Number(stat.war_attacks), league: raw.leagueAttacks, raid: raw.raidAttacks,
+        player: player.name, tag: player.player_tag || "", role: player.role ?? null, lastWarAttacks: latestActivity?.war ?? null, lastLeagueAttacks: latestActivity?.league ?? null, lastRaidAttacks: latestActivity?.raid ?? null, wars: stat?.war_attacks == null ? raw.warAttacks : Number(stat.war_attacks), league: raw.leagueAttacks, raid: raw.raidAttacks,
         donations, games, capital: raw.capital,
         warsPoints, leaguePoints, raidPoints, donationsPoints, gamesPoints, capitalPoints,
         warsPercent: Math.round(warsPoints / 200 * 100), leaguePercent: Math.round(leaguePoints / 200 * 100),
