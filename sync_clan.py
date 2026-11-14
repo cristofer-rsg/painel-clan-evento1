@@ -54,6 +54,10 @@ def buscar_membros(token):
         if player_tag in resultado:
             raise RuntimeError(f"Tag duplicada na API: {player_tag}")
         role = membro.get("role")
+        # A API do Clash of Clans usa "admin" para o cargo exibido no jogo
+        # como Ancião. O banco e a interface padronizam esse valor como "elder".
+        if role == "admin":
+            role = "elder"
         if role not in {"leader", "coLeader", "elder", "member"}:
             raise RuntimeError(f"A API retornou cargo inválido para {nome}: {role!r}")
         resultado[player_tag] = {"name": nome.strip(), "player_tag": player_tag, "role": role}
