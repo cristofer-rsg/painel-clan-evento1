@@ -4,11 +4,19 @@ import { useMemo, useState } from "react";
 
 type RankingPlayer = {
   position: number; player: string; tag: string; total: number; eligible: boolean;
+  role: "leader" | "coLeader" | "elder" | "member" | null;
   wars: number; league: number; donations: number; games: number;
   raid: number; capitalCoins: number; capitalPoints: number; penalties: number;
   penaltyDetails: { category: string; description: string; points: number }[];
 };
 function number(value: number) { return new Intl.NumberFormat("pt-BR").format(value); }
+function roleLabel(role: RankingPlayer["role"]) {
+  if (role === "leader") return "LÍDER";
+  if (role === "coLeader") return "CO-LÍDER";
+  if (role === "elder") return "ANCIÃO";
+  if (role === "member") return "MEMBRO";
+  return "CARGO INDISPONÍVEL";
+}
 
 const categories = [
   { key: "wars", label: "Guerras", max: 200 },
@@ -42,6 +50,7 @@ export default function RankingList({ players }: { players: RankingPlayer[] }) {
         <div className="ranking-row ranking-row-toggle">
           <span className="ranking-player"><b className="ranking-position">{player.position}</b><span>
             {player.tag ? <Link className="ranking-profile-link" href={`/player/${encodeURIComponent(player.tag)}`}>{player.player}</Link> : <b>{player.player}</b>}
+            <span className={`ranking-role-badge ranking-role-${player.role ?? "unknown"}`}>{roleLabel(player.role)}</span>
             <small>{player.eligible ? "Elegível" : "Não elegível"}{player.tag ? " · " + player.tag : ""}</small>
           </span></span>
           <span className="ranking-score"><strong>{number(player.total)} pts</strong>
