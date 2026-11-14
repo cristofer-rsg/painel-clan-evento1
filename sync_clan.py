@@ -53,7 +53,10 @@ def buscar_membros(token):
         player_tag = player_tag.strip().upper()
         if player_tag in resultado:
             raise RuntimeError(f"Tag duplicada na API: {player_tag}")
-        resultado[player_tag] = {"name": nome.strip(), "player_tag": player_tag}
+        role = membro.get("role")
+        if role not in {"leader", "coLeader", "elder", "member"}:
+            raise RuntimeError(f"A API retornou cargo inválido para {nome}: {role!r}")
+        resultado[player_tag] = {"name": nome.strip(), "player_tag": player_tag, "role": role}
 
     return list(resultado.values())
 
@@ -176,7 +179,7 @@ def main():
             nome_cadastrado = existente["name"]
             tag_antiga = existente.get("player_tag")
             estava_ativo = bool(existente.get("active"))
-            atualizacao = {"player_tag": player_tag, "active": True}
+            atualizacao = {"player_tag": player_tag, "active": True, "role": membro["role"]}
             if tag_antiga:
                 db.table("players").update(atualizacao).eq("player_tag", tag_antiga).execute()
             else:
@@ -193,6 +196,7 @@ def main():
                 "name": nome_api,
                 "player_tag": player_tag,
                 "active": True,
+                "role": membro["role"],
                 "eligible": "Elegível",
                 "whatsapp": "Não",
             }).execute()
