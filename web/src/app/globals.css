@@ -1447,3 +1447,9 @@ body{
 .ranking-role-coLeader{border-color:rgba(191,174,224,.4);background:rgba(191,174,224,.1);color:#c7b5e8}
 .ranking-role-elder{border-color:rgba(120,190,164,.38);background:rgba(120,190,164,.1);color:#86c9aa}
 .ranking-role-member{border-color:rgba(150,164,180,.25);background:rgba(150,164,180,.08);color:#aeb9c7}
+
+
+/* Cores dos selos de cargo na aba Desempenho */
+.performance-leader-role.role-leadership{color:#9bd6a5;background:rgba(38,128,65,.18);border:1px solid rgba(92,190,112,.62)}
+.performance-leader-role.role-elder{color:#f2cc68;background:rgba(184,137,31,.18);border:1px solid rgba(232,188,72,.68)}
+.performance-leader-role.role-member{color:#ff9292;background:rgba(166,42,42,.18);border:1px solid rgba(222,85,85,.68)}

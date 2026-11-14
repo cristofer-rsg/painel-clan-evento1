@@ -113,7 +113,7 @@ export default async function PerformancePage({ searchParams }: Props) {
           const attacks = eventFilter === "league" ? row.lastLeagueAttacks : eventFilter === "raid" ? (row.lastRaidAttacks ?? 0) : row.lastWarAttacks;
           return <article className={hasEventFilter ? "performance-card performance-card-event" : "performance-card"} key={row.player}>
             <div className="performance-card-head">
-              <b><span className="performance-position-badge">{row.position}</span><span className="performance-player-name">{row.player}</span>{row.roleLabel && <small className="performance-leader-role">{row.roleLabel}</small>}</b>
+              <b><span className="performance-position-badge">{row.position}</span><span className="performance-player-name">{row.player}</span>{row.roleLabel && <small className={`performance-leader-role ${row.roleLabel === "LÍDER" || row.roleLabel === "CO-LÍDER" ? "role-leadership" : row.roleLabel === "ANCIÃO" ? "role-elder" : "role-member"}`}>{row.roleLabel}</small>}</b>
               {hasEventFilter
                 ? <span className={attacks === null ? "performance-event-inline no-data" : attacks === 0 ? "performance-event-inline no-attack" : "performance-event-inline attacked"}>{attacks === null ? "Não Participou" : `${fmt(attacks)} ${attacks === 1 ? "ataque" : "ataques"}`}</span>
                 : <strong>{fmt(row.index)}%</strong>}
