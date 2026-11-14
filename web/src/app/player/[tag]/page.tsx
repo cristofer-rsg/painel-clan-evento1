@@ -10,6 +10,13 @@ export const metadata: Metadata = {
   description: "Pontuação mensal e histórico de atividade do jogador no Ghost Hunt.",
 };
 type Props = { params: Promise<{ tag: string }> };
+function roleLabel(role: "leader" | "coLeader" | "elder" | "member" | null) {
+  if (role === "leader") return "LÍDER";
+  if (role === "coLeader") return "CO-LÍDER";
+  if (role === "elder") return "ANCIÃO";
+  if (role === "member") return "MEMBRO";
+  return "CARGO INDISPONÍVEL";
+}
 function fmt(value: number) { return new Intl.NumberFormat("pt-BR").format(value); }
 function date(value: string) {
   return new Intl.DateTimeFormat("pt-BR", {
@@ -39,7 +46,7 @@ export default async function PlayerProfilePage({ params }: Props) {
       <span className="auth-kicker">PERFIL DO JOGADOR • {profile.monthLabel.toUpperCase()}</span>
       <div className="player-profile-hero">
         <span className="player-profile-avatar">{profile.name.slice(0, 1).toUpperCase()}</span>
-        <div><h1>{profile.name}</h1><p>{profile.tag}</p><span className={profile.eligible ? "player-profile-status eligible" : "player-profile-status"}>{profile.eligible ? "ELEGÍVEL" : "NÃO ELEGÍVEL"}</span></div>
+        <div><h1>{profile.name}</h1><p>{profile.tag}</p><span className={`ranking-role-badge ranking-role-${profile.role ?? "unknown"}`}>{roleLabel(profile.role)}</span><span className={profile.eligible ? "player-profile-status eligible" : "player-profile-status"}>{profile.eligible ? "ELEGÍVEL" : "NÃO ELEGÍVEL"}</span></div>
       </div>
       <article className="player-profile-total"><small>PONTUAÇÃO DO MÊS</small><strong>{fmt(profile.total)} <i>pts</i></strong><span>{profile.monthLabel}</span></article>
       <div className="history-section-title"><h2>Resumo por categoria</h2><span>ACUMULADO DO MÊS</span></div>

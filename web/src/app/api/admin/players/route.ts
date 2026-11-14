@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
   if (!(await authorized(request))) return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
   try {
     const { data, error } = await createSupabaseAdmin().from("players")
-      .select("name,player_tag,whatsapp,active,created_at").order("name", { ascending: true });
+      .select("name,player_tag,whatsapp,active,role,created_at").order("name", { ascending: true });
     if (error) throw error;
     return NextResponse.json({ players: data ?? [] });
   } catch {
@@ -54,7 +54,7 @@ export async function PATCH(request: NextRequest) {
   }
   try {
     const supabase = createSupabaseAdmin();
-    let query = supabase.from("players").update({ whatsapp, eligible: whatsapp === "Sim" ? "Elegível" : "Inelegível" }).select("name,player_tag,eligible,whatsapp,active,created_at");
+    let query = supabase.from("players").update({ whatsapp, eligible: whatsapp === "Sim" ? "Elegível" : "Inelegível" }).select("name,player_tag,eligible,whatsapp,active,role,created_at");
     if (playerTag) {
       query = query.eq("player_tag", playerTag);
     } else {
