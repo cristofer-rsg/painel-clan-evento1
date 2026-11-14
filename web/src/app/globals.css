@@ -1439,3 +1439,11 @@ body{
 .ranking-penalties-unavailable{margin:9px 0;color:#bda8a1;font-size:10px;line-height:1.5}
 .ranking-penalties-total{padding-top:8px;border-top:1px solid #ffffff12;color:#d8c5bf;font-size:10px;font-weight:700}
 @media(max-width:560px){.ranking-penalties{padding:9px}.ranking-penalties-list li{gap:8px;padding:7px}}
+
+
+/* Cargos oficiais sincronizados diretamente da API do Clash of Clans. */
+.ranking-role-badge{display:inline-flex;align-items:center;width:max-content;margin:5px 0 2px;padding:3px 8px;border:1px solid rgba(212,175,95,.28);border-radius:999px;background:rgba(212,175,95,.09);color:#d8bd82;font-size:9px;font-weight:800;letter-spacing:.09em;line-height:1.4}
+.ranking-role-leader{border-color:rgba(240,197,91,.48);background:rgba(240,197,91,.13);color:#f0c55b}
+.ranking-role-coLeader{border-color:rgba(191,174,224,.4);background:rgba(191,174,224,.1);color:#c7b5e8}
+.ranking-role-elder{border-color:rgba(120,190,164,.38);background:rgba(120,190,164,.1);color:#86c9aa}
+.ranking-role-member{border-color:rgba(150,164,180,.25);background:rgba(150,164,180,.08);color:#aeb9c7}
