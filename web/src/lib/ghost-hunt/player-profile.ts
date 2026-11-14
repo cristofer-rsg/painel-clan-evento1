@@ -8,6 +8,7 @@ type PlayerRow = {
   eligible: string | null;
   whatsapp: string | null;
   active: boolean | null;
+  role: "leader" | "coLeader" | "elder" | "member" | null;
 };
 type MonthlyStat = { player_tag: string | null; player: string | null; clan_games_points: number | null };
 type EventRow = {
@@ -21,6 +22,7 @@ type EventRow = {
 export type PlayerProfile = {
   name: string;
   tag: string;
+  role: "leader" | "coLeader" | "elder" | "member" | null;
   eligible: boolean;
   eligibilityLabel: string;
   monthKey: string;
@@ -56,7 +58,7 @@ function monthBounds(key: string) {
 export async function getPlayerProfile(tag: string): Promise<PlayerProfile | null> {
   const db = createSupabaseAdmin();
   const { data: playerData, error: playerError } = await db.from("players")
-    .select("name,player_tag,eligible,whatsapp,active")
+    .select("name,player_tag,eligible,whatsapp,active,role")
     .eq("player_tag", tag).maybeSingle();
   if (playerError) throw new Error("Não foi possível consultar o jogador.");
   if (!playerData) return null;
@@ -103,7 +105,7 @@ export async function getPlayerProfile(tag: string): Promise<PlayerProfile | nul
     month: "long", year: "numeric", timeZone: "America/Sao_Paulo",
   }).format(new Date(monthKey + "-15T12:00:00-03:00"));
   return {
-    name: player.name, tag: player.player_tag, eligible, eligibilityLabel: eligible ? "Elegível" : "Não elegível",
+    name: player.name, tag: player.player_tag, role: player.role ?? null, eligible, eligibilityLabel: eligible ? "Elegível" : "Não elegível",
     monthKey, monthLabel: monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1),
     total, wars, league, donations, games, raid, capitalCoins, penalties, recentEvents,
   };
