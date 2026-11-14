@@ -8,6 +8,7 @@ type Player = {
   player_tag?: string | null;
   whatsapp?: string | null;
   active?: boolean | null;
+  role?: "leader" | "coLeader" | "elder" | "member" | null;
 };
 
 type MonthlyStat = { month_key: string; player_tag: string | null; player: string | null; clan_games_points: number | null };
@@ -41,6 +42,7 @@ export type RankingRow = {
   eligible: boolean;
   eligibilityStatus: string;
   whatsapp: string;
+  role: "leader" | "coLeader" | "elder" | "member" | null;
 };
 
 export type RecentMember = { player_name: string; player_tag: string | null; first_seen_at: string };
@@ -110,7 +112,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     const supabase = createSupabaseAdmin();
     const { data: playerData, error: playerError } = await supabase
       .from("players")
-      .select("name,player_tag,eligible,whatsapp,active")
+      .select("name,player_tag,eligible,whatsapp,active,role")
       .order("name", { ascending: true });
     if (playerError) throw new Error(`Falha ao consultar jogadores: ${playerError.message}`);
 
@@ -166,6 +168,7 @@ export async function getDashboardData(): Promise<DashboardData> {
         eligible: true,
         eligibilityStatus: "Elegível",
         whatsapp: player.whatsapp ?? "Sim",
+        role: player.role ?? null,
       };
     }).sort((a, b) => b.total - a.total || b.wars - a.wars || b.league - a.league || b.raid - a.raid || b.capitalPoints - a.capitalPoints || b.donations - a.donations || b.games - a.games || a.player.localeCompare(b.player, "pt-BR"))
       .map((row, index) => ({ ...row, position: index + 1 }));
