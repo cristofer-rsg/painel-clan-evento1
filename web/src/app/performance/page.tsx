@@ -19,22 +19,7 @@ export default async function PerformancePage({ searchParams }: Props) {
   const data = await getPerformanceData(params.month, true);
   const activeRows = data.rows.filter(row => row.active);
   const searchTerm = (params.q || "").trim().toLocaleLowerCase("pt-BR");
-  const roleLabels = {
-    leader: "LÍDER",
-    coLeader: "CO-LÍDER",
-    elder: "ANCIÃO",
-    member: "MEMBRO",
-  } as const;
-  const leadershipTags = new Map([
-    ["#L8GV8C2Y", "LÍDER"],
-    ["#P8CCGYU0", "CO-LÍDER"],
-    ["#QU0GC0VLU", "CO-LÍDER"],
-    ["#9CLLGV8CC", "CO-LÍDER"],
-  ]);
-  const rankedRows = activeRows.map(row => ({
-    ...row,
-    roleLabel: row.role ? roleLabels[row.role] : leadershipTags.get(row.tag.trim().toUpperCase()) ?? "",
-  })).sort((a, b) =>
+  const rankedRows = [...activeRows].sort((a, b) =>
     b.totalPoints - a.totalPoints
     || b.warsPoints - a.warsPoints
     || b.leaguePoints - a.leaguePoints
@@ -113,7 +98,7 @@ export default async function PerformancePage({ searchParams }: Props) {
           const attacks = eventFilter === "league" ? row.lastLeagueAttacks : eventFilter === "raid" ? (row.lastRaidAttacks ?? 0) : row.lastWarAttacks;
           return <article className={hasEventFilter ? "performance-card performance-card-event" : "performance-card"} key={row.player}>
             <div className="performance-card-head">
-              <b><span className="performance-position-badge">{row.position}</span><span className="performance-player-name">{row.player}</span>{row.roleLabel && <small className={`performance-leader-role ${row.roleLabel === "LÍDER" || row.roleLabel === "CO-LÍDER" ? "role-leadership" : row.roleLabel === "ANCIÃO" ? "role-elder" : "role-member"}`}>{row.roleLabel}</small>}</b>
+              <b><span className="performance-position-badge">{row.position}</span><span className="performance-player-name">{row.player}</span></b>
               {hasEventFilter
                 ? <span className={attacks === null ? "performance-event-inline no-data" : attacks === 0 ? "performance-event-inline no-attack" : "performance-event-inline attacked"}>{attacks === null ? "Não Participou" : `${fmt(attacks)} ${attacks === 1 ? "ataque" : "ataques"}`}</span>
                 : <strong>{fmt(row.index)}%</strong>}
