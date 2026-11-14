@@ -25,9 +25,15 @@ export default async function PerformancePage({ searchParams }: Props) {
     elder: "ANCIÃO",
     member: "MEMBRO",
   } as const;
+  const leadershipTags = new Map([
+    ["#L8GV8C2Y", "LÍDER"],
+    ["#P8CCGYU0", "CO-LÍDER"],
+    ["#QU0GC0VLU", "CO-LÍDER"],
+    ["#9CLLGV8CC", "CO-LÍDER"],
+  ]);
   const rankedRows = activeRows.map(row => ({
     ...row,
-    roleLabel: row.role ? roleLabels[row.role] : "",
+    roleLabel: row.role ? roleLabels[row.role] : leadershipTags.get(row.tag.trim().toUpperCase()) ?? "",
   })).sort((a, b) =>
     b.totalPoints - a.totalPoints
     || b.warsPoints - a.warsPoints
