@@ -8,8 +8,8 @@ const items = [
   { href: "/", icon: "⌂", label: "Início" },
   { href: "/ranking", icon: "♛", label: "Ranking" },
   { href: "/performance", icon: "◈", label: "Desempenho" },
-  { href: "/rules", icon: "⚖", label: "Regras" },
   { href: "/tempo-de-cla", icon: "◷", label: "Tempo de Clã" },
+  { href: "/rules", icon: "⚖", label: "Regras" },
 ];
 
 export default function BottomNavigation() {
