@@ -262,3 +262,18 @@
 .portal-app-card.violet .portal-card-overlay{
   background:transparent !important;
 }
+
+
+/* Match Inglorious card darkness to the Ghost Hunt card without reducing source sharpness. */
+.portal-app-card.violet .portal-card-art img{
+  opacity:.62 !important;
+  filter:none !important;
+}
+.portal-app-card.violet:before{
+  background:
+    linear-gradient(90deg,rgba(3,12,7,.64) 0%,rgba(3,12,7,.38) 55%,rgba(3,12,7,.2) 100%),
+    linear-gradient(0deg,rgba(3,10,6,.68) 0%,rgba(3,10,6,.06) 75%) !important;
+}
+.portal-app-card.violet .portal-card-overlay{
+  background:linear-gradient(0deg,rgba(4,10,6,.32),transparent 75%) !important;
+}
