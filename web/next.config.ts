@@ -4,8 +4,8 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   async rewrites() {
     return [
-      { source: "/Inglorious", destination: "https://inglorious-six.vercel.app/Inglorious" },
-      { source: "/Inglorious/:path*", destination: "https://inglorious-six.vercel.app/Inglorious/:path*" },
+      { source: "/Inglorious", destination: "https://inglorious-km5n1dji7-cristoferrsg-9877.vercel.app/Inglorious" },
+      { source: "/Inglorious/:path*", destination: "https://inglorious-km5n1dji7-cristoferrsg-9877.vercel.app/Inglorious/:path*" },
     ];
   },
 };
