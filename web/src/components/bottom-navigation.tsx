@@ -89,7 +89,7 @@ export default function BottomNavigation() {
     };
   }, [router]);
 
-  if (pathname.startsWith("/admin") || pathname === "/login") return null;
+  if (pathname === "/" || pathname.startsWith("/admin") || pathname === "/login") return null;
 
   return (
     <nav className="mobile-bottom-nav" aria-label="Navegação principal">
