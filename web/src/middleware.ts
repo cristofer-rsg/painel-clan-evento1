@@ -13,13 +13,26 @@ const appRouteRoots = [
 ];
 
 export function middleware(request: NextRequest) {
-  const { pathname, search } = request.nextUrl;
+  const { pathname, search, hostname } = request.nextUrl;
+  const normalizedHost = hostname.toLowerCase();
+
+  if (normalizedHost === "ghosthunt.ghosthunt.com.br") {
+    if (pathname === "/") {
+      const destination = request.nextUrl.clone();
+      destination.pathname = "/home";
+      return NextResponse.rewrite(destination);
+    }
+    return NextResponse.next();
+  }
 
   const ingloriousPath = pathname.match(/^\/inglorious(?=\/|$)/i);
   if (ingloriousPath) {
-    const normalizedPath = pathname.replace(/^\/inglorious(?=\/|$)/i, "/Inglorious");
-    const destination = new URL(`${normalizedPath}${search}`, ingloriousProductionOrigin);
-    return NextResponse.rewrite(destination);
+    const suffix = pathname.replace(/^\/inglorious(?=\/|$)/i, "");
+    const destination = new URL(
+      `/Inglorious${suffix || "/"}${search}`,
+      "https://inglorious.ghosthunt.com.br",
+    );
+    return NextResponse.redirect(destination, 308);
   }
 
   if (pathname === "/ghosthunt" || pathname.startsWith("/ghosthunt/")) {
