@@ -8,8 +8,8 @@ export default async function RankingPage() {
   const data = await getDashboardData();
   return <main className="admin-shell">
     <header className="admin-header">
-      <a className="brand" href="/"><span className="brand-mark">GH</span><span className="brand-copy"><strong>GHOST <i>HUNT</i></strong><small>CLAN COMMUNITY</small></span></a>
-      <a className="back-link" href="/">← Início</a>
+      <a className="brand" href="/home"><span className="brand-mark">GH</span><span className="brand-copy"><strong>GHOST <i>HUNT</i></strong><small>CLAN COMMUNITY</small></span></a>
+      <a className="back-link" href="/home">← Início</a>
     </header>
     <PublicNavigation />
     <section className="admin-content history-content">
@@ -22,7 +22,7 @@ export default async function RankingPage() {
         <div className="ranking-head"><span>JOGADOR</span><span>PONTUAÇÃO</span></div>
         {data.ranking.length ? <RankingList players={data.ranking} /> : <div className="empty-state"><span className="empty-icon">♜</span><b>{data.connected ? "Ainda não há jogadores cadastrados" : "Conectando os dados do clã"}</b><p>O ranking será exibido assim que os dados estiverem disponíveis.</p></div>}
       </div>
-      <a className="back-link" href="/">← Voltar ao início</a>
+      <a className="back-link" href="/home">← Voltar ao início</a>
     </section>
   </main>;
 }
