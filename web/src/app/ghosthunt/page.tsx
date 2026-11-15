@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import HomePage from "../home/page";
 
 export default function GhostHuntEntryPage() {
-  redirect("/home");
+  return <HomePage />;
 }
