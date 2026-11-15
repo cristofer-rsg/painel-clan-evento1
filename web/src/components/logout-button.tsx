@@ -9,7 +9,7 @@ export default function LogoutButton() {
   async function logout() {
     setLoading(true);
     await fetch("/api/auth/session", { method: "DELETE" });
-    router.replace("/ghosthunt");
+    router.replace("/ghosthunt/login");
     router.refresh();
   }
   return <button className="logout-button" type="button" onClick={logout} disabled={loading}>{loading ? "Saindo..." : "Sair"}</button>;
