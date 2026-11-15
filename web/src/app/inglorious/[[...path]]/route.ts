@@ -19,17 +19,26 @@ const HOP_BY_HOP_HEADERS = new Set([
   "host",
 ]);
 
+function mapUpstreamPath(pathname: string): string | null {
+  if (!pathname.toLowerCase().startsWith(UPSTREAM_BASE_PATH.toLowerCase())) return null;
+  const suffix = pathname.slice(UPSTREAM_BASE_PATH.length);
+  return suffix ? `/inglorious${suffix}` : "/inglorious";
+}
+
 function mapRedirectLocation(location: string, requestUrl: URL): string {
   const target = new URL(location, UPSTREAM_ORIGIN);
   const upstreamHost = new URL(UPSTREAM_ORIGIN).host;
 
-  if (target.host === upstreamHost && target.pathname.toLowerCase().startsWith(UPSTREAM_BASE_PATH.toLowerCase())) {
-    const publicPath = target.pathname.slice(UPSTREAM_BASE_PATH.length);
-    target.pathname = publicPath ? `/inglorious${publicPath}` : "/inglorious";
-    target.host = requestUrl.host;
-    target.protocol = requestUrl.protocol;
-  } else if (target.origin === requestUrl.origin && target.pathname.toLowerCase().startsWith("/inglorious")) {
-    target.pathname = `/inglorious${target.pathname.slice("/inglorious".length)}`;
+  if (target.host === upstreamHost) {
+    const publicPath = mapUpstreamPath(target.pathname);
+    if (publicPath) {
+      target.pathname = publicPath;
+      target.host = requestUrl.host;
+      target.protocol = requestUrl.protocol;
+    }
+  } else if (target.origin === requestUrl.origin) {
+    const publicPath = mapUpstreamPath(target.pathname);
+    if (publicPath) target.pathname = publicPath;
   }
 
   return target.toString();
@@ -38,7 +47,7 @@ function mapRedirectLocation(location: string, requestUrl: URL): string {
 async function proxy(request: Request, context: RouteContext): Promise<Response> {
   const { path = [] } = await context.params;
   const incomingUrl = new URL(request.url);
-  const suffix = path.length > 0 ? `/${path.map(encodeURIComponent).join("/")}` : "/";
+  const suffix = path.length > 0 ? `/${path.map(encodeURIComponent).join("/")}` : "";
   const upstreamUrl = new URL(`${UPSTREAM_BASE_PATH}${suffix}${incomingUrl.search}`, UPSTREAM_ORIGIN);
 
   const headers = new Headers(request.headers);
@@ -60,15 +69,34 @@ async function proxy(request: Request, context: RouteContext): Promise<Response>
 
   const upstream = await fetch(upstreamUrl, init);
   const responseHeaders = new Headers(upstream.headers);
-
   for (const header of HOP_BY_HOP_HEADERS) responseHeaders.delete(header);
 
   const location = upstream.headers.get("location");
-  if (location) responseHeaders.set("location", mapRedirectLocation(location, incomingUrl));
+  if (location) {
+    responseHeaders.set("location", mapRedirectLocation(location, incomingUrl));
+    responseHeaders.delete("refresh");
+  }
 
   responseHeaders.set("cache-control", "no-store");
 
-  return new Response(upstream.body, {
+  const contentType = responseHeaders.get("content-type") ?? "";
+  const shouldRewriteBody =
+    request.method !== "HEAD" &&
+    (contentType.startsWith("text/") ||
+      contentType.includes("javascript") ||
+      contentType.includes("json"));
+
+  if (!shouldRewriteBody) {
+    return new Response(upstream.body, {
+      status: upstream.status,
+      statusText: upstream.statusText,
+      headers: responseHeaders,
+    });
+  }
+
+  const body = await upstream.text();
+  const rewrittenBody = body.replaceAll(UPSTREAM_BASE_PATH, "/inglorious");
+  return new Response(rewrittenBody, {
     status: upstream.status,
     statusText: upstream.statusText,
     headers: responseHeaders,
