@@ -5,9 +5,10 @@ import { useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 const isAdminRoute = (path: string) => /(?:^|\/)admin(?:\/|$)/.test(path) || /(?:^|\/)login(?:\/|$)/.test(path);
+const isPortalRoute = (path: string) => path === "/" || path === "/Inglorious";
 
 const items = [
-  { href: "/", icon: "⌂", label: "Início" },
+  { href: "/home", icon: "⌂", label: "Início" },
   { href: "/ranking", icon: "♛", label: "Ranking" },
   { href: "/performance", icon: "◈", label: "Desempenho" },
   { href: "/tempo-de-cla", icon: "◷", label: "Tempo de Clã" },
@@ -33,8 +34,8 @@ export default function BottomNavigation() {
 
     const onTouchStart = (event: TouchEvent) => {
       // Horizontal swipe navigation belongs only to public pages.
-      // Admin pages must never fall through to the public tab index.
-      if (isAdminRoute(currentPath.current)) {
+      // Admin pages and the clan-selection portal must never fall through to the public tab index.
+      if (isAdminRoute(currentPath.current) || isPortalRoute(currentPath.current)) {
         touchStart.current = null;
         return;
       }
@@ -63,7 +64,7 @@ export default function BottomNavigation() {
       if (!start || event.changedTouches.length !== 1 || navigationPending.current) return;
 
       const path = currentPath.current;
-      if (isAdminRoute(path)) return;
+      if (isAdminRoute(path) || isPortalRoute(path)) return;
 
       const touch = event.changedTouches[0];
       const deltaX = touch.clientX - start.x;
@@ -101,7 +102,7 @@ export default function BottomNavigation() {
     };
   }, [router]);
 
-  if (isAdminRoute(pathname)) return null;
+  if (isPortalRoute(pathname) || isAdminRoute(pathname)) return null;
 
   return (
     <nav className="mobile-bottom-nav" aria-label="Navegação principal">
