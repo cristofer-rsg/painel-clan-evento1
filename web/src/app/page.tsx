@@ -1,6 +1,6 @@
 const applications = [
   { name: "GHOST HUNT", eyebrow: "CLAN COMMUNITY", description: "Ranking, guerras, raides, desempenho e administração do clã.", href: "/ghosthunt", tone: "green", image: "https://d2jqrm6oza8nb6.cloudfront.net/datasets/bf37a79e-28bf-4083-a24f-de224fdf7813.webp?_jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJrZXlIYXNoIjoiNjMyN2Q2NjgwNmQwZTgzYyIsImJ1Y2tldCI6InJ1bndheS1kYXRhc2V0cyIsInN0YWdlIjoicHJvZCIsImV4cCI6MTc5NDg4MzE3Nn0.4dOW9qf5SYuD2BBhvhfQVjtxVHBGqckfswIklfdAYNE", features: ["Ranking e pódio", "Guerras e raides", "Desempenho dos jogadores"] },
-  { name: "INGLORIOUS", eyebrow: "CLAN MANAGEMENT", description: "Ranking, guerras, raides, desempenho e administração do clã.", href: "/inglorious", tone: "violet", image: "https://d2jqrm6oza8nb6.cloudfront.net/datasets/fa433122-0493-40b4-a7ef-195305778c42.webp?_jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJrZXlIYXNoIjoiZWVhYTc5YTE0NGQxODVlZSIsImJ1Y2tldCI6InJ1bndheS1kYXRhc2V0cyIsImV4cCI6MTc5NDkwMTY2NX0.d_FcBpONtekpTAA9uepPgHk-tsfj9108mV5NU4SL0lU", features: ["Ranking e pódio", "Guerras e raides", "Desempenho dos jogadores"] },
+  { name: "INGLORIOUS", eyebrow: "CLAN MANAGEMENT", description: "Ranking, guerras, raides, desempenho e administração do clã.", href: "/inglorious", tone: "violet", image: "/inglorious-card.webp", features: ["Ranking e pódio", "Guerras e raides", "Desempenho dos jogadores"] },
 ];
 export default function PortalHomePage() {
   return <main className="portal-page">
