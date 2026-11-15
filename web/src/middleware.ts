@@ -12,13 +12,15 @@ const appRouteRoots = [
   "/api",
 ];
 
-const ingloriousProductionOrigin = "https://inglorious-cristoferrsg-9877.vercel.app";
+const ingloriousProductionOrigin = "https://inglorious.ghosthunt.com.br";
 
 export function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
-  if (pathname === "/Inglorious" || pathname.startsWith("/Inglorious/")) {
-    const destination = new URL(`${pathname}${search}`, ingloriousProductionOrigin);
+  const ingloriousMatch = pathname.match(/^\/inglorious(?=\/|$)/i);
+  if (ingloriousMatch) {
+    const appPath = pathname.slice(ingloriousMatch[0].length) || "/";
+    const destination = new URL(`/Inglorious${appPath}${search}`, ingloriousProductionOrigin);
     return NextResponse.rewrite(destination);
   }
 
