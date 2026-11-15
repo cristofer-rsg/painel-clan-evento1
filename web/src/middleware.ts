@@ -12,6 +12,9 @@ const appRouteRoots = [
   "/api",
 ];
 
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
   if (pathname === "/ghosthunt" || pathname.startsWith("/ghosthunt/")) {
     const rewrittenUrl = request.nextUrl.clone();
     rewrittenUrl.pathname = pathname.replace(/^\/ghosthunt(?=\/|$)/, "") || "/home";
