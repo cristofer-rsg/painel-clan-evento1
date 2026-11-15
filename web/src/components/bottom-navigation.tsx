@@ -32,7 +32,6 @@ export default function BottomNavigation() {
   }, [pathname]);
 
   useEffect(() => {
-    items.forEach((item) => router.prefetch(item.href));
 
     const onTouchStart = (event: TouchEvent) => {
       if (currentPath.current.startsWith("/admin") || currentPath.current === "/login") {
@@ -106,7 +105,7 @@ export default function BottomNavigation() {
           ? normalizedPath === "/" || normalizedPath === "/home"
           : normalizedPath === item.route || normalizedPath.startsWith(item.route + "/");
         return (
-          <Link className={active ? "mobile-nav-item active" : "mobile-nav-item"} href={item.href} key={item.label} aria-current={active ? "page" : undefined} prefetch>
+          <Link className={active ? "mobile-nav-item active" : "mobile-nav-item"} href={item.href} key={item.label} aria-current={active ? "page" : undefined} prefetch={false} onMouseEnter={() => router.prefetch(item.href)} onFocus={() => router.prefetch(item.href)} onTouchStart={() => router.prefetch(item.href)}>
             <span className="mobile-nav-icon" aria-hidden="true">{item.icon}</span>
             <span>{item.label}</span>
           </Link>
