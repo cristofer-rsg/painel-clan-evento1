@@ -15,9 +15,6 @@ export default async function AdminPage() {
     <span className="auth-kicker">SESSÃO SEGURA • ADMINISTRADOR</span><h1>Central de <em>administração</em></h1>
     <p>Escolha uma ferramenta para administrar os registros atuais do Ghost Hunt.</p>
     <div className="admin-tools">
-      <a href="/admin/players"><span>♟</span><b>Gerenciar jogadores</b><small>Cadastro, elegibilidade e WhatsApp</small><i>→</i></a>
-      <a href="/admin/events"><span>✎</span><b>Editar lançamentos</b><small>Corrigir ou excluir registros do mês</small><i>→</i></a>
-      <a href="/admin/performance"><span>◈</span><b>Desempenho administrativo</b><small>Índice dinâmico, inativos e ordenação completa</small><i>→</i></a>
       <a href="/admin/analytics"><span>▥</span><b>Analytics do site</b><small>Visitantes, visualizações e páginas mais acessadas</small><i>→</i></a>
     </div>
     <section className="export-center" aria-labelledby="export-title">
@@ -32,7 +29,7 @@ export default async function AdminPage() {
       </div>
       <p className="export-footnote">Os arquivos são gerados no momento da solicitação e exigem sessão administrativa válida.</p>
     </section>
-    <div className="admin-notice"><b>Recursos preservados</b><span>Lançamentos manuais continuam desativados. As sincronizações automáticas do clã seguem pelos workflows existentes.</span></div>
+    <div className="admin-notice"><b>Recursos preservados</b><span>Cadastros e lançamentos são recebidos exclusivamente pelas sincronizações automáticas do clã. A edição manual está desativada.</span></div>
     <a className="back-link" href="/">← Abrir ranking público</a>
   </section></main>;
 }
