@@ -17,7 +17,11 @@ const ingloriousProductionOrigin = "https://inglorious.ghosthunt.com.br";
 export function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
-  const ingloriousMatch = pathname.match(/^\/inglorious(?=\/|$)/);
+  if (request.headers.get("x-inglorious-proxy") === "1") {
+    return NextResponse.next();
+  }
+
+  const ingloriousMatch = pathname.match(/^\/inglorious(?=\/|$)/i);
   if (ingloriousMatch) {
     const appPath = pathname.slice(ingloriousMatch[0].length) || "/";
     const destination = new URL(`/Inglorious${appPath}${search}`, ingloriousProductionOrigin);
