@@ -49,6 +49,7 @@ async function proxy(request: Request, context: RouteContext): Promise<Response>
   const incomingUrl = new URL(request.url);
   const suffix = path.length > 0 ? `/${path.map(encodeURIComponent).join("/")}` : "";
   const upstreamUrl = new URL(`${UPSTREAM_BASE_PATH}${suffix}${incomingUrl.search}`, UPSTREAM_ORIGIN);
+  const isImmutableAsset = request.method === "GET" && path[0] === "_next" && path[1] === "static";
 
   const headers = new Headers(request.headers);
   for (const header of HOP_BY_HOP_HEADERS) headers.delete(header);
@@ -60,7 +61,7 @@ async function proxy(request: Request, context: RouteContext): Promise<Response>
     method: request.method,
     headers,
     redirect: "manual",
-    cache: "no-store",
+    cache: isImmutableAsset ? "force-cache" : "no-store",
   };
 
   if (request.method !== "GET" && request.method !== "HEAD") {
@@ -77,14 +78,26 @@ async function proxy(request: Request, context: RouteContext): Promise<Response>
     responseHeaders.delete("refresh");
   }
 
-  responseHeaders.set("cache-control", "no-store");
+  responseHeaders.set(
+    "cache-control",
+    isImmutableAsset ? "public, max-age=31536000, immutable" : "private, no-store, max-age=0",
+  );
+
+  // Hashed Next.js assets are immutable and do not contain the upstream base path.
+  // Stream them directly to avoid buffering and rewriting every CSS/JS request.
+  if (isImmutableAsset || request.method === "HEAD") {
+    return new Response(upstream.body, {
+      status: upstream.status,
+      statusText: upstream.statusText,
+      headers: responseHeaders,
+    });
+  }
 
   const contentType = responseHeaders.get("content-type") ?? "";
   const shouldRewriteBody =
-    request.method !== "HEAD" &&
-    (contentType.startsWith("text/") ||
-      contentType.includes("javascript") ||
-      contentType.includes("json"));
+    contentType.startsWith("text/") ||
+    contentType.includes("javascript") ||
+    contentType.includes("json");
 
   if (!shouldRewriteBody) {
     return new Response(upstream.body, {
