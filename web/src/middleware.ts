@@ -12,28 +12,21 @@ const appRouteRoots = [
   "/api",
 ];
 
-const ingloriousPreviewOrigin = "https://inglorious-git-inglorious-basepath-preview-cristoferrsg-9877.vercel.app";
+const ingloriousOrigin = "https://inglorious.ghosthunt.com.br";
 
 export function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
   if (pathname === "/Inglorious" || pathname.startsWith("/Inglorious/")) {
-    const bypassSecret = process.env.INGLORIOUS_PREVIEW_BYPASS;
-    if (!bypassSecret) {
-      return new NextResponse("A integração de preview não está configurada.", { status: 503 });
-    }
-
-    const headers = new Headers(request.headers);
-    headers.set("x-vercel-protection-bypass", bypassSecret);
-    const destination = new URL(`${pathname}${search}`, ingloriousPreviewOrigin);
-    return NextResponse.rewrite(destination, { request: { headers } });
+    const destination = new URL(`${pathname}${search}`, ingloriousOrigin);
+    return NextResponse.rewrite(destination);
   }
 
   // Keep the exact /ghosthunt entry URL on its own App Router page.
   // Only nested paths are rewritten to the existing Ghost Hunt routes.
   if (pathname.startsWith("/ghosthunt/")) {
     const rewrittenUrl = request.nextUrl.clone();
-    const nestedPath = pathname.replace(/^\/ghosthunt\/?/, "");
+    const nestedPath = pathname.replace(/^\\/ghosthunt\\/?/, "");
     rewrittenUrl.pathname = nestedPath ? `/${nestedPath}` : "/home";
     return NextResponse.rewrite(rewrittenUrl);
   }
