@@ -50,6 +50,11 @@ async function proxy(request: Request, context: RouteContext): Promise<Response>
   const suffix = path.length > 0 ? `/${path.map(encodeURIComponent).join("/")}` : "";
   const upstreamUrl = new URL(`${UPSTREAM_BASE_PATH}${suffix}${incomingUrl.search}`, UPSTREAM_ORIGIN);
   const isImmutableAsset = request.method === "GET" && path[0] === "_next" && path[1] === "static";
+  const isPublicPage =
+    request.method === "GET" &&
+    (path.length === 0 || ["ranking", "performance", "rules", "clan-time"].includes(path[0])) &&
+    !request.headers.has("cookie") &&
+    !request.headers.has("authorization");
 
   const headers = new Headers(request.headers);
   for (const header of HOP_BY_HOP_HEADERS) headers.delete(header);
@@ -78,9 +83,18 @@ async function proxy(request: Request, context: RouteContext): Promise<Response>
     responseHeaders.delete("refresh");
   }
 
+  const canCachePublicPage =
+    isPublicPage &&
+    upstream.status === 200 &&
+    !upstream.headers.has("set-cookie");
+
   responseHeaders.set(
     "cache-control",
-    isImmutableAsset ? "public, max-age=31536000, s-maxage=31536000, immutable" : "private, no-store, max-age=0",
+    isImmutableAsset
+      ? "public, max-age=31536000, s-maxage=31536000, immutable"
+      : canCachePublicPage
+        ? "public, max-age=0, s-maxage=10, stale-while-revalidate=20"
+        : "private, no-store, max-age=0",
   );
 
   // Hashed Next.js assets are immutable and do not contain the upstream base path.
