@@ -69,11 +69,10 @@ export default async function HomePage() {
             <div className="gh-v2-hero-copy">
               <div className="gh-v2-welcome-row">
                 <div className="gh-v2-eyebrow"><span className="gh-v2-live-dot" /> BEM-VINDO, CAÇADOR <span>•</span> {data.monthLabel.toUpperCase()}</div>
-                <a className="gh-v2-switch-clan" href="https://ghosthunt.com.br/" aria-label="Voltar à página de escolha dos clãs">⇄ <span>TROCAR CLÃ</span></a>
               </div>
               <h1>BEM-VINDO,<br /><em>CAÇADOR.</em></h1>
               <p>O desempenho do Ghost Hunt em um só lugar.</p>
-              <a className="gh-v2-hero-link" href="/ranking">ACOMPANHAR RANKING <b>↗</b></a>
+              <a className="gh-v2-hero-link" href="https://ghosthunt.com.br/" aria-label="Trocar de clã">TROCAR CLÃ <b>↗</b></a>
             </div>
             <div className="gh-v2-season-stamp"><small>TEMPORADA</small><strong>{data.monthLabel.split(" de ")[0].slice(0,3).toUpperCase()}</strong><span>2026</span></div>
           </section>
