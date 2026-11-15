@@ -111,10 +111,6 @@ export default function BottomNavigation() {
           </Link>
         );
       })}
-      <Link href="https://ghosthunt.com.br/" className="mobile-nav-item" aria-label="Voltar à página de escolha dos clãs" prefetch={false}>
-        <span className="mobile-nav-icon" aria-hidden="true">⇄</span>
-        <span>Trocar clã</span>
-      </Link>
       <span className="mobile-nav-swipe-arrow" aria-hidden="true">›</span>
     </nav>
   );
