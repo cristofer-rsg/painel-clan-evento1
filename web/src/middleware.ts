@@ -21,7 +21,9 @@ export function middleware(request: NextRequest) {
   if (ingloriousMatch) {
     const appPath = pathname.slice(ingloriousMatch[0].length) || "/";
     const destination = new URL(`/Inglorious${appPath}${search}`, ingloriousProductionOrigin);
-    return NextResponse.rewrite(destination);
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set("x-inglorious-proxy", "1");
+    return NextResponse.rewrite(destination, { request: { headers: requestHeaders } });
   }
 
   if (pathname === "/ghosthunt" || pathname.startsWith("/ghosthunt/")) {
