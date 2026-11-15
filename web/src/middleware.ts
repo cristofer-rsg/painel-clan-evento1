@@ -25,7 +25,6 @@ export function middleware(request: NextRequest) {
 
     const headers = new Headers(request.headers);
     headers.set("x-vercel-protection-bypass", bypassSecret);
-    headers.set("x-vercel-set-bypass-cookie", "true");
     const destination = new URL(`${pathname}${search}`, ingloriousPreviewOrigin);
     return NextResponse.rewrite(destination, { request: { headers } });
   }
