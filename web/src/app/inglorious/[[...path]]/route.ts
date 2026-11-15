@@ -24,8 +24,8 @@ function mapRedirectLocation(location: string, requestUrl: URL): string {
   const upstreamHost = new URL(UPSTREAM_ORIGIN).host;
 
   if (target.host === upstreamHost && target.pathname.toLowerCase().startsWith(UPSTREAM_BASE_PATH.toLowerCase())) {
-    const publicPath = target.pathname.slice(UPSTREAM_BASE_PATH.length) || "/";
-    target.pathname = `/inglorious${publicPath === "/" ? "/" : publicPath}`;
+    const publicPath = target.pathname.slice(UPSTREAM_BASE_PATH.length);
+    target.pathname = publicPath ? `/inglorious${publicPath}` : "/inglorious";
     target.host = requestUrl.host;
     target.protocol = requestUrl.protocol;
   } else if (target.origin === requestUrl.origin && target.pathname.toLowerCase().startsWith("/inglorious")) {
