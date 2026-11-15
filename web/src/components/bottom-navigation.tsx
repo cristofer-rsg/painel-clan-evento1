@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
+const isAdminRoute = (path: string) => /(?:^|\/)admin(?:\/|$)/.test(path) || /(?:^|\/)login(?:\/|$)/.test(path);
+
 const items = [
   { href: "/", icon: "⌂", label: "Início" },
   { href: "/ranking", icon: "♛", label: "Ranking" },
@@ -32,7 +34,7 @@ export default function BottomNavigation() {
     const onTouchStart = (event: TouchEvent) => {
       // Horizontal swipe navigation belongs only to public pages.
       // Admin pages must never fall through to the public tab index.
-      if (currentPath.current.startsWith("/admin") || currentPath.current === "/login") {
+      if (isAdminRoute(currentPath.current)) {
         touchStart.current = null;
         return;
       }
@@ -61,7 +63,7 @@ export default function BottomNavigation() {
       if (!start || event.changedTouches.length !== 1 || navigationPending.current) return;
 
       const path = currentPath.current;
-      if (path.startsWith("/admin") || path === "/login") return;
+      if (isAdminRoute(path)) return;
 
       const touch = event.changedTouches[0];
       const deltaX = touch.clientX - start.x;
@@ -99,7 +101,7 @@ export default function BottomNavigation() {
     };
   }, [router]);
 
-  if (pathname.startsWith("/admin") || pathname === "/login") return null;
+  if (isAdminRoute(pathname)) return null;
 
   return (
     <nav className="mobile-bottom-nav" aria-label="Navegação principal">
