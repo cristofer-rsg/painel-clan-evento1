@@ -80,7 +80,7 @@ async function proxy(request: Request, context: RouteContext): Promise<Response>
 
   responseHeaders.set(
     "cache-control",
-    isImmutableAsset ? "public, max-age=31536000, immutable" : "private, no-store, max-age=0",
+    isImmutableAsset ? "public, max-age=31536000, s-maxage=31536000, immutable" : "private, no-store, max-age=0",
   );
 
   // Hashed Next.js assets are immutable and do not contain the upstream base path.
