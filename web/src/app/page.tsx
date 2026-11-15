@@ -12,7 +12,7 @@ export default function PortalHomePage() {
       <div className="portal-card-topline"><span>{app.eyebrow}</span><span className="portal-card-status"><i/> DISPONÍVEL</span></div>
       <div className="portal-card-copy"><h2>{app.name}</h2><p>{app.description}</p></div>
       <ul className="portal-feature-list">{app.features.map(feature=><li key={feature}><span>✦</span>{feature}</li>)}</ul>
-      <a className="portal-enter-button" href={app.href} target={app.href.startsWith("http")?"_blank":undefined} rel={app.href.startsWith("http")?"noopener noreferrer":undefined}><span>ACESSAR {app.name}</span><b aria-hidden="true">↗</b></a>
+      <Link className="portal-enter-button" href={app.href} prefetch={false}><span>ACESSAR {app.name}</span><b aria-hidden="true">↗</b></Link>
     </article>)}</section>
     <footer className="portal-footer"><span>GHOST HUNT <b>•</b> CENTRAL GAMING</span><span>Selecione um aplicativo para continuar</span></footer>
   </main>;
