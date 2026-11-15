@@ -1,5 +1,5 @@
 const applications = [
-  { name: "GHOST HUNT", eyebrow: "CLAN COMMUNITY", description: "Ranking, guerras, raides, desempenho e administração do clã.", href: "/ranking", tone: "green", mark: "GH", features: ["Ranking e pódio", "Guerras e raides", "Desempenho dos jogadores"] },
+  { name: "GHOST HUNT", eyebrow: "CLAN COMMUNITY", description: "Ranking, guerras, raides, desempenho e administração do clã.", href: "/ranking", tone: "green", image: "/ghost-hunt.webp", imageAlt: "Ghost Hunt com Rei Bárbaro e Rainha Arqueira", features: ["Ranking e pódio", "Guerras e raides", "Desempenho dos jogadores"] },
   { name: "INGLORIOUS", eyebrow: "CLAN MANAGEMENT", description: "Acompanhe os membros, a pontuação, as atividades e a evolução do clã.", href: "https://inglorious-six.vercel.app", tone: "violet", mark: "IG", features: ["Gestão de membros", "Pontuação e estatísticas", "Histórico e atividades"] },
 ];
 export default function PortalHomePage() {
@@ -9,7 +9,7 @@ export default function PortalHomePage() {
     <section className="portal-intro"><span className="portal-kicker">DUAS EXPERIÊNCIAS. UM SÓ PORTAL.</span><h1>ESCOLHA SUA<br/><em>PLATAFORMA</em></h1><p>Acesse seu ambiente de jogo e acompanhe tudo o que acontece no seu clã.</p></section>
     <section className="portal-app-grid" aria-label="Aplicativos disponíveis">{applications.map(app=><article className={`portal-app-card ${app.tone}`} key={app.name}>
       <div className="portal-card-topline"><span>{app.eyebrow}</span><span className="portal-card-status"><i/> DISPONÍVEL</span></div>
-      <div className="portal-emblem-wrap" aria-hidden="true"><div className="portal-emblem"><span>{app.mark}</span></div><span className="portal-emblem-ring"/></div>
+      {app.image ? <div className="portal-art-wrap"><img className="portal-art" src={app.image} alt={app.imageAlt} /></div> : <div className="portal-emblem-wrap" aria-hidden="true"><div className="portal-emblem"><span>{app.mark}</span></div><span className="portal-emblem-ring"/></div>}
       <div className="portal-card-copy"><h2>{app.name}</h2><p>{app.description}</p></div>
       <ul className="portal-feature-list">{app.features.map(feature=><li key={feature}><span>✦</span>{feature}</li>)}</ul>
       <a className="portal-enter-button" href={app.href} target={app.href.startsWith("http")?"_blank":undefined} rel={app.href.startsWith("http")?"noopener noreferrer":undefined}><span>ACESSAR {app.name}</span><b aria-hidden="true">↗</b></a>
