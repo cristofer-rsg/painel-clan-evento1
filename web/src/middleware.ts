@@ -21,7 +21,7 @@ export function middleware(request: NextRequest) {
   if (ingloriousMatch) {
     const appPath = pathname.slice(ingloriousMatch[0].length) || "/";
     const destination = new URL(`/Inglorious${appPath}${search}`, ingloriousProductionOrigin);
-    return NextResponse.redirect(destination, 307);
+    return NextResponse.rewrite(destination);
   }
 
   if (pathname === "/ghosthunt" || pathname.startsWith("/ghosthunt/")) {
