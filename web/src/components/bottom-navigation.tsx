@@ -5,7 +5,11 @@ import { useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 const isAdminRoute = (path: string) => /(?:^|\/)admin(?:\/|$)/.test(path) || /(?:^|\/)login(?:\/|$)/.test(path);
-const isPortalRoute = (path: string) => path === "/" || path === "/Inglorious";
+const isPortalRoute = (path: string) => path === "/" || /^\/inglorious(?:\/|$)/i.test(path);
+const normalizeAppPath = (path: string) => {
+  const normalized = path.replace(/^\/ghosthunt(?=\/|$)/, "") || "/home";
+  return normalized;
+};
 
 const items = [
   { href: "/home", icon: "⌂", label: "Início" },
@@ -75,8 +79,9 @@ export default function BottomNavigation() {
       // A shorter but clearly horizontal gesture is enough; vertical scroll remains untouched.
       if (absX < 48 || absX < absY * 1.2) return;
 
+      const normalizedPath = normalizeAppPath(path);
       const currentIndex = items.findIndex((item) =>
-        item.href === "/" ? path === "/" : path === item.href || path.startsWith(item.href + "/")
+        normalizedPath === item.href || (item.href !== "/home" && normalizedPath.startsWith(item.href + "/"))
       );
       const index = currentIndex >= 0 ? currentIndex : path.startsWith("/player/") ? 1 : 0;
       const nextIndex = deltaX < 0
@@ -108,7 +113,8 @@ export default function BottomNavigation() {
     <nav className="mobile-bottom-nav" aria-label="Navegação principal">
       <span className="mobile-nav-swipe-arrow" aria-hidden="true">‹</span>
       {items.map((item) => {
-        const active = item.href === "/" ? pathname === "/" : pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href + "/"));
+        const normalizedPath = normalizeAppPath(pathname);
+        const active = normalizedPath === item.href || (item.href !== "/home" && normalizedPath.startsWith(item.href + "/"));
         return (
           <Link className={active ? "mobile-nav-item active" : "mobile-nav-item"} href={item.href} key={item.label} aria-current={active ? "page" : undefined} prefetch>
             <span className="mobile-nav-icon" aria-hidden="true">{item.icon}</span>
