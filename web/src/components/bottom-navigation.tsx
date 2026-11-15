@@ -5,12 +5,18 @@ import { useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 const items = [
-  { href: "/", icon: "⌂", label: "Início" },
-  { href: "/ranking", icon: "♛", label: "Ranking" },
-  { href: "/performance", icon: "◈", label: "Desempenho" },
-  { href: "/tempo-de-cla", icon: "◷", label: "Tempo de Clã" },
-  { href: "/rules", icon: "⚖", label: "Regras" },
+  { href: "/ghosthunt", route: "/", icon: "⌂", label: "Início" },
+  { href: "/ghosthunt/ranking", route: "/ranking", icon: "♛", label: "Ranking" },
+  { href: "/ghosthunt/performance", route: "/performance", icon: "◈", label: "Desempenho" },
+  { href: "/ghosthunt/tempo-de-cla", route: "/tempo-de-cla", icon: "◷", label: "Tempo de Clã" },
+  { href: "/ghosthunt/rules", route: "/rules", icon: "⚖", label: "Regras" },
 ];
+
+function normalizePath(pathname: string) {
+  if (pathname === "/ghosthunt" || pathname === "/ghosthunt/") return "/";
+  if (pathname.startsWith("/ghosthunt/")) return pathname.slice("/ghosthunt".length) || "/";
+  return pathname;
+}
 
 export default function BottomNavigation() {
   const pathname = usePathname();
@@ -26,22 +32,17 @@ export default function BottomNavigation() {
   }, [pathname]);
 
   useEffect(() => {
-    // Warm every tab route, including Home, as soon as the navigation is mounted.
     items.forEach((item) => router.prefetch(item.href));
 
     const onTouchStart = (event: TouchEvent) => {
-      // Horizontal swipe navigation belongs only to public pages.
-      // Admin pages must never fall through to the public tab index.
       if (currentPath.current.startsWith("/admin") || currentPath.current === "/login") {
         touchStart.current = null;
         return;
       }
-
       if (event.touches.length !== 1 || navigationPending.current) {
         touchStart.current = null;
         return;
       }
-
       const target = event.target;
       if (
         target instanceof Element &&
@@ -50,7 +51,6 @@ export default function BottomNavigation() {
         touchStart.current = null;
         return;
       }
-
       const touch = event.touches[0];
       touchStart.current = { x: touch.clientX, y: touch.clientY };
     };
@@ -59,23 +59,21 @@ export default function BottomNavigation() {
       const start = touchStart.current;
       touchStart.current = null;
       if (!start || event.changedTouches.length !== 1 || navigationPending.current) return;
-
       const path = currentPath.current;
       if (path.startsWith("/admin") || path === "/login") return;
-
       const touch = event.changedTouches[0];
       const deltaX = touch.clientX - start.x;
       const deltaY = touch.clientY - start.y;
       const absX = Math.abs(deltaX);
       const absY = Math.abs(deltaY);
-
-      // A shorter but clearly horizontal gesture is enough; vertical scroll remains untouched.
       if (absX < 48 || absX < absY * 1.2) return;
 
+      const normalizedPath = normalizePath(path);
       const currentIndex = items.findIndex((item) =>
-        item.href === "/" ? path === "/" : path === item.href || path.startsWith(item.href + "/")
+        item.route === "/" ? normalizedPath === "/" || normalizedPath === "/home"
+          : normalizedPath === item.route || normalizedPath.startsWith(item.route + "/")
       );
-      const index = currentIndex >= 0 ? currentIndex : path.startsWith("/player/") ? 1 : 0;
+      const index = currentIndex >= 0 ? currentIndex : normalizedPath.startsWith("/player/") ? 1 : 0;
       const nextIndex = deltaX < 0
         ? Math.min(items.length - 1, index + 1)
         : Math.max(0, index - 1);
@@ -87,11 +85,9 @@ export default function BottomNavigation() {
     };
 
     const onTouchCancel = () => { touchStart.current = null; };
-
     window.addEventListener("touchstart", onTouchStart, { passive: true });
     window.addEventListener("touchend", onTouchEnd, { passive: true });
     window.addEventListener("touchcancel", onTouchCancel, { passive: true });
-
     return () => {
       window.removeEventListener("touchstart", onTouchStart);
       window.removeEventListener("touchend", onTouchEnd);
@@ -101,11 +97,14 @@ export default function BottomNavigation() {
 
   if (pathname.startsWith("/admin") || pathname === "/login") return null;
 
+  const normalizedPath = normalizePath(pathname);
   return (
     <nav className="mobile-bottom-nav" aria-label="Navegação principal">
       <span className="mobile-nav-swipe-arrow" aria-hidden="true">‹</span>
       {items.map((item) => {
-        const active = item.href === "/" ? pathname === "/" : pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href + "/"));
+        const active = item.route === "/"
+          ? normalizedPath === "/" || normalizedPath === "/home"
+          : normalizedPath === item.route || normalizedPath.startsWith(item.route + "/");
         return (
           <Link className={active ? "mobile-nav-item active" : "mobile-nav-item"} href={item.href} key={item.label} aria-current={active ? "page" : undefined} prefetch>
             <span className="mobile-nav-icon" aria-hidden="true">{item.icon}</span>
