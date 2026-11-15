@@ -181,3 +181,14 @@
   .portal-card-copy h2{font-size:clamp(20px,5.8vw,25px);letter-spacing:.025em}
   .portal-app-card.violet .portal-card-copy h2{font-size:clamp(20px,5.8vw,25px);letter-spacing:.01em}
 }
+
+/* Clan artwork backgrounds — portal landing page only */
+.portal-app-card{background:#080b09}
+.portal-card-art{position:absolute;inset:-7px;z-index:0;overflow:hidden;border-radius:inherit;pointer-events:none}
+.portal-card-art img{display:block;width:100%;height:100%;object-fit:cover;object-position:center;opacity:.58;filter:blur(2.5px) saturate(1.08);transform:scale(1.045)}
+.portal-app-card:before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(90deg,rgba(3,12,7,.78) 0%,rgba(3,12,7,.53) 55%,rgba(3,12,7,.28) 100%),linear-gradient(0deg,rgba(3,10,6,.84) 0%,rgba(3,10,6,.12) 75%)}
+.portal-app-card.violet:before{background:linear-gradient(90deg,rgba(10,4,16,.8) 0%,rgba(10,4,16,.54) 55%,rgba(10,4,16,.28) 100%),linear-gradient(0deg,rgba(9,4,14,.84) 0%,rgba(9,4,14,.12) 75%)}
+.portal-card-overlay{background:linear-gradient(0deg,rgba(4,10,6,.32),transparent 75%)}
+.portal-app-card.violet .portal-card-overlay{background:linear-gradient(0deg,rgba(9,4,14,.32),transparent 75%)}
+.portal-app-card>*:not(.portal-card-art):not(.portal-card-overlay){position:relative;z-index:2}
+@media(max-width:700px){.portal-card-art img{filter:blur(2.2px) saturate(1.08)}}
