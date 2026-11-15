@@ -1,4 +1,5 @@
 import "server-only";
+import { unstable_cache } from "next/cache";
 
 import { createSupabaseAdmin } from "@/lib/supabase/admin";
 import { calculatePlayerScore, isRankingEligible } from "@/lib/ghost-hunt/scoring";
@@ -100,7 +101,7 @@ async function fetchAllEvents(start: string, end: string): Promise<EventRow[]> {
   return rows;
 }
 
-export async function getDashboardData(): Promise<DashboardData> {
+async function loadDashboardData(): Promise<DashboardData> {
   const monthKey = getSaoPauloMonth();
   const monthLabel = new Intl.DateTimeFormat("pt-BR", {
     month: "long",
@@ -198,4 +199,10 @@ export async function getDashboardData(): Promise<DashboardData> {
       error: error instanceof Error ? error.message : "Não foi possível carregar os dados.",
     };
   }
+}
+
+const getCachedDashboardData = unstable_cache(loadDashboardData, ["ghost-hunt-dashboard-v1"], { revalidate: 20 });
+
+export async function getDashboardData(): Promise<DashboardData> {
+  return getCachedDashboardData();
 }
