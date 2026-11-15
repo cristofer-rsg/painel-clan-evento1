@@ -27,12 +27,11 @@ export function middleware(request: NextRequest) {
 
   const ingloriousPath = pathname.match(/^\/inglorious(?=\/|$)/i);
   if (ingloriousPath) {
-    const suffix = pathname.replace(/^\/inglorious(?=\/|$)/i, "");
     const destination = new URL(
-      `/Inglorious${suffix || "/"}${search}`,
+      `${pathname.replace(/^\/inglorious(?=\/|$)/i, "/inglorious") || "/inglorious/"}${search}`,
       "https://inglorious.ghosthunt.com.br",
     );
-    return NextResponse.redirect(destination, 308);
+    return NextResponse.rewrite(destination);
   }
 
   if (pathname === "/ghosthunt" || pathname.startsWith("/ghosthunt/")) {
