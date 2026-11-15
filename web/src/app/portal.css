@@ -192,3 +192,9 @@
 .portal-app-card.violet .portal-card-overlay{background:linear-gradient(0deg,rgba(9,4,14,.32),transparent 75%)}
 .portal-app-card>*:not(.portal-card-art):not(.portal-card-overlay){position:relative;z-index:2}
 @media(max-width:700px){.portal-card-art img{filter:blur(2.2px) saturate(1.08)}}
+
+/* Artwork clarity and correct clan-to-image mapping */
+.portal-card-art img{opacity:.56;filter:blur(.55px) saturate(1.08);transform:scale(1.025)}
+.portal-app-card:before{background:linear-gradient(90deg,rgba(3,12,7,.64) 0%,rgba(3,12,7,.38) 55%,rgba(3,12,7,.2) 100%),linear-gradient(0deg,rgba(3,10,6,.68) 0%,rgba(3,10,6,.06) 75%)}
+.portal-app-card.violet:before{background:linear-gradient(90deg,rgba(10,4,16,.66) 0%,rgba(10,4,16,.4) 55%,rgba(10,4,16,.22) 100%),linear-gradient(0deg,rgba(9,4,14,.68) 0%,rgba(9,4,14,.06) 75%)}
+@media(max-width:700px){.portal-card-art img{filter:blur(.55px) saturate(1.08);opacity:.56}}
