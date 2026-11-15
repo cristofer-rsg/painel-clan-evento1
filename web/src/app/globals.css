@@ -1453,3 +1453,14 @@ body{
 .performance-leader-role.role-leadership{color:#9bd6a5;background:rgba(38,128,65,.18);border:1px solid rgba(92,190,112,.62)}
 .performance-leader-role.role-elder{color:#f2cc68;background:rgba(184,137,31,.18);border:1px solid rgba(232,188,72,.68)}
 .performance-leader-role.role-member{color:#ff9292;background:rgba(166,42,42,.18);border:1px solid rgba(222,85,85,.68)}
+
+
+/* Ação de troca de clã junto à saudação principal */
+.gh-v2-welcome-row { display:flex; align-items:center; justify-content:space-between; gap:12px; position:relative; z-index:2; }
+.gh-v2-switch-clan { display:inline-flex; align-items:center; justify-content:center; gap:7px; flex:0 0 auto; min-height:34px; padding:8px 11px; border:1px solid rgba(213,182,110,.48); border-radius:9px; background:rgba(213,182,110,.09); color:#e5c77f; font-size:10px; font-weight:800; letter-spacing:.07em; white-space:nowrap; }
+.gh-v2-switch-clan:active { background:rgba(213,182,110,.18); }
+@media(max-width:480px) {
+  .gh-v2-welcome-row { align-items:flex-start; }
+  .gh-v2-eyebrow { font-size:9px; letter-spacing:.12em; }
+  .gh-v2-switch-clan { min-height:32px; padding:7px 8px; font-size:8px; }
+}
