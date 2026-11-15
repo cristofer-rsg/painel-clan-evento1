@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import "./portal.css";
 import "./home-community.css";
 import "./gold-theme.css";
 import "./readability-polish.css";
