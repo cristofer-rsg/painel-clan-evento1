@@ -242,3 +242,23 @@
     opacity:.82 !important;
   }
 }
+
+
+/* Inglorious high-resolution source: preserve source detail and remove card-only dimming. */
+.portal-app-card.violet .portal-card-art{
+  inset:0 !important;
+}
+.portal-app-card.violet .portal-card-art img{
+  width:100% !important;
+  height:100% !important;
+  object-fit:cover !important;
+  object-position:center !important;
+  opacity:1 !important;
+  filter:none !important;
+  transform:none !important;
+  image-rendering:auto !important;
+}
+.portal-app-card.violet:before,
+.portal-app-card.violet .portal-card-overlay{
+  background:transparent !important;
+}
