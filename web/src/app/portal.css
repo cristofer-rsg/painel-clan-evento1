@@ -242,3 +242,32 @@
     opacity:.82 !important;
   }
 }
+
+
+/* Inglorious artwork clarity: render the original asset at full visibility without blur or dark overlays. */
+.portal-app-card.violet .portal-card-art{
+  inset:0 !important;
+}
+.portal-app-card.violet .portal-card-art img{
+  width:100% !important;
+  height:100% !important;
+  object-fit:cover !important;
+  object-position:center !important;
+  opacity:1 !important;
+  filter:none !important;
+  transform:none !important;
+  image-rendering:auto !important;
+}
+.portal-app-card.violet:before{
+  background:transparent !important;
+}
+.portal-app-card.violet .portal-card-overlay{
+  background:transparent !important;
+}
+@media(max-width:700px){
+  .portal-app-card.violet .portal-card-art img{
+    opacity:1 !important;
+    filter:none !important;
+    transform:none !important;
+  }
+}
