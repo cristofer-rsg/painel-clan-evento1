@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import "./portal.css";
 import "./home-community.css";
 import "./gold-theme.css";
 import "./readability-polish.css";
@@ -11,10 +12,10 @@ const siteUrl = "https://ghosthunt.com.br";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Ghost Hunt | Central do Clã",
+    default: "Ghost Hunt | Central de Aplicativos",
     template: "%s | Ghost Hunt",
   },
-  description: "Acompanhe o ranking, a pontuação, os eventos e o desempenho dos jogadores do clã Ghost Hunt.",
+  description: "Acesse os aplicativos Ghost Hunt e Inglorious em um só lugar.",
   applicationName: "Ghost Hunt",
   openGraph: {
     type: "website",
