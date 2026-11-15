@@ -1,4 +1,5 @@
 import "server-only";
+import { unstable_cache } from "next/cache";
 import { createSupabaseAdmin } from "@/lib/supabase/admin";
 import { calculatePlayerScore } from "@/lib/ghost-hunt/scoring";
 
@@ -39,7 +40,7 @@ function label(key: string) {
     .format(new Date(key + "-15T12:00:00-03:00"));
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
-export async function getPerformanceData(requestedMonth?: string, useManualDonationFallback = false): Promise<PerformanceData> {
+async function loadPerformanceData(requestedMonth?: string, useManualDonationFallback = false): Promise<PerformanceData> {
   const fallbackMonth = currentMonth();
   try {
     const db = createSupabaseAdmin();
@@ -167,4 +168,10 @@ export async function getPerformanceData(requestedMonth?: string, useManualDonat
       connected: false, error: error instanceof Error ? error.message : "Falha ao carregar desempenho.",
     };
   }
+}
+
+const getCachedPerformanceData = unstable_cache(loadPerformanceData, ["ghost-hunt-performance-v1"], { revalidate: 20 });
+
+export async function getPerformanceData(requestedMonth?: string, useManualDonationFallback = false): Promise<PerformanceData> {
+  return getCachedPerformanceData(requestedMonth, useManualDonationFallback);
 }
