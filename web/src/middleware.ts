@@ -17,9 +17,9 @@ const ingloriousProductionOrigin = "https://inglorious-cristoferrsg-9877.vercel.
 export function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
-  const ingloriousPath = pathname.match(/^\\/inglorious(?=\\/|$)/i);
+  const ingloriousPath = pathname.match(/^\/inglorious(?=\/|$)/i);
   if (ingloriousPath) {
-    const normalizedPath = pathname.replace(/^\\/inglorious(?=\\/|$)/i, "/Inglorious");
+    const normalizedPath = pathname.replace(/^\/inglorious(?=\/|$)/i, "/Inglorious");
     const destination = new URL(`${normalizedPath}${search}`, ingloriousProductionOrigin);
     return NextResponse.rewrite(destination);
   }
