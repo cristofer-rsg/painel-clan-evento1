@@ -7,7 +7,7 @@ import "./readability-polish.css";
 import "./rules.css";
 import "./analytics.css";
 import "./tempo-de-cla/tempo-de-cla.css";
-import BottomNavigation from "@/components/bottom-navigation";
+import AppNavigation from "@/components/app-navigation";
 import AnalyticsTracker from "@/components/analytics-tracker";
 
 const siteUrl = "https://ghosthunt.com.br";
@@ -48,7 +48,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="pt-BR">
       <body>
         {children}
-        <BottomNavigation />
+        <AppNavigation />
         <AnalyticsTracker />
       </body>
     </html>
