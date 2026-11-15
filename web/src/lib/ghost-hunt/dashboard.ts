@@ -130,16 +130,26 @@ async function loadDashboardData(): Promise<DashboardData> {
       .order("entered_at", { ascending: false }).limit(3);
     const recentMembers = recentResult.error ? [] : (recentResult.data ?? []).map((row) => ({ player_name: row.player_name, player_tag: row.player_tag, first_seen_at: row.entered_at })) as RecentMember[];
 
+    const eventsByPlayer = new Map<string, EventRow[]>();
+    for (const event of events) {
+      const key = (event.player ?? "").trim().toLocaleLowerCase("pt-BR");
+      if (!key) continue;
+      const bucket = eventsByPlayer.get(key);
+      if (bucket) bucket.push(event);
+      else eventsByPlayer.set(key, [event]);
+    }
+
     const players = (playerData ?? []) as (Player & { eligible?: string | null })[];
     const competitors = players.filter((player) => isRankingEligible(player));
     const ranking = competitors.map((player) => {
+      const playerEvents = eventsByPlayer.get(player.name.trim().toLocaleLowerCase("pt-BR")) ?? [];
       const gamesRaw = Math.max(
         gamesByTag.get((player.player_tag ?? "").trim().toUpperCase()) ?? 0,
         gamesByName.get(player.name.trim().toLocaleLowerCase("pt-BR")) ?? 0,
       );
       const calculated = calculatePlayerScore({
         playerName: player.name,
-        events,
+        events: playerEvents,
         clanGamesPoints: gamesRaw,
       });
       return {
@@ -155,9 +165,8 @@ async function loadDashboardData(): Promise<DashboardData> {
         capitalCoins: calculated.capitalCoins,
         capitalPoints: calculated.capitalPoints,
         penalties: calculated.penalties,
-        penaltyDetails: events
-          .filter((event) => (event.player ?? "").trim().toLocaleLowerCase("pt-BR") === player.name.trim().toLocaleLowerCase("pt-BR")
-            && Number(event.points ?? 0) < 0)
+        penaltyDetails: playerEvents
+          .filter((event) => Number(event.points ?? 0) < 0)
           .map((event) => ({
             category: event.category?.trim() || "Outros",
             description: (event.activity ?? "Motivo não informado")
