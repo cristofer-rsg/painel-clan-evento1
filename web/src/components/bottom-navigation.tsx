@@ -5,7 +5,7 @@ import { useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 const items = [
-  { href: "/", icon: "⌂", label: "Início" },
+  { href: "/home", icon: "⌂", label: "Início" },
   { href: "/ranking", icon: "♛", label: "Ranking" },
   { href: "/performance", icon: "◈", label: "Desempenho" },
   { href: "/rules", icon: "⚖", label: "Regras" },
