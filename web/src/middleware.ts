@@ -29,9 +29,12 @@ export function middleware(request: NextRequest) {
     return NextResponse.rewrite(destination, { request: { headers } });
   }
 
-  if (pathname === "/ghosthunt" || pathname.startsWith("/ghosthunt/")) {
+  // Keep the exact /ghosthunt entry URL on its own App Router page.
+  // Only nested paths are rewritten to the existing Ghost Hunt routes.
+  if (pathname.startsWith("/ghosthunt/")) {
     const rewrittenUrl = request.nextUrl.clone();
-    rewrittenUrl.pathname = pathname.replace(/^\/ghosthunt(?=\/|$)/, "") || "/home";
+    const nestedPath = pathname.replace(/^\/ghosthunt\/?/, "");
+    rewrittenUrl.pathname = nestedPath ? `/${nestedPath}` : "/home";
     return NextResponse.rewrite(rewrittenUrl);
   }
 
