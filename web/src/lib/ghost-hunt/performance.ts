@@ -7,6 +7,12 @@ type Player = { name: string; player_tag: string | null; active: boolean | null;
 type Stats = { month_key: string; player_tag: string | null; player: string | null; war_attacks: number | null; donations: number | null; clan_games_points: number | null };
 type ActivitySource = { source_key: string; player_tag: string | null; war_attacks: number | null; league_attacks: number | null; raid_attacks: number | null; updated_at: string | null };
 type EventRow = { player: string | null; category: string | null; activity: string | null; points: number | null };
+type RangeQuery<T> = {
+  range(from: number, to: number): PromiseLike<{
+    data: T[] | null;
+    error: { message: string } | null;
+  }>;
+};
 export type PerformanceRow = {
   position: number; player: string; tag: string; role: "leader" | "coLeader" | "elder" | "member" | null;
   wars: number; league: number; raid: number; donations: number; games: number; capital: number;
@@ -24,7 +30,7 @@ function currentMonth() {
   const parts = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit" }).formatToParts(new Date());
   return (parts.find(p => p.type === "year")?.value || "2026") + "-" + (parts.find(p => p.type === "month")?.value || "01");
 }
-async function allRows<T>(query: any): Promise<T[]> {
+async function allRows<T>(query: RangeQuery<T>): Promise<T[]> {
   const rows: T[] = [];
   for (let offset = 0; ; offset += 1000) {
     const { data, error } = await query.range(offset, offset + 999);
@@ -46,8 +52,8 @@ async function loadPerformanceData(requestedMonth?: string, useManualDonationFal
     const db = createSupabaseAdmin();
     const [playersResult, allStats, activitySources] = await Promise.all([
       db.from("players").select("name,player_tag,active,role").order("name", { ascending: true }),
-      allRows<Stats>(db.from("player_monthly_stats").select("month_key,player_tag,player,war_attacks,donations,clan_games_points").order("month_key", { ascending: false })),
-      allRows<ActivitySource>(db.from("player_monthly_stat_sources").select("source_key,player_tag,war_attacks,league_attacks,raid_attacks,updated_at").order("updated_at", { ascending: false })),
+      allRows<Stats>(db.from("player_monthly_stats").select("month_key,player_tag,player,war_attacks,donations,clan_games_points").order("month_key", { ascending: false }) as unknown as RangeQuery<Stats>),
+      allRows<ActivitySource>(db.from("player_monthly_stat_sources").select("source_key,player_tag,war_attacks,league_attacks,raid_attacks,updated_at").order("updated_at", { ascending: false }) as unknown as RangeQuery<ActivitySource>),
     ]);
     if (playersResult.error) throw playersResult.error;
     const months = Array.from(new Set([fallbackMonth, ...allStats.map(row => row.month_key).filter(Boolean)])).sort().reverse();
@@ -118,19 +124,28 @@ async function loadPerformanceData(requestedMonth?: string, useManualDonationFal
       else if (category === "capital do clã" && activity === "Doação automática de Ouro da Capital") bucket.capital += Math.max(0, points);
       rawByPlayer.set(key, bucket);
     }
+    const eventsByPlayer = new Map<string, EventRow[]>();
+    for (const event of events) {
+      const key = (event.player ?? "").trim().toLocaleLowerCase("pt-BR");
+      if (!key) continue;
+      const bucket = eventsByPlayer.get(key);
+      if (bucket) bucket.push(event);
+      else eventsByPlayer.set(key, [event]);
+    }
     const players = playersResult.data || [];
     const rows = players.map((player: Player) => {
       const key = player.name.trim().toLocaleLowerCase("pt-BR");
       const statByTag = player.player_tag ? byTag.get(player.player_tag.trim().toUpperCase()) : undefined;
       const statByName = byName.get(key);
       const stat = statByTag || statByName;
+      const playerEvents = eventsByPlayer.get(key) ?? [];
       const raw = rawByPlayer.get(key) ?? { wars: 0, warAttacks: 0, league: 0, leagueAttacks: 0, raid: 0, raidAttacks: 0, donationsEvents: 0, gamesEvents: 0, capital: 0, penalties: 0 };
       const recordedDonations = Number(stat?.donations || 0);
       const donations = useManualDonationFallback && recordedDonations <= 0 ? raw.donationsEvents : recordedDonations;
       const games = Math.max(Number(statByTag?.clan_games_points || 0), Number(statByName?.clan_games_points || 0), raw.gamesEvents);
       const scoring = calculatePlayerScore({
         playerName: player.name,
-        events,
+        events: playerEvents,
         clanGamesPoints: games,
       });
       const warsPoints = scoring.wars;

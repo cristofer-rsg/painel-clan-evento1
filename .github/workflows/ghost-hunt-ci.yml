@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - main
+      - fix/inglorious-proxy-redirects
   workflow_dispatch:
 
 permissions:
