@@ -1,6 +1,6 @@
 const applications = [
   { name: "GHOST HUNT", eyebrow: "CLAN COMMUNITY", description: "Ranking, guerras, raides, desempenho e administração do clã.", href: "/ghosthunt", tone: "green", features: ["Ranking e pódio", "Guerras e raides", "Desempenho dos jogadores"] },
-  { name: "INGLORIOUS", eyebrow: "CLAN MANAGEMENT", description: "Ranking, guerras, raides, desempenho e administração do clã.", href: "/Inglorious", tone: "violet", features: ["Ranking e pódio", "Guerras e raides", "Desempenho dos jogadores"] },
+  { name: "INGLORIOUS", eyebrow: "CLAN MANAGEMENT", description: "Ranking, guerras, raides, desempenho e administração do clã.", href: "https://inglorious.ghosthunt.com.br", tone: "violet", features: ["Ranking e pódio", "Guerras e raides", "Desempenho dos jogadores"] },
 ];
 export default function PortalHomePage() {
   return <main className="portal-page">
