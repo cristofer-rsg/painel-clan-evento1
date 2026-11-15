@@ -10,7 +10,7 @@ export default function PortalHomePage() {
     <section className="portal-app-grid" aria-label="Aplicativos disponíveis">{applications.map(app=><article className={`portal-app-card ${app.tone}`} key={app.name}>
       <div className="portal-card-art" aria-hidden="true"><img src={app.image} alt="" /></div><div className="portal-card-overlay" aria-hidden="true" />
       <div className="portal-card-topline"><span className="portal-card-status"><i/> DISPONÍVEL</span></div>
-      <div className="portal-card-copy"><h2>{app.name}</h2><p>{app.description}</p></div>
+      <div className="portal-card-copy"><p>{app.description}</p></div>
       <ul className="portal-feature-list">{app.features.map(feature=><li key={feature}><span>✦</span>{feature}</li>)}</ul>
       <a className="portal-enter-button" href={app.href} target={app.href.startsWith("http")?"_blank":undefined} rel={app.href.startsWith("http")?"noopener noreferrer":undefined}><span>ACESSAR {app.name}</span><b aria-hidden="true">↗</b></a>
     </article>)}</section>
