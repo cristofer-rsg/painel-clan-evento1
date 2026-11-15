@@ -126,3 +126,58 @@
   .portal-enter-button{padding:8px 10px}
   .portal-footer{margin-top:8px;padding-top:6px}
 }
+
+
+/* Typography proposal: cinematic title and distinct clan wordmarks. */
+.portal-intro h1.portal-title{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:0;
+  margin:18px 0 14px;
+  font-family:Impact,"Arial Black",system-ui,sans-serif;
+  font-style:italic;
+  font-weight:950;
+  line-height:.88;
+  letter-spacing:-.035em;
+  text-transform:uppercase;
+  transform:skewX(-3deg);
+  text-shadow:0 3px 0 #3d2b12,0 8px 24px rgba(0,0,0,.55);
+}
+.portal-intro h1.portal-title span{
+  color:#f2eee5;
+  font-size:clamp(35px,7vw,66px);
+  -webkit-text-stroke:1px rgba(221,190,125,.42);
+  text-shadow:0 2px 0 #71552a,0 7px 20px rgba(0,0,0,.65);
+}
+.portal-intro h1.portal-title em{
+  margin-top:5px;
+  color:#d4a94e;
+  font-size:clamp(48px,9vw,88px);
+  letter-spacing:.015em;
+  -webkit-text-stroke:1px #f2d48b;
+  text-shadow:0 2px 0 #694516,0 5px 0 #35220d,0 0 26px rgba(213,165,65,.4);
+}
+.portal-card-copy h2{
+  font-family:Impact,"Arial Black",system-ui,sans-serif;
+  font-style:italic;
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.045em;
+  line-height:1;
+  text-shadow:0 2px 0 rgba(0,0,0,.72),0 0 18px rgba(255,255,255,.12);
+}
+.portal-app-card.violet .portal-card-copy h2{
+  font-family:Georgia,"Times New Roman",serif;
+  font-style:normal;
+  font-weight:900;
+  letter-spacing:.025em;
+  text-shadow:0 2px 0 #1a1024,0 3px 0 rgba(0,0,0,.8),0 0 18px rgba(181,155,233,.25);
+}
+@media(max-width:700px){
+  .portal-intro h1.portal-title{margin:10px 0 8px;line-height:.9}
+  .portal-intro h1.portal-title span{font-size:clamp(29px,7.7vw,39px)}
+  .portal-intro h1.portal-title em{font-size:clamp(43px,11vw,56px)}
+  .portal-card-copy h2{font-size:clamp(20px,5.8vw,25px);letter-spacing:.025em}
+  .portal-app-card.violet .portal-card-copy h2{font-size:clamp(20px,5.8vw,25px);letter-spacing:.01em}
+}
