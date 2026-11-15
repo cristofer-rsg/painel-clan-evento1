@@ -32,7 +32,7 @@ export function middleware(request: NextRequest) {
 
   if (pathname === "/ghosthunt" || pathname.startsWith("/ghosthunt/")) {
     const rewrittenUrl = request.nextUrl.clone();
-    rewrittenUrl.pathname = pathname.replace(/^\\/ghosthunt(?=\\/|$)/, "") || "/home";
+    rewrittenUrl.pathname = pathname.replace(/^\/ghosthunt(?=\/|$)/, "") || "/home";
     return NextResponse.rewrite(rewrittenUrl);
   }
 
