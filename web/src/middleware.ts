@@ -22,9 +22,11 @@ export function middleware(request: NextRequest) {
     return NextResponse.rewrite(destination);
   }
 
-  if (pathname === "/ghosthunt" || pathname.startsWith("/ghosthunt/")) {
+  if (pathname === "/ghosthunt") return NextResponse.next();
+
+  if (pathname.startsWith("/ghosthunt/")) {
     const rewrittenUrl = request.nextUrl.clone();
-    rewrittenUrl.pathname = pathname.replace(/^\/ghosthunt(?=\/|$)/, "") || "/home";
+    rewrittenUrl.pathname = pathname.replace(/^\/ghosthunt(?=\/|$)/, "");
     return NextResponse.rewrite(rewrittenUrl);
   }
 
