@@ -12,7 +12,7 @@ const appRouteRoots = [
   "/api",
 ];
 
-const ingloriousProductionOrigin = "https://inglorious-cristoferrsg-9877.vercel.app";
+const ingloriousProductionOrigin = "https://inglorious.ghosthunt.com.br";
 
 export function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
