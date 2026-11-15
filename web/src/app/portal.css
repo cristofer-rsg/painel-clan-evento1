@@ -212,3 +212,33 @@
     opacity:.62;
   }
 }
+
+
+/* Final portal-card adjustments requested: remove duplicate app names and sharpen Inglorious artwork. */
+.portal-card-copy h2{
+  display:none !important;
+}
+.portal-card-copy{
+  margin-top:clamp(72px,9vw,112px);
+}
+.portal-app-card.violet .portal-card-art img{
+  filter:none !important;
+  opacity:.82 !important;
+  transform:scale(1.005) !important;
+  image-rendering:auto;
+}
+.portal-app-card.violet:before{
+  background:
+    linear-gradient(90deg,rgba(10,4,16,.38) 0%,rgba(10,4,16,.2) 55%,rgba(10,4,16,.08) 100%),
+    linear-gradient(0deg,rgba(9,4,14,.52) 0%,rgba(9,4,14,.02) 75%) !important;
+}
+.portal-app-card.violet .portal-card-overlay{
+  background:linear-gradient(0deg,rgba(9,4,14,.18),transparent 75%) !important;
+}
+@media(max-width:700px){
+  .portal-card-copy{margin-top:clamp(58px,8svh,78px)}
+  .portal-app-card.violet .portal-card-art img{
+    filter:none !important;
+    opacity:.82 !important;
+  }
+}
