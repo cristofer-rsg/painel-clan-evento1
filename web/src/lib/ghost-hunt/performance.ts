@@ -118,19 +118,28 @@ async function loadPerformanceData(requestedMonth?: string, useManualDonationFal
       else if (category === "capital do clã" && activity === "Doação automática de Ouro da Capital") bucket.capital += Math.max(0, points);
       rawByPlayer.set(key, bucket);
     }
+    const eventsByPlayer = new Map<string, EventRow[]>();
+    for (const event of events) {
+      const key = (event.player ?? "").trim().toLocaleLowerCase("pt-BR");
+      if (!key) continue;
+      const bucket = eventsByPlayer.get(key);
+      if (bucket) bucket.push(event);
+      else eventsByPlayer.set(key, [event]);
+    }
     const players = playersResult.data || [];
     const rows = players.map((player: Player) => {
       const key = player.name.trim().toLocaleLowerCase("pt-BR");
       const statByTag = player.player_tag ? byTag.get(player.player_tag.trim().toUpperCase()) : undefined;
       const statByName = byName.get(key);
       const stat = statByTag || statByName;
+      const playerEvents = eventsByPlayer.get(key) ?? [];
       const raw = rawByPlayer.get(key) ?? { wars: 0, warAttacks: 0, league: 0, leagueAttacks: 0, raid: 0, raidAttacks: 0, donationsEvents: 0, gamesEvents: 0, capital: 0, penalties: 0 };
       const recordedDonations = Number(stat?.donations || 0);
       const donations = useManualDonationFallback && recordedDonations <= 0 ? raw.donationsEvents : recordedDonations;
       const games = Math.max(Number(statByTag?.clan_games_points || 0), Number(statByName?.clan_games_points || 0), raw.gamesEvents);
       const scoring = calculatePlayerScore({
         playerName: player.name,
-        events,
+        events: playerEvents,
         clanGamesPoints: games,
       });
       const warsPoints = scoring.wars;
