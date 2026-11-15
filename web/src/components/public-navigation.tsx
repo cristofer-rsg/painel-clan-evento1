@@ -4,8 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const items = [
-  { href: "/", icon: "⌂", label: "Início" },
-  { href: "/#ranking", icon: "♛", label: "Ranking" },
+  { href: "/home", icon: "⌂", label: "Início" },
+  { href: "/home#ranking", icon: "♛", label: "Ranking" },
   { href: "/performance", icon: "◈", label: "Desempenho" },
   { href: "/rules", icon: "⚖", label: "Regras" },
   { href: "/history", icon: "▤", label: "Histórico" },
@@ -18,8 +18,8 @@ export default function PublicNavigation() {
       const active = item.href === "/history" ? pathname === "/history"
         : item.href === "/rules" ? pathname === "/rules"
         : item.href === "/performance" ? pathname === "/performance"
-        : item.href === "/#ranking" ? pathname.startsWith("/player/")
-        : item.href === "/" ? pathname === "/" : false;
+        : item.href === "/home#ranking" ? pathname.startsWith("/player/")
+        : item.href === "/home" ? pathname === "/home" : false;
       return <Link href={item.href} key={item.label} className={active ? "public-page-nav-link active" : "public-page-nav-link"} aria-current={active ? "page" : undefined}>
         <span aria-hidden="true">{item.icon}</span>{item.label}
       </Link>;
