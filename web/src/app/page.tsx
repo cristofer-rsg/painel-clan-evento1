@@ -1,5 +1,5 @@
 const applications = [
-  { name: "GHOST HUNT", eyebrow: "CLAN COMMUNITY", description: "Ranking, guerras, raides, desempenho e administração do clã.", href: "/ranking", tone: "green", image: "/ghost-hunt-original-quality.webp", imageAlt: "Arte oficial do Ghost Hunt com Rei Bárbaro, Rainha Arqueira e o castelo", features: ["Ranking e pódio", "Guerras e raides", "Desempenho dos jogadores"] },
+  { name: "GHOST HUNT", eyebrow: "CLAN COMMUNITY", description: "Ranking, guerras, raides, desempenho e administração do clã.", href: "/home", tone: "green", image: "/ghost-hunt-original-quality.webp", imageAlt: "Arte oficial do Ghost Hunt com Rei Bárbaro, Rainha Arqueira e o castelo", features: ["Ranking e pódio", "Guerras e raides", "Desempenho dos jogadores"] },
   { name: "INGLORIOUS", eyebrow: "CLAN MANAGEMENT", description: "Acompanhe os membros, a pontuação, as atividades e a evolução do clã.", href: "https://inglorious-six.vercel.app", tone: "violet", image: "/inglorious-original-quality.webp", imageAlt: "Arte do clã Inglorious com Mago e P.E.K.K.A.", features: ["Gestão de membros", "Pontuação e estatísticas", "Histórico e atividades"] },
 ];
 export default function PortalHomePage() {
