@@ -56,7 +56,7 @@ export default function PerformanceFilters({
   }, [monthKey, query, event, situation, selectedTroops, selectedCoins, order]);
 
   function changeEvent(value: string) {
-    const nextValue = value === "all" && selectedEvent === "all" ? "" : value;
+    const nextValue = selectedEvent === value ? "" : value;
     setSelectedEvent(nextValue);
     setSelectedSituation(nextValue && nextValue !== "all" ? "all" : "");
     if (nextValue) {
@@ -66,11 +66,11 @@ export default function PerformanceFilters({
   }
 
   function changeSituation(value: string) {
-    setSelectedSituation(value === "all" && selectedSituation === "all" ? "" : value);
+    setSelectedSituation(selectedSituation === value ? "" : value);
   }
 
   function changeTroops(value: string) {
-    const nextValue = value === "all" && selectedTroopsValue === "all" ? "" : value;
+    const nextValue = selectedTroopsValue === value ? "" : value;
     setSelectedTroopsValue(nextValue);
     if (nextValue) {
       setSelectedEvent("");
@@ -80,7 +80,7 @@ export default function PerformanceFilters({
   }
 
   function changeCoins(value: string) {
-    const nextValue = value === "all" && selectedCoinsValue === "all" ? "" : value;
+    const nextValue = selectedCoinsValue === value ? "" : value;
     setSelectedCoinsValue(nextValue);
     if (nextValue) {
       setSelectedEvent("");
