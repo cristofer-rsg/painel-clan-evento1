@@ -39,12 +39,15 @@ export default async function PerformancePage({ searchParams }: Props) {
     || b.gamesPoints - a.gamesPoints
     || a.player.localeCompare(b.player, "pt-BR")
   ).map((row, index) => ({ ...row, position: index + 1 }));
-  const eventFilter = ["war", "league", "raid"].includes(eventParam) ? eventParam : "";
+  const requestedEvent = ["war", "league", "raid"].includes(eventParam) ? eventParam : "";
+  const requestedTroops = troopsParam === "with" || troopsParam === "without" ? troopsParam : "all";
+  const requestedCoins = coinsParam === "with" || coinsParam === "without" ? coinsParam : "all";
+  const eventFilter = requestedEvent;
   const hasEventFilter = eventFilter !== "";
   const allowedSituations = eventFilter === "raid" ? ["attacked", "no-attack"] : ["attacked", "no-attack", "no-data"];
   const situationFilter = hasEventFilter && allowedSituations.includes(situationParam) ? situationParam : "";
-  const troopsFilter = troopsParam === "with" || troopsParam === "without" ? troopsParam : "all";
-  const coinsFilter = coinsParam === "with" || coinsParam === "without" ? coinsParam : "all";
+  const troopsFilter = hasEventFilter ? "all" : requestedTroops;
+  const coinsFilter = hasEventFilter || troopsFilter !== "all" ? "all" : requestedCoins;
   const hasAppliedFilters = Boolean(queryParam || hasEventFilter || situationFilter || troopsFilter !== "all" || coinsFilter !== "all" || orderParam === "asc" || (monthParam && monthParam !== data.months[0]));
   // Liga: a fonte registra apenas os membros relacionados à batalha; ausência significa não participação.
   // Raide: não há inscrição; ausência de ataque registrado equivale a zero ataques.
