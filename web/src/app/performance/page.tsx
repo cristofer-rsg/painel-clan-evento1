@@ -45,7 +45,7 @@ export default async function PerformancePage({ searchParams }: Props) {
   const situationFilter = hasEventFilter && allowedSituations.includes(situationParam) ? situationParam : "";
   const troopsFilter = troopsParam === "with" || troopsParam === "without" ? troopsParam : "all";
   const coinsFilter = coinsParam === "with" || coinsParam === "without" ? coinsParam : "all";
-  const hasAppliedFilters = Boolean(queryParam || hasEventFilter || situationFilter || troopsFilter !== "all" || coinsFilter !== "all" || (monthParam && monthParam !== data.months[0]));
+  const hasAppliedFilters = Boolean(queryParam || hasEventFilter || situationFilter || troopsFilter !== "all" || coinsFilter !== "all" || orderParam === "asc" || (monthParam && monthParam !== data.months[0]));
   // Liga: a fonte registra apenas os membros relacionados à batalha; ausência significa não participação.
   // Raide: não há inscrição; ausência de ataque registrado equivale a zero ataques.
   const attackValue = (row: (typeof rankedRows)[number]) =>
@@ -118,8 +118,8 @@ export default async function PerformancePage({ searchParams }: Props) {
             ...(hasEventFilter ? [{ label: attacks === null ? "Não Participou" : `${fmt(attacks)} ${attacks === 1 ? "ataque" : "ataques"}`, className: attacks === null ? "no-data" : attacks === 0 ? "no-attack" : "attacked" }] : []),
             ...(troopsFilter !== "all" ? [{ label: `${fmt(row.donations)} tropas`, className: "attacked" }] : []),
             ...(coinsFilter !== "all" ? [{ label: `${fmt(row.capital)} moedas`, className: "attacked" }] : []),
-            ...(!hasEventFilter && troopsFilter === "all" && coinsFilter === "all" && queryParam ? [{ label: `${fmt(row.index)}%`, className: "attacked" }] : []),
-            ...(!hasEventFilter && troopsFilter === "all" && coinsFilter === "all" && !queryParam && monthParam && monthParam !== data.months[0] ? [{ label: `${fmt(row.index)}%`, className: "attacked" }] : []),
+            ...(!hasEventFilter && troopsFilter === "all" && coinsFilter === "all" && (queryParam || orderParam === "asc") ? [{ label: `${fmt(row.index)}%`, className: "attacked" }] : []),
+            ...(!hasEventFilter && troopsFilter === "all" && coinsFilter === "all" && !queryParam && orderParam !== "asc" && monthParam && monthParam !== data.months[0] ? [{ label: `${fmt(row.index)}%`, className: "attacked" }] : []),
           ];
           return <article className={hasAppliedFilters ? "performance-card performance-card-event" : "performance-card"} key={row.player}>
             <div className="performance-card-head">
