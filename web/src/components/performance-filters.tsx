@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import "./performance-filters.css";
 
 type Props = {
   months: string[];
