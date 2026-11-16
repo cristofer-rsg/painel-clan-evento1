@@ -63,13 +63,26 @@ export default async function PerformancePage({ searchParams }: Props) {
     return (sortOrder === "asc" ? aAttacks - bAttacks : bAttacks - aAttacks)
       || a.player.localeCompare(b.player, "pt-BR");
   }) : rankedRows;
-  const activityRows = hasEventFilter ? eventRows.filter(row => {
+  // Em categorias de contribuição, ordenar pelo valor filtrado; empates preservam a classificação geral.
+  const contributionRows = troopsCategoryActive && troopsFilter === "with"
+    ? [...eventRows].sort((a, b) =>
+        (sortOrder === "asc" ? a.donations - b.donations : b.donations - a.donations)
+        || a.position - b.position
+      )
+    : coinsCategoryActive && coinsFilter === "with"
+      ? [...eventRows].sort((a, b) =>
+          (sortOrder === "asc" ? a.capital - b.capital : b.capital - a.capital)
+          || a.position - b.position
+        )
+      : eventRows;
+  const orderedRows = contributionRows.map((row, index) => ({ ...row, position: index + 1 }));
+  const activityRows = hasEventFilter ? orderedRows.filter(row => {
     const attacks = attackValue(row);
     if (situationFilter === "attacked") return attacks !== null && attacks > 0;
     if (situationFilter === "no-attack") return attacks === 0;
     if (situationFilter === "no-data") return attacks === null;
     return true;
-  }) : eventRows;
+  }) : orderedRows;
   const eventCounts = {
     attacked: eventRows.filter(row => { const n = attackValue(row); return n !== null && n > 0; }).length,
     noAttack: eventRows.filter(row => attackValue(row) === 0).length,
