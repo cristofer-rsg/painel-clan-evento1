@@ -153,15 +153,17 @@ export default function PerformanceFilters({
           <div className="performance-filter-grid two-columns">
             <fieldset className="performance-choice-group">
               <legend>Doações</legend>
-              <label><input type="radio" name="troops" value="all" checked={selectedTroopsValue === "all"} onChange={() => setSelectedTroopsValue("all")} /> <span>Todas</span></label>
-              <label><input type="radio" name="troops" value="with" checked={selectedTroopsValue === "with"} onChange={() => setSelectedTroopsValue("with")} /> <span>Com doações</span></label>
-              <label><input type="radio" name="troops" value="without" checked={selectedTroopsValue === "without"} onChange={() => setSelectedTroopsValue("without")} /> <span>Sem doações</span></label>
+              <input type="hidden" name="troops" value={selectedTroopsValue} disabled={selectedTroopsValue === "all"} />
+              <label><input type="radio" name="troops-choice" value="all" checked={selectedTroopsValue === "all"} onChange={() => setSelectedTroopsValue("all")} /> <span>Todas</span></label>
+              <label><input type="radio" name="troops-choice" value="with" checked={selectedTroopsValue === "with"} onChange={() => setSelectedTroopsValue("with")} /> <span>Com doações</span></label>
+              <label><input type="radio" name="troops-choice" value="without" checked={selectedTroopsValue === "without"} onChange={() => setSelectedTroopsValue("without")} /> <span>Sem doações</span></label>
             </fieldset>
             <fieldset className="performance-choice-group">
               <legend>Moedas da Capital</legend>
-              <label><input type="radio" name="coins" value="all" checked={selectedCoinsValue === "all"} onChange={() => setSelectedCoinsValue("all")} /> <span>Todas</span></label>
-              <label><input type="radio" name="coins" value="with" checked={selectedCoinsValue === "with"} onChange={() => setSelectedCoinsValue("with")} /> <span>Com moedas</span></label>
-              <label><input type="radio" name="coins" value="without" checked={selectedCoinsValue === "without"} onChange={() => setSelectedCoinsValue("without")} /> <span>Sem moedas</span></label>
+              <input type="hidden" name="coins" value={selectedCoinsValue} disabled={selectedCoinsValue === "all"} />
+              <label><input type="radio" name="coins-choice" value="all" checked={selectedCoinsValue === "all"} onChange={() => setSelectedCoinsValue("all")} /> <span>Todas</span></label>
+              <label><input type="radio" name="coins-choice" value="with" checked={selectedCoinsValue === "with"} onChange={() => setSelectedCoinsValue("with")} /> <span>Com moedas</span></label>
+              <label><input type="radio" name="coins-choice" value="without" checked={selectedCoinsValue === "without"} onChange={() => setSelectedCoinsValue("without")} /> <span>Sem moedas</span></label>
             </fieldset>
           </div>
         </div>
@@ -170,7 +172,8 @@ export default function PerformanceFilters({
           <h3><span aria-hidden="true">↕</span> Ordenação</h3>
           <label className="performance-sort-field" htmlFor="performance-order">
             <span>Ordenar resultados por pontuação</span>
-            <select id="performance-order" name="order" value={selectedOrder} onChange={(change) => setSelectedOrder(change.target.value as "asc" | "desc")}>
+            <input type="hidden" name="order" value="asc" disabled={selectedOrder !== "asc"} />
+            <select id="performance-order" value={selectedOrder} onChange={(change) => setSelectedOrder(change.target.value as "asc" | "desc")}>
               <option value="desc">Maior para menor</option>
               <option value="asc">Menor para maior</option>
             </select>

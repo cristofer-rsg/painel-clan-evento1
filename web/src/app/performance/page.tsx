@@ -45,6 +45,7 @@ export default async function PerformancePage({ searchParams }: Props) {
   const situationFilter = hasEventFilter && allowedSituations.includes(situationParam) ? situationParam : "";
   const troopsFilter = troopsParam === "with" || troopsParam === "without" ? troopsParam : "all";
   const coinsFilter = coinsParam === "with" || coinsParam === "without" ? coinsParam : "all";
+  const hasAppliedFilters = Boolean(queryParam || hasEventFilter || situationFilter || troopsFilter !== "all" || coinsFilter !== "all" || orderParam === "asc" || (monthParam && monthParam !== data.months[0]));
   // Liga: a fonte registra apenas os membros relacionados à batalha; ausência significa não participação.
   // Raide: não há inscrição; ausência de ataque registrado equivale a zero ataques.
   const attackValue = (row: (typeof rankedRows)[number]) =>
@@ -101,7 +102,7 @@ export default async function PerformancePage({ searchParams }: Props) {
       {!data.connected && <div className="connection-alert"><b>Não foi possível carregar o desempenho.</b><span>Confira a conexão do servidor com o Supabase.</span>{data.error && <small>{data.error}</small>}</div>}
       <div className="performance-period">{data.monthLabel}</div>
       <div className="performance-section-heading"><h2>Desempenho do clã</h2><span>{activeRows.length} JOGADORES</span></div>
-      {!hasEventFilter && <div className="performance-totals">{totals.map(metric => <article key={metric.key}><small>{metric.label}</small><b>{fmt(metric.value)}</b><span>{metric.unit}</span></article>)}</div>}
+      {!hasAppliedFilters && <div className="performance-totals">{totals.map(metric => <article key={metric.key}><small>{metric.label}</small><b>{fmt(metric.value)}</b><span>{metric.unit}</span></article>)}</div>}
       {hasEventFilter && <div className={`performance-activity-summary${eventFilter === "raid" ? " performance-activity-summary-raid" : ""}`} aria-label={`Resumo de ${eventFilter === "war" ? "última Guerra" : eventFilter === "league" ? "última batalha da Liga" : "última Raide"}`}>
         <article className="activity-summary-attacked"><small>Com ataques</small><b>{eventCounts.attacked}</b><span>Jogadores</span></article>
         <article className="activity-summary-no-attack"><small>Sem ataques</small><b>{eventCounts.noAttack}</b><span>Registro confirmado</span></article>
@@ -113,14 +114,21 @@ export default async function PerformancePage({ searchParams }: Props) {
         {visibleRows.map(row => {
           // Na Raide não há inscrição: ausência de fonte individual significa zero ataques.
           const attacks = eventFilter === "league" ? row.lastLeagueAttacks : eventFilter === "raid" ? (row.lastRaidAttacks ?? 0) : row.lastWarAttacks;
-          return <article className={hasEventFilter ? "performance-card performance-card-event" : "performance-card"} key={row.player}>
+          const resultBadges = [
+            ...(hasEventFilter ? [{ label: attacks === null ? "Não Participou" : `${fmt(attacks)} ${attacks === 1 ? "ataque" : "ataques"}`, className: attacks === null ? "no-data" : attacks === 0 ? "no-attack" : "attacked" }] : []),
+            ...(troopsFilter !== "all" ? [{ label: `${fmt(row.donations)} tropas`, className: "attacked" }] : []),
+            ...(coinsFilter !== "all" ? [{ label: `${fmt(row.capital)} moedas`, className: "attacked" }] : []),
+            ...(!hasEventFilter && troopsFilter === "all" && coinsFilter === "all" && (queryParam || orderParam === "asc") ? [{ label: `${fmt(row.index)}%`, className: "attacked" }] : []),
+            ...(!hasEventFilter && troopsFilter === "all" && coinsFilter === "all" && !queryParam && orderParam !== "asc" && monthParam && monthParam !== data.months[0] ? [{ label: `${fmt(row.index)}%`, className: "attacked" }] : []),
+          ];
+          return <article className={hasAppliedFilters ? "performance-card performance-card-event" : "performance-card"} key={row.player}>
             <div className="performance-card-head">
               <b><span className="performance-position-badge">{row.position}</span><span className="performance-player-name">{row.player}</span></b>
-              {hasEventFilter
-                ? <span className={attacks === null ? "performance-event-inline no-data" : attacks === 0 ? "performance-event-inline no-attack" : "performance-event-inline attacked"}>{attacks === null ? "Não Participou" : `${fmt(attacks)} ${attacks === 1 ? "ataque" : "ataques"}`}</span>
+              {hasAppliedFilters
+                ? <span className="performance-event-badges">{resultBadges.map((badge, index) => <span className={`performance-event-inline ${badge.className}`} key={`${badge.label}-${index}`}>{badge.label}</span>)}</span>
                 : <strong>{fmt(row.index)}%</strong>}
             </div>
-            {!hasEventFilter && <>
+            {!hasAppliedFilters && <>
               <div className="performance-progress" role="img" aria-label={`Desempenho geral: ${row.index}%`}><span style={{ width: `${Math.min(row.index, 100)}%` }} /></div>
               <div className="performance-player-stats">
                 {metrics.map(metric => <div className="performance-player-stat-row" key={metric.key}>
