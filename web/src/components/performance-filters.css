@@ -1,0 +1,46 @@
+.performance-search{display:grid;gap:14px;margin:22px 0 28px;min-width:0}
+.performance-search-form{display:grid;gap:16px;padding:clamp(15px,3vw,24px);border:1px solid #8c6d3b88;border-radius:14px;background:linear-gradient(145deg,#1b1a16,#11110f);box-shadow:0 12px 32px #0003}
+.performance-filter-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding-bottom:14px;border-bottom:1px solid #8c6d3b55}
+.performance-filter-eyebrow{font-size:9px;font-weight:900;letter-spacing:1.4px;color:#d9ad55}
+.performance-filter-heading h2{margin:5px 0 3px;font:700 24px 'Barlow Condensed',sans-serif;color:#f4ead5}
+.performance-filter-heading p{margin:0;color:#a9a091;font-size:11px;line-height:1.5}
+.performance-filter-count{flex:0 0 auto;padding:7px 10px;border:1px solid #8c6d3b;border-radius:20px;color:#f1d18a;font-size:10px;font-weight:800}
+.performance-filter-group{display:grid;gap:12px;padding-bottom:15px;border-bottom:1px solid #6f593b55}
+.performance-filter-group:last-of-type{padding-bottom:0;border-bottom:0}
+.performance-filter-group h3{display:flex;align-items:center;gap:9px;margin:0;color:#f1d18a;font:700 16px 'Barlow Condensed',sans-serif}
+.performance-filter-group h3>span{color:#e2b958;font-size:18px}
+.performance-filter-grid{display:grid;gap:12px;min-width:0}
+.performance-filter-grid.two-columns{grid-template-columns:repeat(2,minmax(0,1fr))}
+.performance-filter-grid>label,.performance-sort-field{display:grid;gap:7px;min-width:0}
+.performance-filter-grid>label>span,.performance-sort-field>span{color:#bdb4a4;font-size:10px;font-weight:800}
+.performance-filter-grid input,.performance-filter-grid select,.performance-sort-field select{width:100%;min-width:0;height:43px;padding:0 12px;border:1px solid #705b3b;border-radius:9px;background:#100f0d;color:#f4ead5;font:500 12px Inter,system-ui,sans-serif;outline:none}
+.performance-filter-grid input:focus,.performance-filter-grid select:focus,.performance-sort-field select:focus{border-color:#e2b958;box-shadow:0 0 0 2px #e2b95825}
+.performance-filter-grid select:disabled{opacity:.45;cursor:not-allowed}
+.performance-choice-group{display:grid;gap:7px;min-width:0;margin:0;padding:0;border:0}
+.performance-choice-group legend{margin-bottom:2px;color:#f1d18a;font:700 14px 'Barlow Condensed',sans-serif}
+.performance-choice-group label{display:flex;align-items:center;gap:9px;min-height:37px;padding:7px 10px;border:1px solid #4d402e;border-radius:9px;background:#171511;color:#eee6d8;font-size:11px;cursor:pointer}
+.performance-choice-group label:has(input:checked){border-color:#1dbd65;background:#0b2b19;color:#d9ffe6}
+.performance-choice-group input{width:17px;height:17px;margin:0;accent-color:#12d66b;flex:0 0 auto}
+.performance-sort-field{max-width:100%}
+.performance-filter-actions{display:grid;grid-template-columns:1fr 1.2fr;gap:10px}
+.performance-clear-button,.performance-apply-button{display:flex;align-items:center;justify-content:center;min-height:45px;padding:10px 13px;border:1px solid #a98447;border-radius:9px;font-size:11px;font-weight:900;text-align:center}
+.performance-clear-button{background:transparent;color:#e7cf9b}
+.performance-apply-button{background:linear-gradient(120deg,#d5a84f,#f0d18a);color:#182233;cursor:pointer}
+.performance-apply-button:hover,.performance-clear-button:hover{filter:brightness(1.08)}
+.performance-applied{display:grid;gap:9px;padding:13px 15px;border:1px solid #6f593b77;border-radius:11px;background:#15130f}
+.performance-applied-heading{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.performance-applied-heading strong{color:#e9d8b4;font-size:11px}
+.performance-applied-heading>a{color:#e6b94f;font-size:10px;font-weight:800;white-space:nowrap}
+.performance-applied-chips{display:flex;flex-wrap:wrap;gap:7px}
+.performance-applied-chips>a{display:inline-flex;align-items:center;gap:8px;max-width:100%;padding:7px 9px;border:1px solid #21864b;border-radius:20px;background:#0b2b19;color:#d9ffe6;font-size:10px;overflow-wrap:anywhere}
+.performance-applied-chips>a span{color:#a6f5bd;font-size:15px;line-height:10px}
+@media(max-width:560px){
+ .performance-search{margin:18px 0 22px;gap:10px}
+ .performance-search-form{gap:14px;padding:14px 12px}
+ .performance-filter-heading h2{font-size:22px}
+ .performance-filter-grid.two-columns{grid-template-columns:1fr}
+ .performance-filter-actions{grid-template-columns:1fr}
+ .performance-filter-count{font-size:9px}
+ .performance-applied{padding:11px}
+ .performance-applied-chips>a{font-size:9px}
+}
