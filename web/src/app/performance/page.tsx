@@ -3,7 +3,7 @@ import PublicNavigation from "@/components/public-navigation";
 import PerformanceFilters from "@/components/performance-filters";
 
 export const dynamic = "force-dynamic";
-type Props = { searchParams: Promise<{ month?: string; q?: string; order?: string; event?: string; situation?: string }> };
+type Props = { searchParams: Promise<{ month?: string; q?: string; order?: string; event?: string; situation?: string; troops?: string; coins?: string }> };
 function fmt(value: number) { return new Intl.NumberFormat("pt-BR").format(value); }
 const metrics = [
   { key: "wars", label: "Guerras", max: 200, unit: "Ataques", pointsKey: "warsPoints", percentKey: "warsPercent" },
@@ -33,6 +33,8 @@ export default async function PerformancePage({ searchParams }: Props) {
   const hasEventFilter = eventFilter !== "";
   const allowedSituations = eventFilter === "raid" ? ["attacked", "no-attack"] : ["attacked", "no-attack", "no-data"];
   const situationFilter = hasEventFilter && allowedSituations.includes(params.situation || "") ? params.situation! : "";
+  const troopsFilter = params.troops === "with" || params.troops === "without" ? params.troops : "all";
+  const coinsFilter = params.coins === "with" || params.coins === "without" ? params.coins : "all";
   // Liga: a fonte registra apenas os membros relacionados à batalha; ausência significa não participação.
   // Raide: não há inscrição; ausência de ataque registrado equivale a zero ataques.
   const attackValue = (row: (typeof rankedRows)[number]) =>
@@ -58,9 +60,12 @@ export default async function PerformancePage({ searchParams }: Props) {
     noAttack: eventRows.filter(row => attackValue(row) === 0).length,
     noData: eventRows.filter(row => attackValue(row) === null).length,
   };
-  const visibleRows = searchTerm
-    ? activityRows.filter(row => row.player.toLocaleLowerCase("pt-BR").includes(searchTerm) || row.tag.toLocaleLowerCase("pt-BR").includes(searchTerm))
-    : activityRows;
+  const visibleRows = activityRows.filter(row => {
+    const matchesSearch = !searchTerm || row.player.toLocaleLowerCase("pt-BR").includes(searchTerm) || row.tag.toLocaleLowerCase("pt-BR").includes(searchTerm);
+    const matchesTroops = troopsFilter === "all" || (troopsFilter === "with" ? row.donations > 0 : row.donations === 0);
+    const matchesCoins = coinsFilter === "all" || (coinsFilter === "with" ? row.capital > 0 : row.capital === 0);
+    return matchesSearch && matchesTroops && matchesCoins;
+  });
   const sortOrder = params.order === "asc" ? "asc" : "desc";
   const totals = metrics.map(metric => ({
     ...metric,
@@ -80,6 +85,8 @@ export default async function PerformancePage({ searchParams }: Props) {
         event={eventFilter}
         situation={situationFilter}
         order={sortOrder}
+        selectedTroops={troopsFilter}
+        selectedCoins={coinsFilter}
       />
       {!data.connected && <div className="connection-alert"><b>Não foi possível carregar o desempenho.</b><span>Confira a conexão do servidor com o Supabase.</span>{data.error && <small>{data.error}</small>}</div>}
       <div className="performance-period">{data.monthLabel}</div>

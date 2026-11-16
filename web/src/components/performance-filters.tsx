@@ -10,9 +10,11 @@ type Props = {
   event: string;
   situation: string;
   order: "asc" | "desc";
+  selectedTroops: string;
+  selectedCoins: string;
 };
 
-export default function PerformanceFilters({ months, monthKey, query, event, situation, order }: Props) {
+export default function PerformanceFilters({ months, monthKey, query, event, situation, order, selectedTroops, selectedCoins }: Props) {
   const [selectedEvent, setSelectedEvent] = useState(event);
   const [selectedSituation, setSelectedSituation] = useState(situation);
 
@@ -42,6 +44,18 @@ export default function PerformanceFilters({ months, monthKey, query, event, sit
         <option value="attacked">{selectedEvent === "raid" ? "Com ataques" : "Realizou ataques"}</option>
         <option value="no-attack">{selectedEvent === "raid" ? "Sem ataques" : "Não realizou ataques"}</option>
         {selectedEvent !== "raid" && <option value="no-data">Não Participou</option>}
+      </select>
+      <label htmlFor="troops">Doações</label>
+      <select id="troops" name="troops" defaultValue={selectedTroops}>
+        <option value="all">Todas</option>
+        <option value="with">Com doações</option>
+        <option value="without">Sem doações</option>
+      </select>
+      <label htmlFor="coins">Moedas da Capital</label>
+      <select id="coins" name="coins" defaultValue={selectedCoins}>
+        <option value="all">Todas</option>
+        <option value="with">Com moedas</option>
+        <option value="without">Sem moedas</option>
       </select>
       <label htmlFor="order">Ordenação</label>
       <select id="order" name="order" defaultValue={order}>
