@@ -64,12 +64,12 @@ export default async function PerformancePage({ searchParams }: Props) {
       || a.player.localeCompare(b.player, "pt-BR");
   }) : rankedRows;
   // Em categorias de contribuição, ordenar pelo valor filtrado; empates preservam a classificação geral.
-  const contributionRows = troopsCategoryActive && troopsFilter === "with"
+  const contributionRows = troopsCategoryActive && troopsFilter !== "without"
     ? [...eventRows].sort((a, b) =>
         (sortOrder === "asc" ? a.donations - b.donations : b.donations - a.donations)
         || a.position - b.position
       )
-    : coinsCategoryActive && coinsFilter === "with"
+    : coinsCategoryActive && coinsFilter !== "without"
       ? [...eventRows].sort((a, b) =>
           (sortOrder === "asc" ? a.capital - b.capital : b.capital - a.capital)
           || a.position - b.position
