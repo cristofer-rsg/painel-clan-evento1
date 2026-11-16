@@ -168,7 +168,7 @@ export default function PerformanceFilters({
                 { value: "league", label: "Última batalha da Liga" },
                 { value: "raid", label: "Última Raide" },
               ].map((option) => (
-                <label key={option.value}><input type="radio" name="event-choice" value={option.value} checked={selectedEvent === option.value} onClick={option.value === "all" ? () => changeEvent(option.value) : undefined} onChange={option.value === "all" ? undefined : () => changeEvent(option.value)} /> <span>{option.label}</span></label>
+                <label key={option.value}><input type="radio" name="event-choice" value={option.value} checked={selectedEvent === option.value} onClick={() => changeEvent(option.value)} /> <span>{option.label}</span></label>
               ))}
             </fieldset>
             <fieldset className="performance-choice-group">
@@ -180,7 +180,7 @@ export default function PerformanceFilters({
                 { value: "no-attack", label: selectedEvent === "raid" ? "Sem ataques" : "Não realizou ataques" },
                 ...(selectedEvent !== "raid" ? [{ value: "no-data", label: "Não participou" }] : []),
               ].map((option) => (
-                <label key={option.value}><input type="radio" name="situation-choice" value={option.value} checked={selectedSituation === option.value} onClick={option.value === "all" ? () => changeSituation(option.value) : undefined} onChange={option.value === "all" ? undefined : () => changeSituation(option.value)} disabled={!selectedEvent || selectedEvent === "all"} /> <span>{option.label}</span></label>
+                <label key={option.value}><input type="radio" name="situation-choice" value={option.value} checked={selectedSituation === option.value} onClick={() => changeSituation(option.value)} disabled={!selectedEvent || selectedEvent === "all"} /> <span>{option.label}</span></label>
               ))}
             </fieldset>
           </div>
@@ -193,15 +193,15 @@ export default function PerformanceFilters({
               <legend>Doações</legend>
               <input type="hidden" name="troops" value={selectedTroopsValue} disabled={!selectedTroopsValue} />
               <label><input type="radio" name="troops-choice" value="all" checked={selectedTroopsValue === "all"} onClick={() => changeTroops("all")} /> <span>Todas</span></label>
-              <label><input type="radio" name="troops-choice" value="with" checked={selectedTroopsValue === "with"} onChange={() => changeTroops("with")} /> <span>Com doações</span></label>
-              <label><input type="radio" name="troops-choice" value="without" checked={selectedTroopsValue === "without"} onChange={() => changeTroops("without")} /> <span>Sem doações</span></label>
+              <label><input type="radio" name="troops-choice" value="with" checked={selectedTroopsValue === "with"} onClick={() => changeTroops("with")} /> <span>Com doações</span></label>
+              <label><input type="radio" name="troops-choice" value="without" checked={selectedTroopsValue === "without"} onClick={() => changeTroops("without")} /> <span>Sem doações</span></label>
             </fieldset>
             <fieldset className="performance-choice-group">
               <legend>Moedas da Capital</legend>
               <input type="hidden" name="coins" value={selectedCoinsValue} disabled={!selectedCoinsValue} />
               <label><input type="radio" name="coins-choice" value="all" checked={selectedCoinsValue === "all"} onClick={() => changeCoins("all")} /> <span>Todas</span></label>
-              <label><input type="radio" name="coins-choice" value="with" checked={selectedCoinsValue === "with"} onChange={() => changeCoins("with")} /> <span>Com moedas</span></label>
-              <label><input type="radio" name="coins-choice" value="without" checked={selectedCoinsValue === "without"} onChange={() => changeCoins("without")} /> <span>Sem moedas</span></label>
+              <label><input type="radio" name="coins-choice" value="with" checked={selectedCoinsValue === "with"} onClick={() => changeCoins("with")} /> <span>Com moedas</span></label>
+              <label><input type="radio" name="coins-choice" value="without" checked={selectedCoinsValue === "without"} onClick={() => changeCoins("without")} /> <span>Sem moedas</span></label>
             </fieldset>
           </div>
         </div>
