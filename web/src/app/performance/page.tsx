@@ -3,7 +3,7 @@ import PublicNavigation from "@/components/public-navigation";
 import PerformanceFilters from "@/components/performance-filters";
 
 export const dynamic = "force-dynamic";
-type Props = { searchParams: Promise<{ month?: string; q?: string; order?: string; event?: string; situation?: string }> };
+type Props = { searchParams: Promise<{ month?: string; q?: string; order?: string; event?: string; situation?: string; troops?: string; coins?: string }> };
 function fmt(value: number) { return new Intl.NumberFormat("pt-BR").format(value); }
 const metrics = [
   { key: "wars", label: "Guerras", max: 200, unit: "Ataques", pointsKey: "warsPoints", percentKey: "warsPercent" },
@@ -32,7 +32,7 @@ export default async function PerformancePage({ searchParams }: Props) {
   const eventFilter = ["war", "league", "raid"].includes(params.event || "") ? params.event! : "";
   const hasEventFilter = eventFilter !== "";
   const allowedSituations = eventFilter === "raid" ? ["attacked", "no-attack"] : ["attacked", "no-attack", "no-data"];
-  const situationFilter = hasEventFilter && allowedSituations.includes(params.situation || "") ? params.situation! : "";
+  const situationFilter = hasEventFilter && allowedSituations.includes(params.situation || "") ? params.situation! : "";\n  const troopsFilter = params.troops === "with" || params.troops === "without" ? params.troops : "all";\n  const coinsFilter = params.coins === "with" || params.coins === "without" ? params.coins : "all";
   // Liga: a fonte registra apenas os membros relacionados à batalha; ausência significa não participação.
   // Raide: não há inscrição; ausência de ataque registrado equivale a zero ataques.
   const attackValue = (row: (typeof rankedRows)[number]) =>
