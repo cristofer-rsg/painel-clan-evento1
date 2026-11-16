@@ -119,8 +119,8 @@ export default async function PerformancePage({ searchParams }: Props) {
           const attacks = eventFilter === "league" ? row.lastLeagueAttacks : eventFilter === "raid" ? (row.lastRaidAttacks ?? 0) : row.lastWarAttacks;
           const resultBadges = [
             ...(hasEventFilter ? [{ label: attacks === null ? "Não Participou" : `${fmt(attacks)} ${attacks === 1 ? "ataque" : "ataques"}`, className: attacks === null ? "no-data" : attacks === 0 ? "no-attack" : "attacked" }] : []),
-            ...(troopsFilter !== "all" ? [{ label: `${fmt(row.donations)} tropas`, className: "attacked" }] : []),
-            ...(coinsFilter !== "all" ? [{ label: `${fmt(row.capital)} moedas`, className: "attacked" }] : []),
+            ...(troopsCategoryActive ? [{ label: `${fmt(row.donations)} tropas`, className: row.donations > 0 ? "attacked" : "no-attack" }] : []),
+            ...(coinsCategoryActive ? [{ label: `${fmt(row.capital)} moedas`, className: row.capital > 0 ? "attacked" : "no-attack" }] : []),
             ...(!hasEventFilter && troopsFilter === "all" && coinsFilter === "all" && (queryParam || orderParam === "asc") ? [{ label: `${fmt(row.index)}%`, className: "attacked" }] : []),
             ...(!hasEventFilter && troopsFilter === "all" && coinsFilter === "all" && !queryParam && orderParam !== "asc" && monthParam && monthParam !== data.months[0] ? [{ label: `${fmt(row.index)}%`, className: "attacked" }] : []),
           ];
