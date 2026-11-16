@@ -10,6 +10,8 @@ type Props = {
   event: string;
   situation: string;
   order: "asc" | "desc";
+  selectedTroops: string;
+  selectedCoins: string;
 };
 
 export default function PerformanceFilters({ months, monthKey, query, event, situation, order, selectedTroops, selectedCoins }: Props) {
