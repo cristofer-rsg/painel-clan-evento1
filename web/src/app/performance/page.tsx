@@ -18,9 +18,10 @@ export default async function PerformancePage({ searchParams }: Props) {
   const params = await searchParams;
   const data = await getPerformanceData(params.month, true);
   const activeRows = data.rows.filter(row => row.active);
-  const searchTerm = (params.q || "").trim().toLocaleLowerCase("pt-BR");
+  const searchTerm = (params.q || "").trim().slice(0, 80).toLocaleLowerCase("pt-BR");
+  const sortOrder = params.order === "asc" ? "asc" : "desc";
   const rankedRows = [...activeRows].sort((a, b) =>
-    b.totalPoints - a.totalPoints
+    (sortOrder === "asc" ? a.totalPoints - b.totalPoints : b.totalPoints - a.totalPoints)
     || b.warsPoints - a.warsPoints
     || b.leaguePoints - a.leaguePoints
     || b.raidPoints - a.raidPoints
@@ -39,14 +40,15 @@ export default async function PerformancePage({ searchParams }: Props) {
   // Raide: não há inscrição; ausência de ataque registrado equivale a zero ataques.
   const attackValue = (row: (typeof rankedRows)[number]) =>
     eventFilter === "league" ? row.lastLeagueAttacks : eventFilter === "raid" ? (row.lastRaidAttacks ?? 0) : row.lastWarAttacks;
-  // Nos filtros de evento, prioriza mais ataques; ausência de dados fica por último.
+  // Nos filtros de evento, prioriza a quantidade de ataques e mantém ausências de dados no fim.
   // Empates são ordenados pelo nome, sem alterar a classificação geral do ranking.
   const eventRows = hasEventFilter ? [...rankedRows].sort((a, b) => {
     const aAttacks = attackValue(a);
     const bAttacks = attackValue(b);
     if (aAttacks === null) return bAttacks === null ? a.player.localeCompare(b.player, "pt-BR") : 1;
     if (bAttacks === null) return -1;
-    return bAttacks - aAttacks || a.player.localeCompare(b.player, "pt-BR");
+    return (sortOrder === "asc" ? aAttacks - bAttacks : bAttacks - aAttacks)
+      || a.player.localeCompare(b.player, "pt-BR");
   }) : rankedRows;
   const activityRows = hasEventFilter ? eventRows.filter(row => {
     const attacks = attackValue(row);
@@ -66,7 +68,6 @@ export default async function PerformancePage({ searchParams }: Props) {
     const matchesCoins = coinsFilter === "all" || (coinsFilter === "with" ? row.capital > 0 : row.capital === 0);
     return matchesSearch && matchesTroops && matchesCoins;
   });
-  const sortOrder = params.order === "asc" ? "asc" : "desc";
   const totals = metrics.map(metric => ({
     ...metric,
     value: activeRows.reduce((sum, row) => sum + row[metric.key], 0),
@@ -125,7 +126,6 @@ export default async function PerformancePage({ searchParams }: Props) {
         })}
         {!visibleRows.length && data.connected && <p>Nenhum jogador corresponde aos filtros selecionados.</p>}
       </div>
-
       <a className="back-link" href="/">← Voltar ao ranking</a>
     </section>
   </main>;
