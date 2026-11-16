@@ -39,16 +39,16 @@ export default async function PerformancePage({ searchParams }: Props) {
     || b.gamesPoints - a.gamesPoints
     || a.player.localeCompare(b.player, "pt-BR")
   ).map((row, index) => ({ ...row, position: index + 1 }));
-  const requestedEvent = ["war", "league", "raid"].includes(eventParam) ? eventParam : "";
-  const requestedTroops = troopsParam === "with" || troopsParam === "without" ? troopsParam : "all";
-  const requestedCoins = coinsParam === "with" || coinsParam === "without" ? coinsParam : "all";
-  const eventFilter = requestedEvent;
+  const eventCategoryActive = ["all", "war", "league", "raid"].includes(eventParam);
+  const eventFilter = eventCategoryActive && eventParam !== "all" ? eventParam : "";
   const hasEventFilter = eventFilter !== "";
-  const allowedSituations = eventFilter === "raid" ? ["attacked", "no-attack"] : ["attacked", "no-attack", "no-data"];
+  const allowedSituations = eventFilter === "raid" ? ["all", "attacked", "no-attack"] : ["all", "attacked", "no-attack", "no-data"];
   const situationFilter = hasEventFilter && allowedSituations.includes(situationParam) ? situationParam : "";
-  const troopsFilter = hasEventFilter ? "all" : requestedTroops;
-  const coinsFilter = hasEventFilter || troopsFilter !== "all" ? "all" : requestedCoins;
-  const hasAppliedFilters = Boolean(queryParam || hasEventFilter || situationFilter || troopsFilter !== "all" || coinsFilter !== "all" || orderParam === "asc" || (monthParam && monthParam !== data.months[0]));
+  const troopsCategoryActive = !eventCategoryActive && ["all", "with", "without"].includes(troopsParam);
+  const troopsFilter = troopsCategoryActive ? troopsParam : "all";
+  const coinsCategoryActive = !eventCategoryActive && !troopsCategoryActive && ["all", "with", "without"].includes(coinsParam);
+  const coinsFilter = coinsCategoryActive ? coinsParam : "all";
+  const hasAppliedFilters = Boolean(queryParam || eventCategoryActive || situationFilter || troopsCategoryActive || coinsCategoryActive || orderParam === "asc" || (monthParam && monthParam !== data.months[0]));
   // Liga: a fonte registra apenas os membros relacionados à batalha; ausência significa não participação.
   // Raide: não há inscrição; ausência de ataque registrado equivale a zero ataques.
   const attackValue = (row: (typeof rankedRows)[number]) =>
@@ -96,11 +96,11 @@ export default async function PerformancePage({ searchParams }: Props) {
         monthKey={data.monthKey}
         monthLabel={data.monthLabel}
         query={queryParam}
-        event={eventFilter}
+        event={eventCategoryActive ? eventParam : ""}
         situation={situationFilter}
         order={sortOrder}
-        selectedTroops={troopsFilter}
-        selectedCoins={coinsFilter}
+        selectedTroops={troopsCategoryActive ? troopsFilter : ""}
+        selectedCoins={coinsCategoryActive ? coinsFilter : ""}
       />
       {!data.connected && <div className="connection-alert"><b>Não foi possível carregar o desempenho.</b><span>Confira a conexão do servidor com o Supabase.</span>{data.error && <small>{data.error}</small>}</div>}
       <div className="performance-period">{data.monthLabel}</div>
