@@ -49,6 +49,7 @@ export default async function PerformancePage({ searchParams }: Props) {
   const coinsCategoryActive = !eventCategoryActive && !troopsCategoryActive && ["all", "with", "without"].includes(coinsParam);
   const coinsFilter = coinsCategoryActive ? coinsParam : "all";
   const hasAppliedFilters = Boolean(queryParam || eventCategoryActive || situationFilter || troopsCategoryActive || coinsCategoryActive || orderParam === "asc" || (monthParam && monthParam !== data.months[0]));
+  const showGeneralPerformance = !hasEventFilter && !troopsCategoryActive && !coinsCategoryActive;
   // Liga: a fonte registra apenas os membros relacionados à batalha; ausência significa não participação.
   // Raide: não há inscrição; ausência de ataque registrado equivale a zero ataques.
   const attackValue = (row: (typeof rankedRows)[number]) =>
@@ -118,7 +119,7 @@ export default async function PerformancePage({ searchParams }: Props) {
       {!data.connected && <div className="connection-alert"><b>Não foi possível carregar o desempenho.</b><span>Confira a conexão do servidor com o Supabase.</span>{data.error && <small>{data.error}</small>}</div>}
       <div className="performance-period">{data.monthLabel}</div>
       <div className="performance-section-heading"><h2>Desempenho do clã</h2><span>{activeRows.length} JOGADORES</span></div>
-      {!hasAppliedFilters && <div className="performance-totals">{totals.map(metric => <article key={metric.key}><small>{metric.label}</small><b>{fmt(metric.value)}</b><span>{metric.unit}</span></article>)}</div>}
+      {showGeneralPerformance && <div className="performance-totals">{totals.map(metric => <article key={metric.key}><small>{metric.label}</small><b>{fmt(metric.value)}</b><span>{metric.unit}</span></article>)}</div>}
       {hasEventFilter && <div className={`performance-activity-summary${eventFilter === "raid" ? " performance-activity-summary-raid" : ""}`} aria-label={`Resumo de ${eventFilter === "war" ? "última Guerra" : eventFilter === "league" ? "última batalha da Liga" : "última Raide"}`}>
         <article className="activity-summary-attacked"><small>Com ataques</small><b>{eventCounts.attacked}</b><span>Jogadores</span></article>
         <article className="activity-summary-no-attack"><small>Sem ataques</small><b>{eventCounts.noAttack}</b><span>Registro confirmado</span></article>
@@ -137,14 +138,14 @@ export default async function PerformancePage({ searchParams }: Props) {
             ...(!hasEventFilter && troopsFilter === "all" && coinsFilter === "all" && (queryParam || orderParam === "asc") ? [{ label: `${fmt(row.index)}%`, className: "attacked" }] : []),
             ...(!hasEventFilter && troopsFilter === "all" && coinsFilter === "all" && !queryParam && orderParam !== "asc" && monthParam && monthParam !== data.months[0] ? [{ label: `${fmt(row.index)}%`, className: "attacked" }] : []),
           ];
-          return <article className={hasAppliedFilters ? "performance-card performance-card-event" : "performance-card"} key={row.player}>
+          return <article className={showGeneralPerformance ? "performance-card" : "performance-card performance-card-event"} key={row.player}>
             <div className="performance-card-head">
               <b><span className="performance-position-badge">{row.position}</span><span className="performance-player-name">{row.player}</span></b>
-              {hasAppliedFilters
+              {!showGeneralPerformance
                 ? <span className="performance-event-badges">{resultBadges.map((badge, index) => <span className={`performance-event-inline ${badge.className}`} key={`${badge.label}-${index}`}>{badge.label}</span>)}</span>
                 : <strong>{fmt(row.index)}%</strong>}
             </div>
-            {!hasAppliedFilters && <>
+            {showGeneralPerformance && <>
               <div className="performance-progress" role="img" aria-label={`Desempenho geral: ${row.index}%`}><span style={{ width: `${Math.min(row.index, 100)}%` }} /></div>
               <div className="performance-player-stats">
                 {metrics.map(metric => <div className="performance-player-stat-row" key={metric.key}>
