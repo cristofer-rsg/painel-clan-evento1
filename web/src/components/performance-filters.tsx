@@ -45,7 +45,19 @@ export default function PerformanceFilters({ months, monthKey, query, event, sit
         <option value="no-attack">{selectedEvent === "raid" ? "Sem ataques" : "Não realizou ataques"}</option>
         {selectedEvent !== "raid" && <option value="no-data">Não Participou</option>}
       </select>
-      <label htmlFor="troops">Doações</label>\n      <select id="troops" name="troops" defaultValue={selectedTroops}>\n        <option value="all">Todas</option>\n        <option value="with">Com doações</option>\n        <option value="without">Sem doações</option>\n      </select>\n      <label htmlFor="coins">Moedas da Capital</label>\n      <select id="coins" name="coins" defaultValue={selectedCoins}>\n        <option value="all">Todas</option>\n        <option value="with">Com moedas</option>\n        <option value="without">Sem moedas</option>\n      </select>\n      <label htmlFor="order">Ordenação</label>
+      <label htmlFor="troops">Doações</label>
+      <select id="troops" name="troops" defaultValue={selectedTroops}>
+        <option value="all">Todas</option>
+        <option value="with">Com doações</option>
+        <option value="without">Sem doações</option>
+      </select>
+      <label htmlFor="coins">Moedas da Capital</label>
+      <select id="coins" name="coins" defaultValue={selectedCoins}>
+        <option value="all">Todas</option>
+        <option value="with">Com moedas</option>
+        <option value="without">Sem moedas</option>
+      </select>
+      <label htmlFor="order">Ordenação</label>
       <select id="order" name="order" defaultValue={order}>
         <option value="desc">Maior para menor</option>
         <option value="asc">Menor para maior</option>
