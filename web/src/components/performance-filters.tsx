@@ -56,31 +56,36 @@ export default function PerformanceFilters({
   }, [monthKey, query, event, situation, selectedTroops, selectedCoins, order]);
 
   function changeEvent(value: string) {
-    setSelectedEvent(value);
-    if (value) {
-      setSelectedTroopsValue("all");
-      setSelectedCoinsValue("all");
-    }
-    if (!value || (value === "raid" && selectedSituation === "no-data")) {
-      setSelectedSituation("");
+    const nextValue = value === "all" && selectedEvent === "all" ? "" : value;
+    setSelectedEvent(nextValue);
+    setSelectedSituation(nextValue && nextValue !== "all" ? "all" : "");
+    if (nextValue) {
+      setSelectedTroopsValue("");
+      setSelectedCoinsValue("");
     }
   }
 
+  function changeSituation(value: string) {
+    setSelectedSituation(value === "all" && selectedSituation === "all" ? "" : value);
+  }
+
   function changeTroops(value: string) {
-    setSelectedTroopsValue(value);
-    if (value !== "all") {
+    const nextValue = value === "all" && selectedTroopsValue === "all" ? "" : value;
+    setSelectedTroopsValue(nextValue);
+    if (nextValue) {
       setSelectedEvent("");
       setSelectedSituation("");
-      setSelectedCoinsValue("all");
+      setSelectedCoinsValue("");
     }
   }
 
   function changeCoins(value: string) {
-    setSelectedCoinsValue(value);
-    if (value !== "all") {
+    const nextValue = value === "all" && selectedCoinsValue === "all" ? "" : value;
+    setSelectedCoinsValue(nextValue);
+    if (nextValue) {
       setSelectedEvent("");
       setSelectedSituation("");
-      setSelectedTroopsValue("all");
+      setSelectedTroopsValue("");
     }
   }
 
@@ -89,8 +94,8 @@ export default function PerformanceFilters({
     q: query.trim(),
     event,
     situation,
-    troops: selectedTroops === "all" ? "" : selectedTroops,
-    coins: selectedCoins === "all" ? "" : selectedCoins,
+    troops: selectedTroops,
+    coins: selectedCoins,
     order: order === "desc" ? "" : order,
   };
 
@@ -107,10 +112,10 @@ export default function PerformanceFilters({
   const chips: FilterChip[] = [
     { key: "month", label: `Mês: ${monthLabel}` },
     ...(query.trim() ? [{ key: "q", label: `Jogador: ${query.trim()}` }] : []),
-    ...(event ? [{ key: "event", label: `Evento: ${eventLabels[event]}` }] : []),
-    ...(situation ? [{ key: "situation", label: `Situação: ${situationLabels[situation]}` }] : []),
-    ...(selectedTroops !== "all" ? [{ key: "troops", label: selectedTroops === "with" ? "Doações: Com doações" : "Doações: Sem doações" }] : []),
-    ...(selectedCoins !== "all" ? [{ key: "coins", label: selectedCoins === "with" ? "Moedas: Com moedas" : "Moedas: Sem moedas" }] : []),
+    ...(event ? [{ key: "event", label: event === "all" ? "Eventos: Todos" : `Evento: ${eventLabels[event]}` }] : []),
+    ...(situation ? [{ key: "situation", label: situation === "all" ? "Situação: Todas" : `Situação: ${situationLabels[situation]}` }] : []),
+    ...(selectedTroops ? [{ key: "troops", label: selectedTroops === "all" ? "Doações: Todas" : selectedTroops === "with" ? "Doações: Com doações" : "Doações: Sem doações" }] : []),
+    ...(selectedCoins ? [{ key: "coins", label: selectedCoins === "all" ? "Moedas: Todas" : selectedCoins === "with" ? "Moedas: Com moedas" : "Moedas: Sem moedas" }] : []),
     ...(order === "asc" ? [{ key: "order", label: "Ordenação: Menor para maior" }] : []),
   ];
 
@@ -127,8 +132,8 @@ export default function PerformanceFilters({
         </div>
 
         <div className="performance-filter-group">
-          <h3><span aria-hidden="true">▦</span> Período e evento</h3>
-          <div className="performance-filter-grid two-columns">
+          <h3><span aria-hidden="true">▦</span> Período</h3>
+          <div className="performance-filter-grid">
             <label htmlFor="performance-month">
               <span>Mês de referência</span>
               <select id="performance-month" name="month" value={selectedMonth} onChange={(change) => setSelectedMonth(change.target.value)}>
@@ -139,34 +144,45 @@ export default function PerformanceFilters({
                 ))}
               </select>
             </label>
-            <label htmlFor="performance-event">
-              <span>Evento recente</span>
-              <select id="performance-event" name="event" value={selectedEvent} onChange={(change) => changeEvent(change.target.value)}>
-                <option value="">Classificação geral</option>
-                <option value="war">Última Guerra</option>
-                <option value="league">Última batalha da Liga</option>
-                <option value="raid">Última Raide</option>
-              </select>
-            </label>
           </div>
         </div>
 
         <div className="performance-filter-group">
           <h3><span aria-hidden="true">♙</span> Jogadores</h3>
-          <div className="performance-filter-grid two-columns">
+          <div className="performance-filter-grid">
             <label htmlFor="performance-player">
               <span>Buscar jogador</span>
               <input id="performance-player" name="q" type="search" maxLength={80} placeholder="Nome ou tag do jogador" value={selectedQuery} onChange={(change) => setSelectedQuery(change.target.value)} />
             </label>
-            <label htmlFor="performance-situation">
-              <span>Situação no evento</span>
-              <select id="performance-situation" name="situation" value={selectedSituation} onChange={(change) => setSelectedSituation(change.target.value)} disabled={!selectedEvent}>
-                <option value="">Todas as situações</option>
-                <option value="attacked">{selectedEvent === "raid" ? "Com ataques" : "Realizou ataques"}</option>
-                <option value="no-attack">{selectedEvent === "raid" ? "Sem ataques" : "Não realizou ataques"}</option>
-                {selectedEvent !== "raid" && <option value="no-data">Não participou</option>}
-              </select>
-            </label>
+          </div>
+        </div>
+        <div className="performance-filter-group">
+          <h3><span aria-hidden="true">⚔</span> Eventos</h3>
+          <input type="hidden" name="event" value={selectedEvent} disabled={!selectedEvent} />
+          <div className="performance-filter-grid two-columns">
+            <fieldset className="performance-choice-group">
+              <legend>Evento recente</legend>
+              {[
+                { value: "all", label: "Todas" },
+                { value: "war", label: "Última Guerra" },
+                { value: "league", label: "Última batalha da Liga" },
+                { value: "raid", label: "Última Raide" },
+              ].map((option) => (
+                <label key={option.value}><input type="radio" name="event-choice" value={option.value} checked={selectedEvent === option.value} onClick={option.value === "all" ? () => changeEvent(option.value) : undefined} onChange={option.value === "all" ? undefined : () => changeEvent(option.value)} /> <span>{option.label}</span></label>
+              ))}
+            </fieldset>
+            <fieldset className="performance-choice-group">
+              <legend>Situação do evento</legend>
+              <input type="hidden" name="situation" value={selectedSituation} disabled={!selectedSituation || !selectedEvent || selectedEvent === "all"} />
+              {[
+                { value: "all", label: "Todas" },
+                { value: "attacked", label: selectedEvent === "raid" ? "Com ataques" : "Realizou ataques" },
+                { value: "no-attack", label: selectedEvent === "raid" ? "Sem ataques" : "Não realizou ataques" },
+                ...(selectedEvent !== "raid" ? [{ value: "no-data", label: "Não participou" }] : []),
+              ].map((option) => (
+                <label key={option.value}><input type="radio" name="situation-choice" value={option.value} checked={selectedSituation === option.value} onClick={option.value === "all" ? () => changeSituation(option.value) : undefined} onChange={option.value === "all" ? undefined : () => changeSituation(option.value)} disabled={!selectedEvent || selectedEvent === "all"} /> <span>{option.label}</span></label>
+              ))}
+            </fieldset>
           </div>
         </div>
 
@@ -175,15 +191,15 @@ export default function PerformanceFilters({
           <div className="performance-filter-grid two-columns">
             <fieldset className="performance-choice-group">
               <legend>Doações</legend>
-              <input type="hidden" name="troops" value={selectedTroopsValue} disabled={selectedTroopsValue === "all"} />
-              <label><input type="radio" name="troops-choice" value="all" checked={selectedTroopsValue === "all"} onChange={() => changeTroops("all")} /> <span>Todas</span></label>
+              <input type="hidden" name="troops" value={selectedTroopsValue} disabled={!selectedTroopsValue} />
+              <label><input type="radio" name="troops-choice" value="all" checked={selectedTroopsValue === "all"} onClick={() => changeTroops("all")} /> <span>Todas</span></label>
               <label><input type="radio" name="troops-choice" value="with" checked={selectedTroopsValue === "with"} onChange={() => changeTroops("with")} /> <span>Com doações</span></label>
               <label><input type="radio" name="troops-choice" value="without" checked={selectedTroopsValue === "without"} onChange={() => changeTroops("without")} /> <span>Sem doações</span></label>
             </fieldset>
             <fieldset className="performance-choice-group">
               <legend>Moedas da Capital</legend>
-              <input type="hidden" name="coins" value={selectedCoinsValue} disabled={selectedCoinsValue === "all"} />
-              <label><input type="radio" name="coins-choice" value="all" checked={selectedCoinsValue === "all"} onChange={() => changeCoins("all")} /> <span>Todas</span></label>
+              <input type="hidden" name="coins" value={selectedCoinsValue} disabled={!selectedCoinsValue} />
+              <label><input type="radio" name="coins-choice" value="all" checked={selectedCoinsValue === "all"} onClick={() => changeCoins("all")} /> <span>Todas</span></label>
               <label><input type="radio" name="coins-choice" value="with" checked={selectedCoinsValue === "with"} onChange={() => changeCoins("with")} /> <span>Com moedas</span></label>
               <label><input type="radio" name="coins-choice" value="without" checked={selectedCoinsValue === "without"} onChange={() => changeCoins("without")} /> <span>Sem moedas</span></label>
             </fieldset>
