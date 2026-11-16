@@ -28,7 +28,7 @@ export default async function PerformancePage({ searchParams }: Props) {
   const data = await getPerformanceData(monthParam || undefined, true);
   const activeRows = data.rows.filter(row => row.active);
   const searchTerm = queryParam.toLocaleLowerCase("pt-BR");
-  const sortOrder = orderParam === "asc" ? "asc" : "desc”;
+  const sortOrder = orderParam === "asc" ? "asc" : "desc";
   const rankedRows = [...activeRows].sort((a, b) =>
     (sortOrder === "asc" ? a.totalPoints - b.totalPoints : b.totalPoints - a.totalPoints)
     || b.warsPoints - a.warsPoints
