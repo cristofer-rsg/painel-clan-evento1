@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./performance-filters.css";
 
 type Props = {
@@ -37,8 +37,23 @@ export default function PerformanceFilters({
   selectedTroops,
   selectedCoins,
 }: Props) {
+  const [selectedMonth, setSelectedMonth] = useState(monthKey);
+  const [selectedQuery, setSelectedQuery] = useState(query);
   const [selectedEvent, setSelectedEvent] = useState(event);
   const [selectedSituation, setSelectedSituation] = useState(situation);
+  const [selectedTroopsValue, setSelectedTroopsValue] = useState(selectedTroops);
+  const [selectedCoinsValue, setSelectedCoinsValue] = useState(selectedCoins);
+  const [selectedOrder, setSelectedOrder] = useState(order);
+
+  useEffect(() => {
+    setSelectedMonth(monthKey);
+    setSelectedQuery(query);
+    setSelectedEvent(event);
+    setSelectedSituation(situation);
+    setSelectedTroopsValue(selectedTroops);
+    setSelectedCoinsValue(selectedCoins);
+    setSelectedOrder(order);
+  }, [monthKey, query, event, situation, selectedTroops, selectedCoins, order]);
 
   function changeEvent(value: string) {
     setSelectedEvent(value);
@@ -94,7 +109,7 @@ export default function PerformanceFilters({
           <div className="performance-filter-grid two-columns">
             <label htmlFor="performance-month">
               <span>Mês de referência</span>
-              <select id="performance-month" name="month" defaultValue={monthKey}>
+              <select id="performance-month" name="month" value={selectedMonth} onChange={(change) => setSelectedMonth(change.target.value)}>
                 {months.map((month) => (
                   <option value={month} key={month}>
                     {new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric", timeZone: "America/Sao_Paulo" }).format(new Date(`${month}-15T12:00:00-03:00`))}
@@ -119,7 +134,7 @@ export default function PerformanceFilters({
           <div className="performance-filter-grid two-columns">
             <label htmlFor="performance-player">
               <span>Buscar jogador</span>
-              <input id="performance-player" name="q" type="search" maxLength={80} placeholder="Nome ou tag do jogador" defaultValue={query} />
+              <input id="performance-player" name="q" type="search" maxLength={80} placeholder="Nome ou tag do jogador" value={selectedQuery} onChange={(change) => setSelectedQuery(change.target.value)} />
             </label>
             <label htmlFor="performance-situation">
               <span>Situação no evento</span>
@@ -138,15 +153,15 @@ export default function PerformanceFilters({
           <div className="performance-filter-grid two-columns">
             <fieldset className="performance-choice-group">
               <legend>Doações</legend>
-              <label><input type="radio" name="troops" value="all" defaultChecked={selectedTroops === "all"} /> <span>Todas</span></label>
-              <label><input type="radio" name="troops" value="with" defaultChecked={selectedTroops === "with"} /> <span>Com doações</span></label>
-              <label><input type="radio" name="troops" value="without" defaultChecked={selectedTroops === "without"} /> <span>Sem doações</span></label>
+              <label><input type="radio" name="troops" value="all" checked={selectedTroopsValue === "all"} onChange={() => setSelectedTroopsValue("all")} /> <span>Todas</span></label>
+              <label><input type="radio" name="troops" value="with" checked={selectedTroopsValue === "with"} onChange={() => setSelectedTroopsValue("with")} /> <span>Com doações</span></label>
+              <label><input type="radio" name="troops" value="without" checked={selectedTroopsValue === "without"} onChange={() => setSelectedTroopsValue("without")} /> <span>Sem doações</span></label>
             </fieldset>
             <fieldset className="performance-choice-group">
               <legend>Moedas da Capital</legend>
-              <label><input type="radio" name="coins" value="all" defaultChecked={selectedCoins === "all"} /> <span>Todas</span></label>
-              <label><input type="radio" name="coins" value="with" defaultChecked={selectedCoins === "with"} /> <span>Com moedas</span></label>
-              <label><input type="radio" name="coins" value="without" defaultChecked={selectedCoins === "without"} /> <span>Sem moedas</span></label>
+              <label><input type="radio" name="coins" value="all" checked={selectedCoinsValue === "all"} onChange={() => setSelectedCoinsValue("all")} /> <span>Todas</span></label>
+              <label><input type="radio" name="coins" value="with" checked={selectedCoinsValue === "with"} onChange={() => setSelectedCoinsValue("with")} /> <span>Com moedas</span></label>
+              <label><input type="radio" name="coins" value="without" checked={selectedCoinsValue === "without"} onChange={() => setSelectedCoinsValue("without")} /> <span>Sem moedas</span></label>
             </fieldset>
           </div>
         </div>
@@ -155,7 +170,7 @@ export default function PerformanceFilters({
           <h3><span aria-hidden="true">↕</span> Ordenação</h3>
           <label className="performance-sort-field" htmlFor="performance-order">
             <span>Ordenar resultados por pontuação</span>
-            <select id="performance-order" name="order" defaultValue={order}>
+            <select id="performance-order" name="order" value={selectedOrder} onChange={(change) => setSelectedOrder(change.target.value as "asc" | "desc")}>
               <option value="desc">Maior para menor</option>
               <option value="asc">Menor para maior</option>
             </select>
