@@ -57,8 +57,30 @@ export default function PerformanceFilters({
 
   function changeEvent(value: string) {
     setSelectedEvent(value);
+    if (value) {
+      setSelectedTroopsValue("all");
+      setSelectedCoinsValue("all");
+    }
     if (!value || (value === "raid" && selectedSituation === "no-data")) {
       setSelectedSituation("");
+    }
+  }
+
+  function changeTroops(value: string) {
+    setSelectedTroopsValue(value);
+    if (value !== "all") {
+      setSelectedEvent("");
+      setSelectedSituation("");
+      setSelectedCoinsValue("all");
+    }
+  }
+
+  function changeCoins(value: string) {
+    setSelectedCoinsValue(value);
+    if (value !== "all") {
+      setSelectedEvent("");
+      setSelectedSituation("");
+      setSelectedTroopsValue("all");
     }
   }
 
@@ -99,7 +121,7 @@ export default function PerformanceFilters({
           <div>
             <span className="performance-filter-eyebrow">PESQUISA AVANÇADA</span>
             <h2>Filtros de desempenho</h2>
-            <p>Combine os critérios e aplique todos de uma só vez.</p>
+            <p>Escolha uma categoria por vez para consultar os resultados.</p>
           </div>
           <span className="performance-filter-count">{chips.length} {chips.length === 1 ? "critério" : "critérios"}</span>
         </div>
@@ -154,16 +176,16 @@ export default function PerformanceFilters({
             <fieldset className="performance-choice-group">
               <legend>Doações</legend>
               <input type="hidden" name="troops" value={selectedTroopsValue} disabled={selectedTroopsValue === "all"} />
-              <label><input type="radio" name="troops-choice" value="all" checked={selectedTroopsValue === "all"} onChange={() => setSelectedTroopsValue("all")} /> <span>Todas</span></label>
-              <label><input type="radio" name="troops-choice" value="with" checked={selectedTroopsValue === "with"} onChange={() => setSelectedTroopsValue("with")} /> <span>Com doações</span></label>
-              <label><input type="radio" name="troops-choice" value="without" checked={selectedTroopsValue === "without"} onChange={() => setSelectedTroopsValue("without")} /> <span>Sem doações</span></label>
+              <label><input type="radio" name="troops-choice" value="all" checked={selectedTroopsValue === "all"} onChange={() => changeTroops("all")} /> <span>Todas</span></label>
+              <label><input type="radio" name="troops-choice" value="with" checked={selectedTroopsValue === "with"} onChange={() => changeTroops("with")} /> <span>Com doações</span></label>
+              <label><input type="radio" name="troops-choice" value="without" checked={selectedTroopsValue === "without"} onChange={() => changeTroops("without")} /> <span>Sem doações</span></label>
             </fieldset>
             <fieldset className="performance-choice-group">
               <legend>Moedas da Capital</legend>
               <input type="hidden" name="coins" value={selectedCoinsValue} disabled={selectedCoinsValue === "all"} />
-              <label><input type="radio" name="coins-choice" value="all" checked={selectedCoinsValue === "all"} onChange={() => setSelectedCoinsValue("all")} /> <span>Todas</span></label>
-              <label><input type="radio" name="coins-choice" value="with" checked={selectedCoinsValue === "with"} onChange={() => setSelectedCoinsValue("with")} /> <span>Com moedas</span></label>
-              <label><input type="radio" name="coins-choice" value="without" checked={selectedCoinsValue === "without"} onChange={() => setSelectedCoinsValue("without")} /> <span>Sem moedas</span></label>
+              <label><input type="radio" name="coins-choice" value="all" checked={selectedCoinsValue === "all"} onChange={() => changeCoins("all")} /> <span>Todas</span></label>
+              <label><input type="radio" name="coins-choice" value="with" checked={selectedCoinsValue === "with"} onChange={() => changeCoins("with")} /> <span>Com moedas</span></label>
+              <label><input type="radio" name="coins-choice" value="without" checked={selectedCoinsValue === "without"} onChange={() => changeCoins("without")} /> <span>Sem moedas</span></label>
             </fieldset>
           </div>
         </div>
