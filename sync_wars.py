@@ -102,6 +102,14 @@ def build_war_events(war, players_by_tag):
 
         player_name = player["name"]
 
+        add(
+            f"{war_key}:{player_tag}:participation",
+            player_name,
+            player_tag,
+            "Participou da guerra (+5)",
+            5,
+        )
+
         if not attacks:
             if state == "warEnded":
                 add(f"{war_key}:{player_tag}:penalty:no-attacks", player_name, player_tag,
@@ -111,14 +119,6 @@ def build_war_events(war, players_by_tag):
         if state == "warEnded" and len(attacks) == 1:
             add(f"{war_key}:{player_tag}:penalty:one-attack", player_name, player_tag,
                 "Penalidade: realizou apenas um ataque (−5)", -5)
-
-        add(
-            f"{war_key}:{player_tag}:participation",
-            player_name,
-            player_tag,
-            "Participou da guerra (+5)",
-            5,
-        )
 
         if len(attacks) >= 2:
             add(
