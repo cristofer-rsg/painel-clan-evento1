@@ -1,6 +1,15 @@
 from datetime import timedelta
 
 
+def resolve_war_end(war_start, war_end):
+    """Use the API end time, or the 24-hour battle duration as a fallback."""
+    if war_end is not None:
+        return war_end
+    if war_start is None:
+        return None
+    return war_start + timedelta(hours=24)
+
+
 def is_before_final_twelve_hours(observed_at, war_end):
     """True when the attack was first observed before the final 12-hour window."""
     if observed_at is None or war_end is None:
