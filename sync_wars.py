@@ -55,6 +55,9 @@ def build_war_events(war, players_by_tag):
     opponent = war.get("opponent") or {}
     war_start = war.get("startTime") or war.get("endTime")
     war_end = parse_coc_time(war.get("endTime"))
+    # A API de guerra não informa battleTime nos ataques. Usamos o instante
+    # desta sincronização como primeira observação do ataque recém-publicado.
+    observed_at = datetime.now(timezone.utc)
 
     if not war_start:
         raise RuntimeError("A API não informou startTime/endTime.")
@@ -136,7 +139,9 @@ def build_war_events(war, players_by_tag):
             defender_tag = attack.get("defenderTag")
             own_position = member.get("mapPosition")
             defender_position = enemy_position_by_tag.get(defender_tag)
-            battle_time = parse_coc_time(attack.get("battleTime"))
+            # A API currentwar não fornece battleTime; o instante confiável
+            # disponível é quando esta execução detecta o ataque.
+            battle_time = None
             order = attack.get("order", attack_number)
 
             if battle_time is not None:
@@ -165,7 +170,7 @@ def build_war_events(war, players_by_tag):
                 and defender_position is not None
                 and own_position is not None
                 and should_penalize_off_mirror(
-                    attack_number, battle_time, war_end
+                    attack_number, observed_at, war_end
                 )
             ):
                 add(
@@ -180,7 +185,7 @@ def build_war_events(war, players_by_tag):
             # as 12 horas finais. A ordem é individual do jogador (1º/2º),
             # não o número global do ataque na guerra retornado pela API.
             if should_penalize_early_second_attack(
-                attack_number, battle_time, war_end
+                attack_number, observed_at, war_end
             ):
                 add(
                     f"{war_key}:{player_tag}:penalty:early-second:{order}",
