@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from scripts.war_rules import (
     should_penalize_early_second_attack,
     should_penalize_off_mirror,
+    resolve_war_end,
 )
 
 
@@ -56,6 +57,15 @@ class WarMirrorRuleTests(unittest.TestCase):
         self.assertFalse(
             should_penalize_off_mirror(1, self.at_boundary, self.war_end)
         )
+
+    def test_missing_api_end_time_uses_24_hour_battle_duration(self):
+        war_start = self.war_end - timedelta(hours=24)
+        self.assertEqual(resolve_war_end(war_start, None), self.war_end)
+        self.assertIsNone(resolve_war_end(None, None))
+
+    def test_api_end_time_takes_precedence_over_fallback(self):
+        actual_end = self.war_end + timedelta(minutes=5)
+        self.assertEqual(resolve_war_end(self.war_end, actual_end), actual_end)
 
     def test_missing_timestamps_do_not_create_mirror_penalty(self):
         self.assertFalse(should_penalize_off_mirror(1, None, self.war_end))
