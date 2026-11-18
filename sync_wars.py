@@ -273,6 +273,7 @@ def main():
         start_time[:15],
         "%Y%m%dT%H%M%S"
     ).replace(tzinfo=timezone.utc)
+    war_key = f"{CLAN_TAG}:{start_time}"
 
     cutoff = datetime(2026, 11, 6, 13, 50, tzinfo=timezone.utc)
     allow_points = war_started > cutoff
@@ -324,7 +325,6 @@ def main():
     # Estatística mensal: uma origem por jogador e guerra. A mesma chave
     # é atualizada nas próximas execuções, sem somar ataques em duplicidade.
     month_key = war_started.astimezone(TZ).strftime("%Y-%m")
-    war_key = f"{CLAN_TAG}:{start_time}"
     stat_sources = []
 
     for member in (war.get("clan") or {}).get("members") or []:
