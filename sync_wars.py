@@ -56,7 +56,11 @@ def build_war_events(war, players_by_tag):
     opponent = war.get("opponent") or {}
     war_start = war.get("startTime") or war.get("endTime")
     war_started_at = parse_coc_time(war_start)
-    war_end = resolve_war_end(war_started_at, parse_coc_time(war.get("endTime")))
+    war_end = resolve_war_end(
+        war_started_at,
+        parse_coc_time(war.get("endTime")),
+        state,
+    )
     # A API de guerra não informa battleTime nos ataques. Usamos o instante
     # desta sincronização como primeira observação do ataque recém-publicado.
     observed_at = datetime.now(timezone.utc)
