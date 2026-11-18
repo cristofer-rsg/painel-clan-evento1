@@ -35,6 +35,7 @@ export type PlayerProfile = {
   raid: number;
   capitalCoins: number;
   penalties: number;
+  penaltyEvents: EventRow[];
   recentEvents: EventRow[];
 };
 
@@ -100,6 +101,7 @@ export async function getPlayerProfile(tag: string): Promise<PlayerProfile | nul
     clanGamesPoints: matchingStat?.clan_games_points ?? 0,
   });
   const { wars, league, donations, games, raid, capitalCoins, penalties } = scoring;
+  const penaltyEvents = events.filter(event => Number(event.points ?? 0) < 0);
   const total = eligible ? scoring.total : 0;
   const monthLabel = new Intl.DateTimeFormat("pt-BR", {
     month: "long", year: "numeric", timeZone: "America/Sao_Paulo",
@@ -107,6 +109,6 @@ export async function getPlayerProfile(tag: string): Promise<PlayerProfile | nul
   return {
     name: player.name, tag: player.player_tag, role: player.role ?? null, eligible, eligibilityLabel: eligible ? "Elegível" : "Não elegível",
     monthKey, monthLabel: monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1),
-    total, wars, league, donations, games, raid, capitalCoins, penalties, recentEvents,
+    total, wars, league, donations, games, raid, capitalCoins, penalties, penaltyEvents, recentEvents,
   };
 }

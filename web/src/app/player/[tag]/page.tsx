@@ -54,6 +54,14 @@ export default async function PlayerProfilePage({ params }: Props) {
         {metrics.map(([label, key]) => <article key={key}><small>{label}</small><b>{fmt(profile[key])}</b><span>{key === "capitalCoins" ? "moedas" : "pontos"}</span></article>)}
       </div>
       {profile.penalties > 0 && <p className="player-profile-penalty">Penalidades no mês: <b>−{fmt(profile.penalties)} pts</b></p>}
+      <div className="history-section-title"><h2>Penalidades do mês</h2><span>{profile.penaltyEvents.length} REGISTROS</span></div>
+      <div className="history-events player-profile-events">
+        {profile.penaltyEvents.map(event => <article key={event.id}>
+          <div><b>{event.category || "Penalidade"}</b><small>{date(event.created_at)}</small><p>{event.activity || "Penalidade aplicada"}</p></div>
+          <strong className="negative">−{fmt(Math.abs(Number(event.points || 0)))} pts</strong>
+        </article>)}
+        {!profile.penaltyEvents.length && <p>Nenhuma penalidade registrada neste mês.</p>}
+      </div>
       <div className="history-section-title"><h2>Histórico recente</h2><span>{profile.recentEvents.length} REGISTROS</span></div>
       <div className="history-events player-profile-events">
         {profile.recentEvents.map(event => <article key={event.id}>
