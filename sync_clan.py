@@ -184,6 +184,8 @@ def main():
             tag_antiga = existente.get("player_tag")
             estava_ativo = bool(existente.get("active"))
             atualizacao = {"player_tag": player_tag, "active": True, "role": membro["role"]}
+            if player_tag in tags_novos_ingressantes:
+                atualizacao["whatsapp"] = "Sim"
             if tag_antiga:
                 db.table("players").update(atualizacao).eq("player_tag", tag_antiga).execute()
             else:
@@ -202,7 +204,7 @@ def main():
                 "active": True,
                 "role": membro["role"],
                 "eligible": "Elegível",
-                "whatsapp": "Não",
+                "whatsapp": "Sim",
             }).execute()
             novos += 1
 
