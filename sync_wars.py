@@ -107,7 +107,7 @@ def build_war_events(war, players_by_tag):
         if not player_tag:
             continue
 
-        player = players_by_tag.get(player_tag)
+        player = players_by_tag.get(player_tag.strip().upper())
 
         if not player:
             missing_players.add(player_tag)
@@ -289,7 +289,7 @@ def main():
     )
 
     players_by_tag = {
-        row["player_tag"]: row
+        row["player_tag"].strip().upper(): row
         for row in roster
         if row.get("player_tag") and row.get("name")
     }
@@ -329,7 +329,7 @@ def main():
 
     for member in (war.get("clan") or {}).get("members") or []:
         player_tag = member.get("tag")
-        player = players_by_tag.get(player_tag)
+        player = players_by_tag.get(player_tag.strip().upper()) if player_tag else None
         if not player_tag or not player:
             continue
 
