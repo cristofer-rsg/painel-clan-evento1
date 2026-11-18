@@ -12,6 +12,7 @@ from supabase import create_client
 from scripts.war_rules import (
     should_penalize_early_second_attack,
     should_penalize_off_mirror,
+    resolve_war_end,
 )
 
 CLAN_TAG = "#2GCGP0RQ9"
@@ -54,13 +55,23 @@ def build_war_events(war, players_by_tag):
     clan = war.get("clan") or {}
     opponent = war.get("opponent") or {}
     war_start = war.get("startTime") or war.get("endTime")
-    war_end = parse_coc_time(war.get("endTime"))
+    war_started_at = parse_coc_time(war_start)
+    war_end = resolve_war_end(war_started_at, parse_coc_time(war.get("endTime")))
     # A API de guerra não informa battleTime nos ataques. Usamos o instante
     # desta sincronização como primeira observação do ataque recém-publicado.
     observed_at = datetime.now(timezone.utc)
 
-    if not war_start:
-        raise RuntimeError("A API não informou startTime/endTime.")
+    if not war_start or war_started_at is None:
+        raise RuntimeError("A API não informou startTime/endTime válido.")
+
+    if war_end is None:
+        raise RuntimeError("Não foi possível determinar o fim previsto da guerra.")
+
+    print(
+        f"Regra de penalidade: observado={observed_at.isoformat()}, "
+        f"fim_guerra={war_end.isoformat()}, "
+        f"limite_12h={(war_end - timedelta(hours=12)).isoformat()}"
+    )
 
     war_key = f"{CLAN_TAG}:{war_start}"
     own_members = clan.get("members") or []
