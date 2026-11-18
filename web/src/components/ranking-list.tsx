@@ -81,6 +81,7 @@ export default function RankingList({ players }: { players: RankingPlayer[] }) {
             </ul> : <p className="ranking-penalties-unavailable">O total foi aplicado, mas não há descrição individual registrada para estas ocorrências.</p>}
             <div className="ranking-penalties-total"><span>Total descontado</span><b>−{number(player.penalties)} pts</b></div>
           </section>}
+          {player.tag && <Link className="ranking-profile-link" href={`/player/${encodeURIComponent(player.tag)}`}>Ver perfil completo ↗</Link>}
         </div>}
       </article>;
     })}
