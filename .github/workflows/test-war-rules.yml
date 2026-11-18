@@ -1,0 +1,34 @@
+name: Validar regras de penalidade de guerra
+
+on:
+  pull_request:
+    paths:
+      - "scripts/war_rules.py"
+      - "sync_wars.py"
+      - "tests/test_war_rules.py"
+      - ".github/workflows/test-war-rules.yml"
+  push:
+    branches:
+      - main
+    - "fix/war-penalty-window-detection"
+    paths:
+      - "scripts/war_rules.py"
+      - "sync_wars.py"
+      - "tests/test_war_rules.py"
+      - ".github/workflows/test-war-rules.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  test-war-rules:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar repositório
+        uses: actions/checkout@v4
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Executar testes das regras de guerra
+        run: python -m unittest tests.test_war_rules -v
