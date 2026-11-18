@@ -168,6 +168,8 @@ def main():
         if membro["player_tag"] not in tags_anteriores
     ]
 
+    tags_novos_ingressantes = {membro["player_tag"] for membro in entradas_detectadas}
+
     # Mantém registros e lançamentos históricos; apenas altera o estado atual.
     db.table("players").update({"active": False}).neq("name", "").execute()
 
