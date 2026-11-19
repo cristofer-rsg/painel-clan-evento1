@@ -1,6 +1,6 @@
 const applications = [
-  { name: "GHOST HUNT", description: "Ranking, guerras, raides, desempenho e administração do clã.", href: "/ghosthunt", tone: "green", image: "/images/ghost-hunt.webp", features: ["Ranking e pódio", "Guerras e raides", "Desempenho dos jogadores"] },
-  { name: "INGLORIOUS", description: "Ranking, guerras, raides, desempenho e administração do clã.", href: "/inglorious", tone: "violet", image: "/images/inglorious.webp", features: ["Ranking e pódio", "Guerras e raides", "Desempenho dos jogadores"] },
+  { name: "GHOST HUNT", description: "Ranking, guerras, raides, desempenho e administração do clã.", href: "/ghosthunt", tone: "green", image: "/ghost-hunt-original-quality.webp", features: ["Ranking e pódio", "Guerras e raides", "Desempenho dos jogadores"] },
+  { name: "INGLORIOUS", description: "Ranking, guerras, raides, desempenho e administração do clã.", href: "/inglorious", tone: "violet", image: "/inglorious-original-quality.webp", features: ["Ranking e pódio", "Guerras e raides", "Desempenho dos jogadores"] },
 ];
 export default function PortalHomePage() {
   return <main className="portal-page">
