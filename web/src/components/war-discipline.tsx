@@ -64,19 +64,20 @@ function CheckPill({ value }: { value: Check }) {
 }
 async function loadHistory() {
   const db = createSupabaseAdmin();
-  const [playersResult, warsResult] = await Promise.all([
+  const [playersResult, warsResult, snapshotsResult] = await Promise.all([
     db.from("players").select("name,player_tag").order("name", { ascending: true }),
     db.from("clan_war_completions").select("war_key,started_at,ended_at").order("ended_at", { ascending: false }).limit(6),
+    db.from("player_monthly_stat_sources").select("source_key,player_tag,player,war_attacks").like("source_key", "war:%").order("updated_at", { ascending: false }).limit(5000),
   ]);
   if (playersResult.error) throw new Error(playersResult.error.message);
   if (warsResult.error) throw new Error(warsResult.error.message);
+  if (snapshotsResult.error) throw new Error(snapshotsResult.error.message);
   const players = (playersResult.data ?? []) as Player[];
+  const warSnapshots = (snapshotsResult.data ?? []) as Array<{source_key:string;player_tag:string|null;player:string|null;war_attacks:number|null}>;
   let wars = (warsResult.data ?? []) as Completion[];
   if (!wars.length) {
-    const snapshotsResult = await db.from("player_monthly_stat_sources").select("source_key,updated_at").like("source_key", "war:%").order("updated_at", { ascending: false }).limit(5000);
-    if (snapshotsResult.error) throw new Error(snapshotsResult.error.message);
     const latest = new Map<string, string>();
-    for (const row of (snapshotsResult.data ?? []) as Array<{source_key:string;updated_at:string|null}>) {
+    for (const row of (snapshotsResult.data ?? []) as Array<{source_key:string;player_tag:string|null;player:string|null;war_attacks:number|null;updated_at?:string|null}>) {
       const match = row.source_key.match(/^war:(.+):#[A-Z0-9]+$/);
       if (match && row.updated_at && row.updated_at > (latest.get(match[1]) ?? "")) latest.set(match[1], row.updated_at);
     }
@@ -102,25 +103,42 @@ async function loadHistory() {
   return wars.map((war)=>{
     const rows = automation.filter((row)=>row.war_key===war.war_key);
     const mark = new Date(war.started_at).getTime()+12*3600000;
-    const roster: DisciplinePlayer[] = players.flatMap((player)=>{
-      const tag=(player.player_tag??"").trim().toUpperCase();
-      if(!tag)return[];
-      const own=rows.filter((row)=>row.player_tag.trim().toUpperCase()===tag);
-      if(!own.some((row)=>row.source_key.endsWith(":participation")))return[];
-      const attacks=own.filter((row)=>row.source_key.includes(":attack:")&&row.source_key.endsWith(":stars")).map((row)=>{
-        const match=row.source_key.match(/:attack:(\d+):stars$/);
-        const time=row.event_id?eventMap.get(Number(row.event_id))?.battle_time:null;
-        return {order:match?Number(match[1]):0,time:time?new Date(time).getTime():null};
-      }).filter((attack)=>attack.order>0).sort((a,b)=>a.order-b.order);
-      const first=attacks[0], second=attacks[1];
-      return [{tag,name:player.name,attacks:attacks.length,
-        firstWithin12h:first?.time==null?null:first.time<=mark,
-        secondAfter12h:second?.time==null?null:second.time>=mark,
-        firstMirror:first?own.some((row)=>row.source_key.includes(`:mirror:${first.order}`)):null}];
-    });
-    const participants=roster.filter((player)=>player.attacks>0);
+    const snapshotRoster=warSnapshots.filter((row)=>row.source_key.startsWith(`war:${war.war_key}:`));
+    const roster: DisciplinePlayer[] = snapshotRoster.length
+      ? snapshotRoster.flatMap((snapshot)=>{
+          if(!snapshot.player_tag||!snapshot.player)return[];
+          const tag=snapshot.player_tag.trim().toUpperCase();
+          const own=rows.filter((row)=>row.player_tag.trim().toUpperCase()===tag);
+          const attacks=own.filter((row)=>row.source_key.includes(":attack:")&&row.source_key.endsWith(":stars")).map((row)=>{
+            const match=row.source_key.match(/:attack:(\d+):stars$/);
+            const time=row.event_id?eventMap.get(Number(row.event_id))?.battle_time:null;
+            return {order:match?Number(match[1]):0,time:time?new Date(time).getTime():null};
+          }).filter((attack)=>attack.order>0).sort((a,b)=>a.order-b.order);
+          const first=attacks[0], second=attacks[1];
+          return [{tag,name:snapshot.player,attacks:Number(snapshot.war_attacks??attacks.length),
+            firstWithin12h:first?.time==null?null:first.time<=mark,
+            secondAfter12h:second?.time==null?null:second.time>=mark,
+            firstMirror:first?own.some((row)=>row.source_key.endsWith(`:mirror:${first.order}`)):null}];
+        })
+      : players.flatMap((player)=>{
+          const tag=(player.player_tag??"").trim().toUpperCase();
+          if(!tag)return[];
+          const own=rows.filter((row)=>row.player_tag.trim().toUpperCase()===tag);
+          if(!own.some((row)=>row.source_key.endsWith(":participation")))return[];
+          const attacks=own.filter((row)=>row.source_key.includes(":attack:")&&row.source_key.endsWith(":stars")).map((row)=>{
+            const match=row.source_key.match(/:attack:(\d+):stars$/);
+            const time=row.event_id?eventMap.get(Number(row.event_id))?.battle_time:null;
+            return {order:match?Number(match[1]):0,time:time?new Date(time).getTime():null};
+          }).filter((attack)=>attack.order>0).sort((a,b)=>a.order-b.order);
+          const first=attacks[0], second=attacks[1];
+          return [{tag,name:player.name,attacks:attacks.length,
+            firstWithin12h:first?.time==null?null:first.time<=mark,
+            secondAfter12h:second?.time==null?null:second.time>=mark,
+            firstMirror:first?own.some((row)=>row.source_key.endsWith(`:mirror:${first.order}`)):null}];
+        });
+    const participants=roster.length;
     const passed=participants.filter((player)=>player.firstWithin12h===true&&player.secondAfter12h===true&&player.firstMirror===true).length;
-    return {...war,roster,participants:participants.length,passed};
+    return {...war,roster,participants,passed};
   });
 }
 export default async function WarDiscipline() {
