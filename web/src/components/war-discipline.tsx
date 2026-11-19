@@ -122,7 +122,7 @@ async function loadHistory() {
   if (automationResult.error) throw new Error(automationResult.error.message);
   const automation = (automationResult.data ?? []) as AutomationRow[];
   const eventIds = [...new Set(automation.map((row)=>row.event_id).filter((id):id is string=>Boolean(id)))];
-  const eventsResult = eventIds.length ? await db.from("events").select("id,battle_time,created_at").in("id",eventIds.map(Number)) : {data:[],error:null};
+  const eventsResult = eventIds.length ? await db.from("events").select("id,battle_time,created_at,activity").in("id",eventIds.map(Number)) : {data:[],error:null};
   if (eventsResult.error) throw new Error(eventsResult.error.message);
   const eventMap = new Map<number,WarEvent>();
   for (const event of (eventsResult.data ?? []) as WarEvent[]) eventMap.set(event.id,event);
@@ -148,12 +148,12 @@ async function loadHistory() {
             const starEvent=starRow?.event_id?eventMap.get(Number(starRow.event_id)):null;
             const timeEvent=timeRow?.event_id?eventMap.get(Number(timeRow.event_id)):null;
             const battleTime=starEvent?.battle_time??(starEvent?.created_at??null)??timeEvent?.battle_time??null;
-            return {order,time:battleTime?new Date(battleTime).getTime():null,observedAt:null};
+            return {order,time:battleTime?new Date(battleTime).getTime():null,observedAt:observedTimes.get(order)??null};
           });
           const first=attacks[0], second=attacks[1];
           return [{tag,name:snapshot.player,attacks:Number(snapshot.war_attacks??attacks.length),
-            firstWithin12h:resolveFirstWithin12h(first?.time??null,null,mark,own.some((row)=>row.source_key.endsWith(":penalty:no-attacks")&&(()=>{const event=row.event_id?eventMap.get(Number(row.event_id)):null;return !event?.activity?.startsWith("Penalidade removida:");})())),
-            secondAfter12h:resolveSecondAfter12h(second?.time??null,null,mark,own.some((row)=>row.source_key.endsWith(":penalty:one-attack")&&(()=>{const event=row.event_id?eventMap.get(Number(row.event_id)):null;return !event?.activity?.startsWith("Penalidade removida:");})()),own.some((row)=>row.source_key.endsWith(":penalty:no-attacks")&&(()=>{const event=row.event_id?eventMap.get(Number(row.event_id)):null;return !event?.activity?.startsWith("Penalidade removida:");})())),
+            firstWithin12h:resolveFirstWithin12h(first?.time??null,first?.observedAt??null,mark,own.some((row)=>row.source_key.endsWith(":penalty:no-attacks")&&(()=>{const event=row.event_id?eventMap.get(Number(row.event_id)):null;return !event?.activity?.startsWith("Penalidade removida:");})())),
+            secondAfter12h:resolveSecondAfter12h(second?.time??null,second?.observedAt??null,mark,own.some((row)=>row.source_key.endsWith(":penalty:one-attack")&&(()=>{const event=row.event_id?eventMap.get(Number(row.event_id)):null;return !event?.activity?.startsWith("Penalidade removida:");})()),own.some((row)=>row.source_key.endsWith(":penalty:no-attacks")&&(()=>{const event=row.event_id?eventMap.get(Number(row.event_id)):null;return !event?.activity?.startsWith("Penalidade removida:");})())),
             firstMirror:first?own.some((row)=>row.source_key.endsWith(`:mirror:${first.order}`))?true:own.some((row)=>row.source_key.endsWith(`:penalty:off-mirror:${first.order}`)&&(()=>{const event=row.event_id?eventMap.get(Number(row.event_id)):null;return !event?.activity?.startsWith("Penalidade removida:");})())?false:null:null}];
         })
       : players.flatMap((player)=>{
@@ -174,7 +174,7 @@ async function loadHistory() {
             const starEvent=starRow?.event_id?eventMap.get(Number(starRow.event_id)):null;
             const timeEvent=timeRow?.event_id?eventMap.get(Number(timeRow.event_id)):null;
             const battleTime=starEvent?.battle_time??(starEvent?.created_at??null)??timeEvent?.battle_time??null;
-            return {order,time:battleTime?new Date(battleTime).getTime():null,observedAt:null};
+            return {order,time:battleTime?new Date(battleTime).getTime():null,observedAt:observedTimes.get(order)??null};
           });
           const first=attacks[0], second=attacks[1];
           return [{tag,name:player.name,attacks:attacks.length,
@@ -223,7 +223,7 @@ export default async function WarDiscipline() {
         const resultLabel=isPerfect?"Perfeito":hasFailure?"Ruim":"Em análise";
         return <article className="wd-player-card" key={player.tag}>
           <strong className="wd-player-name">{player.name}</strong>
-          <span className={`wd-shield ${player.attacks>0?"is-green":"is-red"}`} aria-label={player.attacks>0?"Participou da guerra":"Não atacou na guerra"}>
+          <span className={`wd-shield ${resultClass}`} aria-label={resultLabel}>
             <svg viewBox="0 0 24 28" aria-hidden="true"><path d="M12 1.5 21 5v7.2c0 6.2-3.8 11.2-9 14.3-5.2-3.1-9-8.1-9-14.3V5l9-3.5Z" /></svg>
           </span>
           <span className={`wd-result-seal ${resultClass}`}>{resultLabel}</span>
@@ -235,7 +235,7 @@ export default async function WarDiscipline() {
       {!wars.length?<p className="wd-message">Ainda não há guerras concluídas para auditar.</p>:wars.map((war,index)=><details className="wd-war" key={war.war_key} open={index===0}><summary><span><strong>{index===0?"Última guerra concluída":`Guerra anterior ${index}`}</strong><small>{formatDate(war.started_at)} · {war.participants} participantes</small></span><b>{war.passed}/{war.participants}</b></summary><div className="wd-history-list">{war.roster.map((player)=>{const hasFailure=player.firstWithin12h===false||player.secondAfter12h===false||player.firstMirror===false;
         const isPerfect=player.firstWithin12h===true&&player.secondAfter12h===true&&player.firstMirror===true;
         const resultClass=isPerfect?"is-pass":hasFailure?"is-fail":"is-unknown";
-        const resultLabel=isPerfect?"Perfeito":hasFailure?"Ruim":"Em análise";return <article className="wd-history-player" key={player.tag}><strong className="wd-player-name">{player.name}</strong><span className={`wd-shield ${player.attacks>0?"is-green":"is-red"}`} aria-label={player.attacks>0?"Participou da guerra":"Não atacou na guerra"}><svg viewBox="0 0 24 28" aria-hidden="true"><path d="M12 1.5 21 5v7.2c0 6.2-3.8 11.2-9 14.3-5.2-3.1-9-8.1-9-14.3V5l9-3.5Z" /></svg></span><span className={`wd-result-seal ${resultClass}`}>{resultLabel}</span></article>;})}</div></details>)}
+        const resultLabel=isPerfect?"Perfeito":hasFailure?"Ruim":"Em análise";return <article className="wd-history-player" key={player.tag}><strong className="wd-player-name">{player.name}</strong><span className={`wd-shield ${resultClass}`} aria-label={resultLabel}><svg viewBox="0 0 24 28" aria-hidden="true"><path d="M12 1.5 21 5v7.2c0 6.2-3.8 11.2-9 14.3-5.2-3.1-9-8.1-9-14.3V5l9-3.5Z" /></svg></span><span className={`wd-result-seal ${resultClass}`}>{resultLabel}</span></article>;})}</div></details>)}
     </section>
     <p className="wd-note">A auditoria é informativa e não altera pontos, penalidades ou classificação.</p>
   </section>;
