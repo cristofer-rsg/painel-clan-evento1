@@ -8,7 +8,7 @@ type Check = boolean | null;
 type Player = { name: string; player_tag: string | null };
 type Completion = { war_key: string; started_at: string; ended_at: string };
 type AutomationRow = { war_key: string; source_key: string; player_tag: string; event_id: string | null };
-type WarEvent = { id: number; battle_time: string | null };
+type WarEvent = { id: number; battle_time: string | null; created_at: string };
 type DisciplinePlayer = { tag: string; name: string; attacks: number; firstWithin12h: Check; secondAfter12h: Check; firstMirror: Check };
 
 async function loadCurrentWar() {
@@ -19,7 +19,7 @@ async function loadCurrentWar() {
   if (snapshotsResult.error) throw new Error("Não foi possível carregar a sincronização da guerra.");
   const snapshots=(snapshotsResult.data??[]) as Array<{source_key:string;player_tag:string|null;player:string|null;war_attacks:number|null;updated_at:string|null}>;
   const latestWar=snapshots.find((row)=>/^war:.+:#([A-Z0-9]+)$/.test(row.source_key));
-  if(!latestWar)return {state:"notInWar",startedAt:null,members:[] as Array<{tag:string;name:string;mapPosition:number;attacks:Array<{order:number;battleTime:number|null;defenderTag:string|null;defenderPosition:number|null}>;mirrorOrders:number[];offMirrorOrders:number[];syncedAttackCount:number}>};
+  if(!latestWar)return {state:"notInWar",startedAt:null,members:[] as Array<{tag:string;name:string;mapPosition:number;attacks:Array<{order:number;battleTime:number|null;observedAt:number|null;defenderTag:string|null;defenderPosition:number|null}>;mirrorOrders:number[];offMirrorOrders:number[];syncedAttackCount:number}>};
   const match=latestWar.source_key.match(/^war:(.+):#[A-Z0-9]+$/);
   const warKey=match?.[1]??"";
   const warRows=snapshots.filter((row)=>row.source_key.startsWith(`war:${warKey}:`));
@@ -30,16 +30,20 @@ async function loadCurrentWar() {
   if(automationResult.error)throw new Error("Não foi possível carregar os ataques sincronizados.");
   const automation=(automationResult.data??[]) as Array<{source_key:string;player_tag:string;event_id:string|null}>;
   const eventIds=[...new Set(automation.map((row)=>row.event_id).filter((id):id is string=>Boolean(id)))];
-  const eventsResult=eventIds.length?await db.from("events").select("id,battle_time").in("id",eventIds.map(Number)):{data:[],error:null};
+  const eventsResult=eventIds.length?await db.from("events").select("id,battle_time,created_at").in("id",eventIds.map(Number)):{data:[],error:null};
   if(eventsResult.error)throw new Error("Não foi possível carregar os horários dos ataques.");
   const eventTimes=new Map<number,number>();
-  for(const event of (eventsResult.data??[]) as Array<{id:number;battle_time:string|null}>){if(event.battle_time)eventTimes.set(event.id,new Date(event.battle_time).getTime());}
+  const eventObservedAt=new Map<number,number>();
+  for(const event of (eventsResult.data??[]) as Array<{id:number;battle_time:string|null;created_at:string}>){
+    if(event.battle_time)eventTimes.set(event.id,new Date(event.battle_time).getTime());
+    if(event.created_at)eventObservedAt.set(event.id,new Date(event.created_at).getTime());
+  }
   const members=warRows.flatMap((row)=>{
     if(!row.player_tag||!row.player)return[];
     const tag=row.player_tag.trim().toUpperCase();
     const own=automation.filter((entry)=>entry.player_tag.trim().toUpperCase()===tag);
     const attacks=own.filter((entry)=>entry.source_key.includes(":attack:")&&entry.source_key.endsWith(":stars"))
-      .map((entry)=>{const m=entry.source_key.match(/:attack:(\d+):stars$/);return {order:m?Number(m[1]):0,battleTime:entry.event_id?eventTimes.get(Number(entry.event_id))??null:null,defenderTag:null,defenderPosition:null};})
+      .map((entry)=>{const m=entry.source_key.match(/:attack:(\d+):stars$/);return {order:m?Number(m[1]):0,battleTime:entry.event_id?eventTimes.get(Number(entry.event_id))??null:null,observedAt:entry.event_id?eventObservedAt.get(Number(entry.event_id))??null:null,defenderTag:null,defenderPosition:null};})
       .filter((attack)=>attack.order>0).sort((a,b)=>a.order-b.order);
     return [{tag,name:row.player,mapPosition:0,attacks,
       mirrorOrders:own.flatMap((entry)=>{const m=entry.source_key.match(/:mirror:(\d+)$/);return m?[Number(m[1])]:[];}),
@@ -52,6 +56,19 @@ function parseClashTime(value: string) {
   const normalized = value.replace(/(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})(?:\.\d+)?Z/, "$1-$2-$3T$4:$5:$6Z");
   const date = new Date(normalized);
   return Number.isFinite(date.getTime()) ? date : null;
+}
+function resolveFirstWithin12h(actual:number|null,observed:number|null,mark:number):Check {
+  if(actual!==null)return actual<=mark;
+  // created_at is the first observation by the sync, not the exact attack time.
+  // An observation before the cutoff proves the attack happened before it;
+  // an observation after the cutoff cannot prove a late attack.
+  return observed!==null&&observed<=mark?true:null;
+}
+function resolveSecondAfter12h(actual:number|null,observed:number|null,mark:number):Check {
+  if(actual!==null)return actual>=mark;
+  // If the sync already saw the second attack before the cutoff, it was early.
+  // A later observation alone cannot prove when the attack actually happened.
+  return observed!==null&&observed<mark?false:null;
 }
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeZone: "America/Sao_Paulo" }).format(new Date(value));
@@ -96,7 +113,7 @@ async function loadHistory() {
   if (automationResult.error) throw new Error(automationResult.error.message);
   const automation = (automationResult.data ?? []) as AutomationRow[];
   const eventIds = [...new Set(automation.map((row)=>row.event_id).filter((id):id is string=>Boolean(id)))];
-  const eventsResult = eventIds.length ? await db.from("events").select("id,battle_time").in("id",eventIds.map(Number)) : {data:[],error:null};
+  const eventsResult = eventIds.length ? await db.from("events").select("id,battle_time,created_at").in("id",eventIds.map(Number)) : {data:[],error:null};
   if (eventsResult.error) throw new Error(eventsResult.error.message);
   const eventMap = new Map<number,WarEvent>();
   for (const event of (eventsResult.data ?? []) as WarEvent[]) eventMap.set(event.id,event);
@@ -111,13 +128,13 @@ async function loadHistory() {
           const own=rows.filter((row)=>row.player_tag.trim().toUpperCase()===tag);
           const attacks=own.filter((row)=>row.source_key.includes(":attack:")&&row.source_key.endsWith(":stars")).map((row)=>{
             const match=row.source_key.match(/:attack:(\d+):stars$/);
-            const time=row.event_id?eventMap.get(Number(row.event_id))?.battle_time:null;
-            return {order:match?Number(match[1]):0,time:time?new Date(time).getTime():null};
+            const event=row.event_id?eventMap.get(Number(row.event_id)):null;
+            return {order:match?Number(match[1]):0,time:event?.battle_time?new Date(event.battle_time).getTime():null,observedAt:event?.created_at?new Date(event.created_at).getTime():null};
           }).filter((attack)=>attack.order>0).sort((a,b)=>a.order-b.order);
           const first=attacks[0], second=attacks[1];
           return [{tag,name:snapshot.player,attacks:Number(snapshot.war_attacks??attacks.length),
-            firstWithin12h:first?.time==null?null:first.time<=mark,
-            secondAfter12h:second?.time==null?null:second.time>=mark,
+            firstWithin12h:resolveFirstWithin12h(first?.time??null,first?.observedAt??null,mark),
+            secondAfter12h:resolveSecondAfter12h(second?.time??null,second?.observedAt??null,mark),
             firstMirror:first?own.some((row)=>row.source_key.endsWith(`:mirror:${first.order}`)):null}];
         })
       : players.flatMap((player)=>{
@@ -127,13 +144,13 @@ async function loadHistory() {
           if(!own.some((row)=>row.source_key.endsWith(":participation")))return[];
           const attacks=own.filter((row)=>row.source_key.includes(":attack:")&&row.source_key.endsWith(":stars")).map((row)=>{
             const match=row.source_key.match(/:attack:(\d+):stars$/);
-            const time=row.event_id?eventMap.get(Number(row.event_id))?.battle_time:null;
-            return {order:match?Number(match[1]):0,time:time?new Date(time).getTime():null};
+            const event=row.event_id?eventMap.get(Number(row.event_id)):null;
+            return {order:match?Number(match[1]):0,time:event?.battle_time?new Date(event.battle_time).getTime():null,observedAt:event?.created_at?new Date(event.created_at).getTime():null};
           }).filter((attack)=>attack.order>0).sort((a,b)=>a.order-b.order);
           const first=attacks[0], second=attacks[1];
           return [{tag,name:player.name,attacks:attacks.length,
-            firstWithin12h:first?.time==null?null:first.time<=mark,
-            secondAfter12h:second?.time==null?null:second.time>=mark,
+            firstWithin12h:resolveFirstWithin12h(first?.time??null,first?.observedAt??null,mark),
+            secondAfter12h:resolveSecondAfter12h(second?.time??null,second?.observedAt??null,mark),
             firstMirror:first?own.some((row)=>row.source_key.endsWith(`:mirror:${first.order}`)):null}];
         });
     const participantCount=roster.length;
@@ -159,8 +176,8 @@ export default async function WarDiscipline() {
         : member.offMirrorOrders.includes(first.order) ? false : null
       : null;
     return {tag:member.tag,name:member.name,attacks:member.syncedAttackCount,
-      firstWithin12h:first?.battleTime==null||currentMark===null?null:first.battleTime<=currentMark,
-      secondAfter12h:second?.battleTime==null||currentMark===null?null:second.battleTime>=currentMark,
+      firstWithin12h:currentMark===null?null:resolveFirstWithin12h(first?.battleTime??null,first?.observedAt??null,currentMark),
+      secondAfter12h:currentMark===null?null:resolveSecondAfter12h(second?.battleTime??null,second?.observedAt??null,currentMark),
       firstMirror};
   }).sort((a,b)=>a.name.localeCompare(b.name,"pt-BR"));
   const auditedCurrent=currentPlayers.filter((p)=>p.firstWithin12h!==null&&p.secondAfter12h!==null&&p.firstMirror!==null).length;
