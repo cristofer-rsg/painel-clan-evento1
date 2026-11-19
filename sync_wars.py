@@ -154,10 +154,21 @@ def build_war_events(war, players_by_tag):
             defender_tag = attack.get("defenderTag")
             own_position = member.get("mapPosition")
             defender_position = enemy_position_by_tag.get(defender_tag)
-            # A API currentwar não fornece battleTime; o instante confiável
-            # disponível é quando esta execução detecta o ataque.
-            battle_time = None
+            # Quando a API não fornece o horário real, registra a primeira
+            # detecção deste ataque. A chave idempotente preserva a observação
+            # inicial feita durante a guerra, sem confundi-la com battleTime.
+            battle_time = parse_coc_time(attack.get("battleTime"))
             order = attack.get("order", attack_number)
+
+            if battle_time is None:
+                add(
+                    f"{war_key}:{player_tag}:attack:{order}:observed-time",
+                    player_name,
+                    player_tag,
+                    f"Ataque detectado pela sincronização em {observed_at.astimezone(TZ).strftime('%d/%m/%Y %H:%M:%S')} (Brasília)",
+                    0,
+                    observed_at,
+                )
 
             if battle_time is not None:
                 add(
