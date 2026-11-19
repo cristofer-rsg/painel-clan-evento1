@@ -5,7 +5,7 @@ import "./war-discipline.css";
 
 type Player = { name: string; player_tag: string | null };
 type Completion = { war_key: string; started_at: string; ended_at: string };
-type AutomationRow = { war_key: string; source_key: string; player_tag: string; event_id: string | null; created_at: string };
+type AutomationRow = { war_key: string; source_key: string; player_tag: string; event_id: string | null };
 type WarEvent = { id: number; battle_time: string | null };
 type Check = boolean | null;
 type DisciplinePlayer = { tag: string; name: string; attacks: number; firstWithin12h: Check; secondAfter12h: Check; firstMirror: Check };
@@ -33,16 +33,19 @@ async function loadHistory() {
   let automation: AutomationRow[] = [];
 
   if (!wars.length) {
-    const fallbackResult = await db.from("clash_war_automation")
-      .select("war_key,source_key,player_tag,event_id,created_at")
-      .order("created_at", { ascending: false })
+    const snapshotsResult = await db.from("player_monthly_stat_sources")
+      .select("source_key,updated_at")
+      .like("source_key", "war:%")
+      .order("updated_at", { ascending: false })
       .limit(5000);
-    if (fallbackResult.error) throw new Error(fallbackResult.error.message);
-    automation = (fallbackResult.data ?? []) as AutomationRow[];
+    if (snapshotsResult.error) throw new Error(snapshotsResult.error.message);
+    const snapshots = (snapshotsResult.data ?? []) as Array<{ source_key: string; updated_at: string | null }>;
     const latestSnapshotByWar = new Map<string, string>();
-    for (const row of automation) {
-      const current = latestSnapshotByWar.get(row.war_key) ?? "";
-      if (row.created_at > current) latestSnapshotByWar.set(row.war_key, row.created_at);
+    for (const snapshot of snapshots) {
+      const match = snapshot.source_key.match(/^war:(.+):#[A-Z0-9]+$/);
+      if (!match || !snapshot.updated_at) continue;
+      const current = latestSnapshotByWar.get(match[1]) ?? "";
+      if (snapshot.updated_at > current) latestSnapshotByWar.set(match[1], snapshot.updated_at);
     }
     wars = Array.from(latestSnapshotByWar.entries()).flatMap(([war_key, snapshotAt]) => {
       const match = war_key.match(/:(\\d{8}T\\d{6}(?:\\.\\d+)?Z)$/);
@@ -54,16 +57,16 @@ async function loadHistory() {
         || new Date(snapshotAt).getTime() < endedAt.getTime() - 60 * 60 * 1000) return [];
       return [{ war_key, started_at: startedAt.toISOString(), ended_at: endedAt.toISOString() }];
     }).sort((a, b) => b.ended_at.localeCompare(a.ended_at)).slice(0, 6);
-    const allowedKeys = new Set(wars.map((war) => war.war_key));
-    automation = automation.filter((row) => allowedKeys.has(row.war_key));
-  } else {
+  }
+
+  if (wars.length) {
     const keys = wars.map((war) => war.war_key);
     const automationResult = await db.from("clash_war_automation")
-      .select("war_key,source_key,player_tag,event_id,created_at").in("war_key", keys);
+      .select("war_key,source_key,player_tag,event_id").in("war_key", keys);
     if (automationResult.error) throw new Error(automationResult.error.message);
     automation = (automationResult.data ?? []) as AutomationRow[];
   }
-  if (!wars.length) return [];
+
   const eventIds = Array.from(new Set(automation.map((row) => row.event_id).filter((id): id is string => Boolean(id))));
   const eventMap = new Map<number, WarEvent>();
 
