@@ -1,7 +1,6 @@
 import { getPerformanceData } from "@/lib/ghost-hunt/performance";
 import PublicNavigation from "@/components/public-navigation";
 import PerformanceFilters from "@/components/performance-filters";
-import WarDiscipline from "@/components/war-discipline";
 
 export const dynamic = "force-dynamic";
 type SearchValue = string | string[] | undefined;
@@ -106,7 +105,6 @@ export default async function PerformancePage({ searchParams }: Props) {
     <section className="admin-content performance-content">
       <span className="auth-kicker">CONSULTA PÚBLICA • INDICADORES DO CLÃ</span><h1>Desempenho <em>mensal</em></h1>
       <p>Consulte os indicadores de participação e o aproveitamento calculado pela mesma pontuação e pelos mesmos critérios de desempate do ranking. Jogadores inelegíveis também aparecem nesta avaliação.</p>
-      <WarDiscipline />
       <PerformanceFilters
         months={data.months}
         monthKey={data.monthKey}
