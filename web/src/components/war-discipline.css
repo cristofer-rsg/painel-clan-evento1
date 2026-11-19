@@ -14,3 +14,5 @@
 .wd-history-player{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px 12px;padding:11px 12px}
 .wd-history-player .wd-result-seal{grid-column:1/-1}
 @media(max-width:640px){.wd-player-grid{grid-template-columns:1fr}.wd-player-card{grid-template-columns:minmax(0,1fr) auto;padding:12px}.wd-history-player{grid-template-columns:minmax(0,1fr) auto}}
+
+.wd-result-seal.is-unknown{background:rgba(148,163,184,.13);border:1px solid rgba(148,163,184,.45);color:#cbd5e1;box-shadow:0 0 8px rgba(148,163,184,.1)}
