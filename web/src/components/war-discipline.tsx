@@ -118,7 +118,7 @@ async function loadHistory() {
   if (automationResult.error) throw new Error(automationResult.error.message);
   const automation = (automationResult.data ?? []) as AutomationRow[];
   const eventIds = [...new Set(automation.map((row)=>row.event_id).filter((id):id is string=>Boolean(id)))];
-  const eventsResult = eventIds.length ? await db.from("events").select("id,battle_time").in("id",eventIds.map(Number)) : {data:[],error:null};
+  const eventsResult = eventIds.length ? await db.from("events").select("id,battle_time,created_at").in("id",eventIds.map(Number)) : {data:[],error:null};
   if (eventsResult.error) throw new Error(eventsResult.error.message);
   const eventMap = new Map<number,WarEvent>();
   for (const event of (eventsResult.data ?? []) as WarEvent[]) eventMap.set(event.id,event);
