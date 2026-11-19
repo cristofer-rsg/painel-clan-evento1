@@ -53,6 +53,7 @@ async function loadHistory() {
       const tag = (player.player_tag ?? "").trim().toUpperCase();
       if (!tag) return [];
       const ownRows = rows.filter((row) => row.player_tag.trim().toUpperCase() === tag);
+      if (!ownRows.some((row) => row.source_key.endsWith(":participation"))) return [];
       const attacks = ownRows
         .filter((row) => row.source_key.includes(":attack:") && row.source_key.endsWith(":stars"))
         .map((row) => {
