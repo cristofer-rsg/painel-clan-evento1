@@ -269,7 +269,7 @@ def build_war_events(war, players_by_tag):
                 and defender_position is not None
                 and own_position is not None
                 and should_penalize_off_mirror(
-                    attack_number, observed_at, war_end, battle_time
+                    attack_number, observed_at, war_end
                 )
             ):
                 add(
@@ -284,7 +284,7 @@ def build_war_events(war, players_by_tag):
             # as 12 horas finais. A ordem é individual do jogador (1º/2º),
             # não o número global do ataque na guerra retornado pela API.
             if should_penalize_early_second_attack(
-                attack_number, observed_at, war_end, battle_time
+                attack_number, observed_at, war_end
             ):
                 add(
                     f"{war_key}:{player_tag}:penalty:early-second:{order}",
@@ -366,7 +366,8 @@ def main():
 
     roster = (
         db.table("players")
-        .select("name,player_tag")
+        .select("name,player_tag,active")
+        .eq("active", True)
         .execute()
         .data or []
     )
