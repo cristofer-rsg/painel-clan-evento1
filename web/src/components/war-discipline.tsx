@@ -49,7 +49,7 @@ async function loadCurrentWar() {
   return {state:Date.now()-startedAt.getTime()>36*60*60*1000?"warEnded":"inWar",startedAt:startedAt.toISOString(),members};
 }
 function parseClashTime(value: string) {
-  const normalized = value.replace(/(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})(?:\.\\d+)?Z/, "$1-$2-$3T$4:$5:$6Z");
+  const normalized = value.replace(/(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})(?:\.\d+)?Z/, "$1-$2-$3T$4:$5:$6Z");
   const date = new Date(normalized);
   return Number.isFinite(date.getTime()) ? date : null;
 }
@@ -81,7 +81,7 @@ async function loadHistory() {
       if (match && row.updated_at && row.updated_at > (latest.get(match[1]) ?? "")) latest.set(match[1], row.updated_at);
     }
     wars = [...latest.entries()].flatMap(([war_key, snapshotAt]) => {
-      const match = war_key.match(/:(\d{8}T\\d{6}(?:\.\\d+)?Z)$/);
+      const match = war_key.match(/:(\d{8}T\d{6}(?:\.\d+)?Z)$/);
       if (!match) return [];
       const startedAt = parseClashTime(match[1]);
       if (!startedAt) return [];
