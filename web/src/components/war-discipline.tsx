@@ -8,7 +8,7 @@ type Check = boolean | null;
 type Player = { name: string; player_tag: string | null };
 type Completion = { war_key: string; started_at: string; ended_at: string };
 type AutomationRow = { war_key: string; source_key: string; player_tag: string; event_id: string | null };
-type WarEvent = { id: number; battle_time: string | null; created_at: string };
+type WarEvent = { id: number; battle_time: string | null };
 type DisciplinePlayer = { tag: string; name: string; attacks: number; firstWithin12h: Check; secondAfter12h: Check; firstMirror: Check };
 
 async function loadCurrentWar() {
@@ -30,20 +30,25 @@ async function loadCurrentWar() {
   if(automationResult.error)throw new Error("Não foi possível carregar os ataques sincronizados.");
   const automation=(automationResult.data??[]) as Array<{source_key:string;player_tag:string;event_id:string|null}>;
   const eventIds=[...new Set(automation.map((row)=>row.event_id).filter((id):id is string=>Boolean(id)))];
-  const eventsResult=eventIds.length?await db.from("events").select("id,battle_time,created_at").in("id",eventIds.map(Number)):{data:[],error:null};
+  const eventsResult=eventIds.length?await db.from("events").select("id,battle_time").in("id",eventIds.map(Number)):{data:[],error:null};
   if(eventsResult.error)throw new Error("Não foi possível carregar os horários dos ataques.");
   const eventTimes=new Map<number,number>();
-  const eventObservedAt=new Map<number,number>();
-  for(const event of (eventsResult.data??[]) as Array<{id:number;battle_time:string|null;created_at:string}>){
+  for(const event of (eventsResult.data??[]) as Array<{id:number;battle_time:string|null}>){
     if(event.battle_time)eventTimes.set(event.id,new Date(event.battle_time).getTime());
-    if(event.created_at)eventObservedAt.set(event.id,new Date(event.created_at).getTime());
+  }
+  const observedTimes=new Map<number,number>();
+  for(const entry of automation){
+    const observedMatch=entry.source_key.match(/:attack:(\d+):observed-time$/);
+    if(!observedMatch||!entry.event_id)continue;
+    const observed=eventTimes.get(Number(entry.event_id));
+    if(observed!==undefined)observedTimes.set(Number(observedMatch[1]),observed);
   }
   const members=warRows.flatMap((row)=>{
     if(!row.player_tag||!row.player)return[];
     const tag=row.player_tag.trim().toUpperCase();
     const own=automation.filter((entry)=>entry.player_tag.trim().toUpperCase()===tag);
     const attacks=own.filter((entry)=>entry.source_key.includes(":attack:")&&entry.source_key.endsWith(":stars"))
-      .map((entry)=>{const m=entry.source_key.match(/:attack:(\d+):stars$/);return {order:m?Number(m[1]):0,battleTime:entry.event_id?eventTimes.get(Number(entry.event_id))??null:null,observedAt:entry.event_id?eventObservedAt.get(Number(entry.event_id))??null:null,defenderTag:null,defenderPosition:null};})
+      .map((entry)=>{const m=entry.source_key.match(/:attack:(\d+):stars$/);return {order:m?Number(m[1]):0,battleTime:entry.event_id?eventTimes.get(Number(entry.event_id))??null:null,observedAt:observedTimes.get(m?Number(m[1]):0)??null,defenderTag:null,defenderPosition:null};})
       .filter((attack)=>attack.order>0).sort((a,b)=>a.order-b.order);
     return [{tag,name:row.player,mapPosition:0,attacks,
       mirrorOrders:own.flatMap((entry)=>{const m=entry.source_key.match(/:mirror:(\d+)$/);return m?[Number(m[1])]:[];}),
@@ -59,10 +64,12 @@ function parseClashTime(value: string) {
 }
 function resolveFirstWithin12h(actual:number|null,observed:number|null,mark:number):Check {
   if(actual!==null)return actual<=mark;
+  if(observed!==null&&observed<=mark)return true;
   return null;
 }
 function resolveSecondAfter12h(actual:number|null,observed:number|null,mark:number):Check {
   if(actual!==null)return actual>=mark;
+  if(observed!==null&&observed<mark)return false;
   return null;
 }
 function formatDate(value: string) {
@@ -108,7 +115,7 @@ async function loadHistory() {
   if (automationResult.error) throw new Error(automationResult.error.message);
   const automation = (automationResult.data ?? []) as AutomationRow[];
   const eventIds = [...new Set(automation.map((row)=>row.event_id).filter((id):id is string=>Boolean(id)))];
-  const eventsResult = eventIds.length ? await db.from("events").select("id,battle_time,created_at").in("id",eventIds.map(Number)) : {data:[],error:null};
+  const eventsResult = eventIds.length ? await db.from("events").select("id,battle_time").in("id",eventIds.map(Number)) : {data:[],error:null};
   if (eventsResult.error) throw new Error(eventsResult.error.message);
   const eventMap = new Map<number,WarEvent>();
   for (const event of (eventsResult.data ?? []) as WarEvent[]) eventMap.set(event.id,event);
@@ -121,15 +128,22 @@ async function loadHistory() {
           if(!snapshot.player_tag||!snapshot.player)return[];
           const tag=snapshot.player_tag.trim().toUpperCase();
           const own=rows.filter((row)=>row.player_tag.trim().toUpperCase()===tag);
+          const observedTimes=new Map<number,number>();
+          for(const row of own){
+            const observedMatch=row.source_key.match(/:attack:(\d+):observed-time$/);
+            const event=row.event_id?eventMap.get(Number(row.event_id)):null;
+            if(observedMatch&&event?.battle_time)observedTimes.set(Number(observedMatch[1]),new Date(event.battle_time).getTime());
+          }
           const attacks=own.filter((row)=>row.source_key.includes(":attack:")&&row.source_key.endsWith(":stars")).map((row)=>{
             const match=row.source_key.match(/:attack:(\d+):stars$/);
             const event=row.event_id?eventMap.get(Number(row.event_id)):null;
-            return {order:match?Number(match[1]):0,time:event?.battle_time?new Date(event.battle_time).getTime():null,observedAt:event?.created_at?new Date(event.created_at).getTime():null};
+            const order=match?Number(match[1]):0;
+            return {order,time:event?.battle_time?new Date(event.battle_time).getTime():null,observedAt:observedTimes.get(order)??null};
           }).filter((attack)=>attack.order>0).sort((a,b)=>a.order-b.order);
           const first=attacks[0], second=attacks[1];
           return [{tag,name:snapshot.player,attacks:Number(snapshot.war_attacks??attacks.length),
-            firstWithin12h:first?.time==null?null:first.time<=mark,
-            secondAfter12h:second?.time==null?null:second.time>=mark,
+            firstWithin12h:resolveFirstWithin12h(first?.time??null,first?.observedAt??null,mark),
+            secondAfter12h:resolveSecondAfter12h(second?.time??null,second?.observedAt??null,mark),
             firstMirror:first?own.some((row)=>row.source_key.endsWith(`:mirror:${first.order}`))?true:own.some((row)=>row.source_key.endsWith(`:penalty:off-mirror:${first.order}`))?false:null:null}];
         })
       : players.flatMap((player)=>{
@@ -137,15 +151,22 @@ async function loadHistory() {
           if(!tag)return[];
           const own=rows.filter((row)=>row.player_tag.trim().toUpperCase()===tag);
           if(!own.some((row)=>row.source_key.endsWith(":participation")))return[];
+          const observedTimes=new Map<number,number>();
+          for(const row of own){
+            const observedMatch=row.source_key.match(/:attack:(\d+):observed-time$/);
+            const event=row.event_id?eventMap.get(Number(row.event_id)):null;
+            if(observedMatch&&event?.battle_time)observedTimes.set(Number(observedMatch[1]),new Date(event.battle_time).getTime());
+          }
           const attacks=own.filter((row)=>row.source_key.includes(":attack:")&&row.source_key.endsWith(":stars")).map((row)=>{
             const match=row.source_key.match(/:attack:(\d+):stars$/);
             const event=row.event_id?eventMap.get(Number(row.event_id)):null;
-            return {order:match?Number(match[1]):0,time:event?.battle_time?new Date(event.battle_time).getTime():null,observedAt:event?.created_at?new Date(event.created_at).getTime():null};
+            const order=match?Number(match[1]):0;
+            return {order,time:event?.battle_time?new Date(event.battle_time).getTime():null,observedAt:observedTimes.get(order)??null};
           }).filter((attack)=>attack.order>0).sort((a,b)=>a.order-b.order);
           const first=attacks[0], second=attacks[1];
           return [{tag,name:player.name,attacks:attacks.length,
-            firstWithin12h:first?.time==null?null:first.time<=mark,
-            secondAfter12h:second?.time==null?null:second.time>=mark,
+            firstWithin12h:resolveFirstWithin12h(first?.time??null,first?.observedAt??null,mark),
+            secondAfter12h:resolveSecondAfter12h(second?.time??null,second?.observedAt??null,mark),
             firstMirror:first?own.some((row)=>row.source_key.endsWith(`:mirror:${first.order}`))?true:own.some((row)=>row.source_key.endsWith(`:penalty:off-mirror:${first.order}`))?false:null:null}];
         });
     const participantCount=roster.length;
@@ -171,8 +192,8 @@ export default async function WarDiscipline() {
         : member.offMirrorOrders.includes(first.order) ? false : null
       : null;
     return {tag:member.tag,name:member.name,attacks:member.syncedAttackCount,
-      firstWithin12h:first?.battleTime==null||currentMark===null?null:first.battleTime<=currentMark,
-      secondAfter12h:second?.battleTime==null||currentMark===null?null:second.battleTime>=currentMark,
+      firstWithin12h:currentMark===null?null:resolveFirstWithin12h(first?.battleTime??null,first?.observedAt??null,currentMark),
+      secondAfter12h:currentMark===null?null:resolveSecondAfter12h(second?.battleTime??null,second?.observedAt??null,currentMark),
       firstMirror};
   }).sort((a,b)=>a.name.localeCompare(b.name,"pt-BR"));
   const auditedCurrent=currentPlayers.filter((p)=>p.firstWithin12h!==null&&p.secondAfter12h!==null&&p.firstMirror!==null).length;
