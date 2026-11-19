@@ -55,6 +55,7 @@ def fetch_war_preference(member, token, war_key):
             "player_tag": player_tag,
             "player_name": member.get("name") or player_tag,
             "war_preference": preference,
+            "observed_at": datetime.now(timezone.utc).isoformat(),
         }
     except Exception as error:
         print(f"Preferência de guerra não consultada para {player_tag}: {error}")
@@ -65,28 +66,37 @@ def sync_war_preferences(db, war, war_key, token):
     members = war.get("clan", {}).get("members") or []
     existing_result = (
         db.table("clan_war_preferences")
-        .select("player_tag")
+        .select("player_tag,observed_at")
         .eq("war_key", war_key)
         .execute()
     )
-    existing = {
-        row["player_tag"].strip().upper()
+    now = datetime.now(timezone.utc)
+    refresh_before = now - timedelta(minutes=30)
+    last_observed = {
+        row["player_tag"].strip().upper(): row.get("observed_at")
         for row in (existing_result.data or [])
         if row.get("player_tag")
     }
-    missing = [
-        member for member in members
-        if (member.get("tag") or "").strip().upper() not in existing
-    ]
-    if not missing:
-        print(f"Preferências da guerra já registradas: {len(existing)}")
+    members_to_refresh = []
+    for member in members:
+        tag = (member.get("tag") or "").strip().upper()
+        observed_at = last_observed.get(tag)
+        try:
+            observed = datetime.fromisoformat(observed_at.replace("Z", "+00:00")) if observed_at else None
+        except (TypeError, ValueError):
+            observed = None
+        if observed is None or observed < refresh_before:
+            members_to_refresh.append(member)
+
+    if not members_to_refresh:
+        print(f"Preferências da guerra atualizadas há menos de 30 minutos: {len(last_observed)}")
         return 0
 
     snapshots = []
     with ThreadPoolExecutor(max_workers=10) as executor:
         futures = [
             executor.submit(fetch_war_preference, member, token, war_key)
-            for member in missing
+            for member in members_to_refresh
         ]
         for future in as_completed(futures):
             snapshot = future.result()
@@ -97,7 +107,7 @@ def sync_war_preferences(db, war, war_key, token):
         db.table("clan_war_preferences").upsert(
             snapshots,
             on_conflict="war_key,player_tag",
-            ignore_duplicates=True,
+            ignore_duplicates=False,
         ).execute()
     print(f"Preferências de guerra registradas: {len(snapshots)}/{len(missing)}")
     return len(snapshots)
