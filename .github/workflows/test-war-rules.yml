@@ -10,7 +10,8 @@ on:
   push:
     branches:
       - main
-    - "fix/war-penalty-window-detection"
+      - "fix/war-penalty-window-detection"
+      - "fix/war-discipline-accuracy"
     paths:
       - "scripts/war_rules.py"
       - "sync_wars.py"
