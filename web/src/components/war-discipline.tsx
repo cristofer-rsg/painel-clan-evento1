@@ -156,10 +156,10 @@ export default async function WarDiscipline() {
         const compliant=player.firstWithin12h===true&&player.secondAfter12h===true&&player.firstMirror===true;
         return <article className="wd-player-card" key={player.tag}>
           <strong className="wd-player-name">{player.name}</strong>
-          <span className={`wd-shield ${compliant?"is-green":"is-red"}`} aria-label={compliant?"Escudo verde":"Escudo vermelho"}>
+          <span className={`wd-shield ${player.attacks>0?"is-green":"is-red"}`} aria-label={player.attacks>0?"Participou da guerra":"Não atacou na guerra"}>
             <svg viewBox="0 0 24 28" aria-hidden="true"><path d="M12 1.5 21 5v7.2c0 6.2-3.8 11.2-9 14.3-5.2-3.1-9-8.1-9-14.3V5l9-3.5Z" /></svg>
           </span>
-          <span className={`wd-result-seal ${compliant?"is-pass":"is-fail"}`}>{compliant?"Fez tudo correto":"Não fez tudo correto"}</span>
+          <span className={`wd-result-seal ${compliant?"is-pass":"is-fail"}`}>{compliant?"Perfeito":"Ruim"}</span>
         </article>;
       })}</div>:<p className="wd-message">A API não informa uma guerra em andamento para este clã.</p>}
       <p className="wd-note">A auditoria é informativa e não altera pontos, penalidades ou classificação.</p>
