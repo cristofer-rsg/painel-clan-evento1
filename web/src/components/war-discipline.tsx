@@ -65,12 +65,14 @@ function parseClashTime(value: string) {
   const date = new Date(normalized);
   return Number.isFinite(date.getTime()) ? date : null;
 }
-function resolveFirstWithin12h(actual:number|null,observed:number|null,mark:number):Check {
+function resolveFirstWithin12h(actual:number|null,observed:number|null,mark:number,noAttacks=false):Check {
+  if(noAttacks)return false;
   if(actual!==null)return actual<=mark;
   if(observed!==null&&observed<=mark)return true;
   return null;
 }
-function resolveSecondAfter12h(actual:number|null,observed:number|null,mark:number):Check {
+function resolveSecondAfter12h(actual:number|null,observed:number|null,mark:number,missedSecond=false,noAttacks=false):Check {
+  if(noAttacks||missedSecond)return false;
   if(actual!==null)return actual>=mark;
   if(observed!==null&&observed<mark)return false;
   return null;
@@ -148,8 +150,8 @@ async function loadHistory() {
           });
           const first=attacks[0], second=attacks[1];
           return [{tag,name:snapshot.player,attacks:Number(snapshot.war_attacks??attacks.length),
-            firstWithin12h:resolveFirstWithin12h(first?.time??null,first?.observedAt??null,mark),
-            secondAfter12h:resolveSecondAfter12h(second?.time??null,second?.observedAt??null,mark),
+            firstWithin12h:resolveFirstWithin12h(first?.time??null,first?.observedAt??null,mark,own.some((row)=>row.source_key.endsWith(":penalty:no-attacks"))),
+            secondAfter12h:resolveSecondAfter12h(second?.time??null,second?.observedAt??null,mark,own.some((row)=>row.source_key.endsWith(":penalty:one-attack")),own.some((row)=>row.source_key.endsWith(":penalty:no-attacks"))),
             firstMirror:first?own.some((row)=>row.source_key.endsWith(`:mirror:${first.order}`))?true:own.some((row)=>row.source_key.endsWith(`:penalty:off-mirror:${first.order}`))?false:null:null}];
         })
       : players.flatMap((player)=>{
@@ -174,8 +176,8 @@ async function loadHistory() {
           });
           const first=attacks[0], second=attacks[1];
           return [{tag,name:player.name,attacks:attacks.length,
-            firstWithin12h:resolveFirstWithin12h(first?.time??null,first?.observedAt??null,mark),
-            secondAfter12h:resolveSecondAfter12h(second?.time??null,second?.observedAt??null,mark),
+            firstWithin12h:resolveFirstWithin12h(first?.time??null,first?.observedAt??null,mark,own.some((row)=>row.source_key.endsWith(":penalty:no-attacks"))),
+            secondAfter12h:resolveSecondAfter12h(second?.time??null,second?.observedAt??null,mark,own.some((row)=>row.source_key.endsWith(":penalty:one-attack")),own.some((row)=>row.source_key.endsWith(":penalty:no-attacks"))),
             firstMirror:first?own.some((row)=>row.source_key.endsWith(`:mirror:${first.order}`))?true:own.some((row)=>row.source_key.endsWith(`:penalty:off-mirror:${first.order}`))?false:null:null}];
         });
     const participantCount=roster.length;
