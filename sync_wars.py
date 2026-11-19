@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone, timedelta
 import json
 import os
@@ -37,6 +38,69 @@ def api_get(path, token):
         raise RuntimeError(
             f"Erro na API Clash of Clans ({error.code}): {detail}"
         ) from error
+
+
+
+def fetch_war_preference(member, token, war_key):
+    player_tag = (member.get("tag") or "").strip().upper()
+    if not player_tag:
+        return None
+    try:
+        profile = api_get(f"/players/{quote(player_tag, safe='')}", token)
+        preference = profile.get("warPreference")
+        if preference not in {"in", "out"}:
+            preference = "unknown"
+        return {
+            "war_key": war_key,
+            "player_tag": player_tag,
+            "player_name": member.get("name") or player_tag,
+            "war_preference": preference,
+        }
+    except Exception as error:
+        print(f"Preferência de guerra não consultada para {player_tag}: {error}")
+        return None
+
+
+def sync_war_preferences(db, war, war_key, token):
+    members = war.get("clan", {}).get("members") or []
+    existing_result = (
+        db.table("clan_war_preferences")
+        .select("player_tag")
+        .eq("war_key", war_key)
+        .execute()
+    )
+    existing = {
+        row["player_tag"].strip().upper()
+        for row in (existing_result.data or [])
+        if row.get("player_tag")
+    }
+    missing = [
+        member for member in members
+        if (member.get("tag") or "").strip().upper() not in existing
+    ]
+    if not missing:
+        print(f"Preferências da guerra já registradas: {len(existing)}")
+        return 0
+
+    snapshots = []
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        futures = [
+            executor.submit(fetch_war_preference, member, token, war_key)
+            for member in missing
+        ]
+        for future in as_completed(futures):
+            snapshot = future.result()
+            if snapshot:
+                snapshots.append(snapshot)
+
+    if snapshots:
+        db.table("clan_war_preferences").upsert(
+            snapshots,
+            on_conflict="war_key,player_tag",
+            ignore_duplicates=True,
+        ).execute()
+    print(f"Preferências de guerra registradas: {len(snapshots)}/{len(missing)}")
+    return len(snapshots)
 
 
 def parse_coc_time(value):
@@ -304,6 +368,8 @@ def main():
         for row in roster
         if row.get("player_tag") and row.get("name")
     }
+
+    sync_war_preferences(db, war, war_key, token)
 
     events, missing_players = build_war_events(
         war, players_by_tag

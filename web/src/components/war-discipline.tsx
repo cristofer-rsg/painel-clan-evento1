@@ -9,7 +9,8 @@ type Player = { name: string; player_tag: string | null };
 type Completion = { war_key: string; started_at: string; ended_at: string };
 type AutomationRow = { war_key: string; source_key: string; player_tag: string; event_id: string | null };
 type WarEvent = { id: number; battle_time: string | null; created_at: string; activity: string | null };
-type DisciplinePlayer = { tag: string; name: string; attacks: number; firstWithin12h: Check; secondAfter12h: Check; firstMirror: Check };
+type WarPreference = "in" | "out" | "unknown" | null;
+type DisciplinePlayer = { tag: string; name: string; attacks: number; warPreference: WarPreference; firstWithin12h: Check; secondAfter12h: Check; firstMirror: Check };
 
 async function loadCurrentWar() {
   const db = createSupabaseAdmin();
@@ -19,10 +20,13 @@ async function loadCurrentWar() {
   if (snapshotsResult.error) throw new Error("Não foi possível carregar a sincronização da guerra.");
   const snapshots=(snapshotsResult.data??[]) as Array<{source_key:string;player_tag:string|null;player:string|null;war_attacks:number|null;updated_at:string|null}>;
   const latestWar=snapshots.find((row)=>/^war:.+:#([A-Z0-9]+)$/.test(row.source_key));
-  if(!latestWar)return {state:"notInWar",startedAt:null,members:[] as Array<{tag:string;name:string;mapPosition:number;attacks:Array<{order:number;battleTime:number|null;observedAt:number|null;defenderTag:string|null;defenderPosition:number|null}>;mirrorOrders:number[];offMirrorOrders:number[];earlySecondOrders:number[];syncedAttackCount:number}>};
+  if(!latestWar)return {state:"notInWar",startedAt:null,members:[] as Array<{tag:string;name:string;mapPosition:number;attacks:Array<{order:number;battleTime:number|null;observedAt:number|null;defenderTag:string|null;defenderPosition:number|null}>;warPreference:WarPreference;mirrorOrders:number[];offMirrorOrders:number[];earlySecondOrders:number[];syncedAttackCount:number}>};
   const match=latestWar.source_key.match(/^war:(.+):#[A-Z0-9]+$/);
   const warKey=match?.[1]??"";
   const warRows=snapshots.filter((row)=>row.source_key.startsWith(`war:${warKey}:`));
+  const preferenceResult=await db.from("clan_war_preferences").select("player_tag,war_preference").eq("war_key",warKey);
+  if(preferenceResult.error)throw new Error("Não foi possível carregar as preferências de guerra.");
+  const preferences=new Map((preferenceResult.data??[]).map((row)=>[row.player_tag.trim().toUpperCase(),row.war_preference as WarPreference]));
   const startMatch=warKey.match(/:(\d{8}T\d{6}(?:\.\d+)?Z)$/);
   const startedAt=startMatch?parseClashTime(startMatch[1]):null;
   if(!startedAt)throw new Error("A sincronização não contém o início válido da guerra.");
@@ -59,7 +63,7 @@ async function loadCurrentWar() {
       return {order,battleTime:(starEntry?.event_id?eventTimes.get(Number(starEntry.event_id)):undefined)??(timeEntry?.event_id?eventTimes.get(Number(timeEntry.event_id)):undefined)??null,observedAt:earliestObservedTime(observedTimes.get(order),starEntry?.event_id?attackEventTimes.get(Number(starEntry.event_id)):undefined,timeEntry?.event_id?attackEventTimes.get(Number(timeEntry.event_id)):undefined),defenderTag:null,defenderPosition:null};
     });
     const isActivePenalty=(entry:{event_id:string|null})=>{const activity=entry.event_id?eventActivities.get(Number(entry.event_id)):null;return !activity?.startsWith("Penalidade removida:");};
-    return [{tag,name:row.player,mapPosition:0,attacks,
+    return [{tag,name:row.player,mapPosition:0,attacks,warPreference:preferences.get(tag)??null,
       mirrorOrders:own.flatMap((entry)=>{const m=entry.source_key.match(/:mirror:(\d+)$/);return m?[Number(m[1])]:[];}),
       offMirrorOrders:own.flatMap((entry)=>{const m=entry.source_key.match(/:penalty:off-mirror:(\d+)$/);return m&&isActivePenalty(entry)?[Number(m[1])]:[];}),
       earlySecondOrders:own.flatMap((entry)=>{const m=entry.source_key.match(/:penalty:early-second:(\d+)$/);return m&&isActivePenalty(entry)?[Number(m[1])]:[];}),
@@ -136,6 +140,11 @@ async function loadHistory() {
   const automationResult = keys.length ? await db.from("clash_war_automation").select("war_key,source_key,player_tag,event_id").in("war_key",keys) : {data:[],error:null};
   if (automationResult.error) throw new Error(automationResult.error.message);
   const automation = (automationResult.data ?? []) as AutomationRow[];
+  const preferenceResult = keys.length
+    ? await db.from("clan_war_preferences").select("war_key,player_tag,war_preference").in("war_key",keys)
+    : {data:[],error:null};
+  if (preferenceResult.error) throw new Error(preferenceResult.error.message);
+  const preferences = new Map((preferenceResult.data ?? []).map((row)=>[`${row.war_key}|${row.player_tag.trim().toUpperCase()}`,row.war_preference as WarPreference]));
   const eventIds = [...new Set(automation.map((row)=>row.event_id).filter((id):id is string=>Boolean(id)))];
   const eventsResult = eventIds.length ? await db.from("events").select("id,battle_time,created_at,activity").in("id",eventIds.map(Number)) : {data:[],error:null};
   if (eventsResult.error) throw new Error(eventsResult.error.message);
@@ -174,7 +183,7 @@ async function loadHistory() {
           const oneAttack=own.some((row)=>row.source_key.endsWith(":penalty:one-attack")&&isActivePenalty(row));
           const earlySecond=own.some((row)=>row.source_key.includes(":penalty:early-second:")&&isActivePenalty(row));
           const offMirrorOrders=own.flatMap((row)=>{const match=row.source_key.match(/:penalty:off-mirror:(\d+)$/);return match&&isActivePenalty(row)?[Number(match[1])]:[];});
-          return [{tag,name:snapshot.player,attacks:expectedAttacks,
+          return [{tag,name:snapshot.player,attacks:expectedAttacks,warPreference:preferences.get(`${war.war_key}|${tag}`)??null,
             firstWithin12h:noAttacks?false:first?resolveFirstWithin12h(first.time,first.observedAt,mark):null,
             secondAfter12h:noAttacks||oneAttack||earlySecond?false:second?resolveSecondAfter12h(second.time,second.observedAt,mark):null,
             firstMirror:first?(offMirrorOrders.includes(first.order)?false:own.some((row)=>row.source_key.endsWith(`:mirror:${first.order}`))?true:null):null}];
@@ -200,7 +209,7 @@ async function loadHistory() {
             return {order,time:battleTime?new Date(battleTime).getTime():null,observedAt:earliestObservedTime(observedTimes.get(order),starEvent?new Date(starEvent.created_at).getTime():undefined,timeEvent?new Date(timeEvent.created_at).getTime():undefined)};
           });
           const first=attacks[0], second=attacks[1];
-          return [{tag,name:player.name,attacks:attacks.length,
+          return [{tag,name:player.name,attacks:attacks.length,warPreference:preferences.get(`${war.war_key}|${tag}`)??null,
             firstWithin12h:resolveFirstWithin12h(first?.time??null,first?.observedAt??null,mark,own.some((row)=>row.source_key.endsWith(":penalty:no-attacks")&&(()=>{const event=row.event_id?eventMap.get(Number(row.event_id)):null;return !event?.activity?.startsWith("Penalidade removida:");})())),
             secondAfter12h:resolveSecondAfter12h(second?.time??null,second?.observedAt??null,mark,own.some((row)=>(row.source_key.endsWith(":penalty:one-attack")||row.source_key.includes(":penalty:early-second:"))&&(()=>{const event=row.event_id?eventMap.get(Number(row.event_id)):null;return !event?.activity?.startsWith("Penalidade removida:");})()),own.some((row)=>row.source_key.endsWith(":penalty:no-attacks")&&(()=>{const event=row.event_id?eventMap.get(Number(row.event_id)):null;return !event?.activity?.startsWith("Penalidade removida:");})())),
             firstMirror:first?own.some((row)=>row.source_key.endsWith(`:mirror:${first.order}`))?true:own.some((row)=>row.source_key.endsWith(`:penalty:off-mirror:${first.order}`)&&(()=>{const event=row.event_id?eventMap.get(Number(row.event_id)):null;return !event?.activity?.startsWith("Penalidade removida:");})())?false:null:null}];
@@ -225,7 +234,7 @@ export default async function WarDiscipline() {
     const timelineComplete=attacks.length===member.syncedAttackCount;
     const first=timelineComplete?attacks[0]:undefined, second=timelineComplete?attacks[1]:undefined;
     const firstMirror=first?(member.offMirrorOrders.includes(first.order)?false:member.mirrorOrders.includes(first.order)?true:null):null;
-    return {tag:member.tag,name:member.name,attacks:member.syncedAttackCount,
+    return {tag:member.tag,name:member.name,attacks:member.syncedAttackCount,warPreference:member.warPreference,
       firstWithin12h:currentMark===null?null:first?resolveFirstWithin12h(first.battleTime,first.observedAt,currentMark):null,
       secondAfter12h:currentMark===null?null:second?(member.earlySecondOrders.includes(second.order)?false:resolveSecondAfter12h(second.battleTime,second.observedAt,currentMark)):null,
       firstMirror};
@@ -244,7 +253,7 @@ export default async function WarDiscipline() {
         const resultLabel=isPerfect?"Perfeito":hasFailure?"Ruim":"Em análise";
         return <article className="wd-player-card" key={player.tag}>
           <strong className="wd-player-name">{player.name}</strong>
-          <span className={`wd-shield ${player.attacks > 0 ? "is-green" : "is-red"}`} aria-label={player.attacks > 0 ? `Escudo verde: participou da guerra, ${player.attacks} ataque(s) registrado(s)` : "Escudo vermelho: não participou da guerra; nenhum ataque registrado"} title={player.attacks > 0 ? `Participou da guerra: ${player.attacks} ataque(s) registrado(s)` : "Não participou da guerra: nenhum ataque registrado"}>
+          <span className={`wd-shield ${player.warPreference === "in" ? "is-green" : player.warPreference === "out" ? "is-red" : "is-unknown"}`} aria-label={player.warPreference === "in" ? "Quero lutar: disponível para guerras" : player.warPreference === "out" ? "Não quero: não deseja participar de guerras" : "Preferência não registrada para esta guerra"} title={player.warPreference === "in" ? "Quero lutar!" : player.warPreference === "out" ? "Não quero!" : "Preferência não registrada"}>
             <svg viewBox="0 0 24 28" aria-hidden="true"><path d="M12 1.5 21 5v7.2c0 6.2-3.8 11.2-9 14.3-5.2-3.1-9-8.1-9-14.3V5l9-3.5Z" /></svg>
           </span>
           <span className={`wd-result-seal ${resultClass}`}>{resultLabel}</span>
@@ -256,7 +265,7 @@ export default async function WarDiscipline() {
       {!wars.length?<p className="wd-message">Ainda não há guerras concluídas para auditar.</p>:wars.map((war,index)=><details className="wd-war" key={war.war_key} open={index===0}><summary><span><strong>{index===0?"Última guerra concluída":`Guerra anterior ${index}`}</strong><small>{formatDate(war.started_at)} · {war.participants} participantes</small></span><b>{war.passed}/{war.participants}</b></summary><div className="wd-history-list">{war.roster.map((player)=>{const hasFailure=player.firstWithin12h===false||player.secondAfter12h===false||player.firstMirror===false;
         const isPerfect=player.firstWithin12h===true&&player.secondAfter12h===true&&player.firstMirror===true;
         const resultClass=isPerfect?"is-pass":hasFailure?"is-fail":"is-unknown";
-        const resultLabel=isPerfect?"Perfeito":hasFailure?"Ruim":"Em análise";return <article className="wd-history-player" key={player.tag}><strong className="wd-player-name">{player.name}</strong><span className={`wd-shield ${player.attacks > 0 ? "is-green" : "is-red"}`} aria-label={player.attacks > 0 ? `Escudo verde: participou da guerra, ${player.attacks} ataque(s) registrado(s)` : "Escudo vermelho: não participou da guerra; nenhum ataque registrado"} title={player.attacks > 0 ? `Participou da guerra: ${player.attacks} ataque(s) registrado(s)` : "Não participou da guerra: nenhum ataque registrado"}><svg viewBox="0 0 24 28" aria-hidden="true"><path d="M12 1.5 21 5v7.2c0 6.2-3.8 11.2-9 14.3-5.2-3.1-9-8.1-9-14.3V5l9-3.5Z" /></svg></span><span className={`wd-result-seal ${resultClass}`}>{resultLabel}</span></article>;})}</div></details>)}
+        const resultLabel=isPerfect?"Perfeito":hasFailure?"Ruim":"Em análise";return <article className="wd-history-player" key={player.tag}><strong className="wd-player-name">{player.name}</strong><span className={`wd-shield ${player.warPreference === "in" ? "is-green" : player.warPreference === "out" ? "is-red" : "is-unknown"}`} aria-label={player.warPreference === "in" ? "Quero lutar: disponível para guerras" : player.warPreference === "out" ? "Não quero: não deseja participar de guerras" : "Preferência não registrada para esta guerra"} title={player.warPreference === "in" ? "Quero lutar!" : player.warPreference === "out" ? "Não quero!" : "Preferência não registrada"}><svg viewBox="0 0 24 28" aria-hidden="true"><path d="M12 1.5 21 5v7.2c0 6.2-3.8 11.2-9 14.3-5.2-3.1-9-8.1-9-14.3V5l9-3.5Z" /></svg></span><span className={`wd-result-seal ${resultClass}`}>{resultLabel}</span></article>;})}</div></details>)}
     </section>
     <p className="wd-note">A auditoria é informativa e não altera pontos, penalidades ou classificação.</p>
   </section>;
