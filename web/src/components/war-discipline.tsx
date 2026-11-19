@@ -137,7 +137,7 @@ async function loadHistory() {
   if (automationResult.error) throw new Error(automationResult.error.message);
   const automation = (automationResult.data ?? []) as AutomationRow[];
   const preferenceResult = keys.length
-    ? await db.from("clan_war_preferences").select("war_key,player_tag,war_preference").in("war_key",keys)
+    ? await db.from("clan_war_preferences").select("war_key,player_tag,player_name,war_preference").in("war_key",keys)
     : {data:[],error:null};
   if (preferenceResult.error) throw new Error(preferenceResult.error.message);
   const preferenceRows = (preferenceResult.data ?? []) as Array<{war_key:string;player_tag:string;player_name:string;war_preference:WarPreference}>;
