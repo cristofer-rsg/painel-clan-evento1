@@ -59,16 +59,11 @@ function parseClashTime(value: string) {
 }
 function resolveFirstWithin12h(actual:number|null,observed:number|null,mark:number):Check {
   if(actual!==null)return actual<=mark;
-  // created_at is the first observation by the sync, not the exact attack time.
-  // An observation before the cutoff proves the attack happened before it;
-  // an observation after the cutoff cannot prove a late attack.
-  return observed!==null&&observed<=mark?true:null;
+  return null;
 }
 function resolveSecondAfter12h(actual:number|null,observed:number|null,mark:number):Check {
   if(actual!==null)return actual>=mark;
-  // If the sync already saw the second attack before the cutoff, it was early.
-  // A later observation alone cannot prove when the attack actually happened.
-  return observed!==null&&observed<mark?false:null;
+  return null;
 }
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeZone: "America/Sao_Paulo" }).format(new Date(value));
@@ -149,9 +144,9 @@ async function loadHistory() {
           }).filter((attack)=>attack.order>0).sort((a,b)=>a.order-b.order);
           const first=attacks[0], second=attacks[1];
           return [{tag,name:player.name,attacks:attacks.length,
-            firstWithin12h:resolveFirstWithin12h(first?.time??null,first?.observedAt??null,mark),
-            secondAfter12h:resolveSecondAfter12h(second?.time??null,second?.observedAt??null,mark),
-            firstMirror:first?own.some((row)=>row.source_key.endsWith(`:mirror:${first.order}`)):null}];
+            firstWithin12h:first?.time==null?null:first.time<=mark,
+            secondAfter12h:second?.time==null?null:second.time>=mark,
+            firstMirror:first?own.some((row)=>row.source_key.endsWith(`:mirror:${first.order}`))?true:own.some((row)=>row.source_key.endsWith(`:penalty:off-mirror:${first.order}`))?false:null:null}];
         });
     const participantCount=roster.length;
     const passed=roster.filter((player)=>player.firstWithin12h===true&&player.secondAfter12h===true&&player.firstMirror===true).length;
@@ -176,8 +171,8 @@ export default async function WarDiscipline() {
         : member.offMirrorOrders.includes(first.order) ? false : null
       : null;
     return {tag:member.tag,name:member.name,attacks:member.syncedAttackCount,
-      firstWithin12h:currentMark===null?null:resolveFirstWithin12h(first?.battleTime??null,first?.observedAt??null,currentMark),
-      secondAfter12h:currentMark===null?null:resolveSecondAfter12h(second?.battleTime??null,second?.observedAt??null,currentMark),
+      firstWithin12h:first?.battleTime==null||currentMark===null?null:first.battleTime<=currentMark,
+      secondAfter12h:second?.battleTime==null||currentMark===null?null:second.battleTime>=currentMark,
       firstMirror};
   }).sort((a,b)=>a.name.localeCompare(b.name,"pt-BR"));
   const auditedCurrent=currentPlayers.filter((p)=>p.firstWithin12h!==null&&p.secondAfter12h!==null&&p.firstMirror!==null).length;
