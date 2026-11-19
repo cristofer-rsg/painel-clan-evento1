@@ -29,6 +29,13 @@ async function loadCurrentWar() {
   const startMatch=warKey.match(/:(\d{8}T\d{6}(?:\.\d+)?Z)$/);
   const startedAt=startMatch?parseClashTime(startMatch[1]):null;
   if(!startedAt)throw new Error("A sincronização não contém o início válido da guerra.");
+  const completionResult=await db.from("clan_war_completions").select("ended_at").eq("war_key",warKey).maybeSingle();
+  if(completionResult.error)throw new Error("Não foi possível consultar o encerramento oficial da guerra.");
+  const recordedEnd=completionResult.data?.ended_at?new Date(completionResult.data.ended_at):null;
+  const scheduledEnd=new Date(startedAt.getTime()+24*60*60*1000);
+  const warEnd=recordedEnd&&Number.isFinite(recordedEnd.getTime())&&recordedEnd.getTime()>startedAt.getTime()?recordedEnd:scheduledEnd;
+  const now=Date.now();
+  const state=now<startedAt.getTime()?"preparation":now>=warEnd.getTime()?"warEnded":"inWar";
   const automationResult=await db.from("clash_war_automation").select("source_key,player_tag,event_id").eq("war_key",warKey);
   if(automationResult.error)throw new Error("Não foi possível carregar os ataques sincronizados.");
   const automation=(automationResult.data??[]) as Array<{source_key:string;player_tag:string;event_id:string|null}>;
@@ -48,7 +55,7 @@ async function loadCurrentWar() {
     const observedMatch=entry.source_key.match(/:attack:(\d+):observed-time$/);
     if(!observedMatch||!entry.event_id)continue;
     const eventId=Number(entry.event_id);
-    const observed=eventTimes.get(eventId)??attackEventTimes.get(eventId);
+    const observed=attackEventTimes.get(eventId);
     if(observed!==undefined)observedTimes.set(Number(observedMatch[1]),observed);
   }
   const members=warRows.flatMap((row)=>{
@@ -68,7 +75,7 @@ async function loadCurrentWar() {
       earlySecondOrders:own.flatMap((entry)=>{const m=entry.source_key.match(/:penalty:early-second:(\d+)$/);return m&&isActivePenalty(entry)?[Number(m[1])]:[];}),
       syncedAttackCount:Number(row.war_attacks??attacks.length)}];
   });
-  return {state:Date.now()-startedAt.getTime()>36*60*60*1000?"warEnded":"inWar",startedAt:startedAt.toISOString(),members};
+  return {state,startedAt:startedAt.toISOString(),members};
 }
 function parseClashTime(value: string) {
   const normalized = value.replace(/(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})(?:\.\d+)?Z/, "$1-$2-$3T$4:$5:$6Z");
@@ -180,7 +187,7 @@ async function loadHistory() {
           for(const row of own){
             const observedMatch=row.source_key.match(/:attack:(\d+):observed-time$/);
             const event=row.event_id?eventMap.get(Number(row.event_id)):null;
-            if(observedMatch&&event)observedTimes.set(Number(observedMatch[1]),new Date(event.battle_time??event.created_at).getTime());
+            if(observedMatch&&event)observedTimes.set(Number(observedMatch[1]),new Date(event.created_at).getTime());
           }
           const attackOrders=[...new Set(own.flatMap((row)=>{const match=row.source_key.match(/:attack:(\d+):(stars|observed-time|battle-time)$/);return match?[Number(match[1])]:[];}))].sort((a,b)=>a-b);
           const attacks=attackOrders.map((order)=>{
@@ -203,7 +210,7 @@ async function loadHistory() {
           return [{tag,name:snapshot.player,attacks:expectedAttacks,warPreference:preferences.get(`${war.war_key}|${tag}`)??null,
             firstWithin12h:noAttacks?false:first?resolveFirstWithin12h(first.time,first.observedAt,mark):null,
             secondAfter12h:noAttacks||oneAttack||earlySecond?false:second?resolveSecondAfter12h(second.time,second.observedAt,mark):null,
-            firstMirror:first?(offMirrorOrders.includes(first.order)?false:own.some((row)=>row.source_key.endsWith(`:mirror:${first.order}`))?true:null):null}];
+            firstMirror:first?(offMirrorOrders.includes(first.order)?false:own.some((row)=>row.source_key.endsWith(`:mirror:${first.order}`))?true:first.time!==null&&first.time>=mark?true:null):null}];
         })
     const participantCount=roster.length;
     const passed=roster.filter((player)=>player.firstWithin12h===true&&player.secondAfter12h===true&&player.firstMirror===true).length;
@@ -224,7 +231,7 @@ export default async function WarDiscipline() {
     const attacks=[...member.attacks].sort((a,b)=>a.order-b.order);
     const timelineComplete=attacks.length===member.syncedAttackCount;
     const first=timelineComplete?attacks[0]:undefined, second=timelineComplete?attacks[1]:undefined;
-    const firstMirror=first?(member.offMirrorOrders.includes(first.order)?false:member.mirrorOrders.includes(first.order)?true:null):null;
+    const firstMirror=first?(member.offMirrorOrders.includes(first.order)?false:member.mirrorOrders.includes(first.order)?true:first.battleTime!==null&&currentMark!==null&&first.battleTime>=currentMark?true:null):null;
     return {tag:member.tag,name:member.name,attacks:member.syncedAttackCount,warPreference:member.warPreference,
       firstWithin12h:currentMark===null?null:first?resolveFirstWithin12h(first.battleTime,first.observedAt,currentMark):null,
       secondAfter12h:currentMark===null?null:second?(member.earlySecondOrders.includes(second.order)?false:resolveSecondAfter12h(second.battleTime,second.observedAt,currentMark)):null,
