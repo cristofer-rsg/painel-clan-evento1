@@ -116,7 +116,7 @@ async function loadHistory() {
     }
   }
   const inferredWars = [...latestSnapshots.entries()].flatMap(([war_key, snapshotAt]) => {
-    const match = war_key.match(/:(\d{8}T\d{6}(?:\\.\d+)?Z)$/);
+    const match = war_key.match(/:(\d{8}T\d{6}(?:\.\d+)?Z)$/);
     if (!match) return [];
     const startedAt = parseClashTime(match[1]);
     if (!startedAt) return [];
@@ -202,7 +202,7 @@ async function loadHistory() {
           const first=attacks[0], second=attacks[1];
           return [{tag,name:player.name,attacks:attacks.length,
             firstWithin12h:resolveFirstWithin12h(first?.time??null,first?.observedAt??null,mark,own.some((row)=>row.source_key.endsWith(":penalty:no-attacks")&&(()=>{const event=row.event_id?eventMap.get(Number(row.event_id)):null;return !event?.activity?.startsWith("Penalidade removida:");})())),
-            secondAfter12h:resolveSecondAfter12h(second?.time??null,second?.observedAt??null,mark,own.some((row)=>row.source_key.endsWith(":penalty:one-attack")&&(()=>{const event=row.event_id?eventMap.get(Number(row.event_id)):null;return !event?.activity?.startsWith("Penalidade removida:");})()),own.some((row)=>row.source_key.endsWith(":penalty:no-attacks")&&(()=>{const event=row.event_id?eventMap.get(Number(row.event_id)):null;return !event?.activity?.startsWith("Penalidade removida:");})())),
+            secondAfter12h:resolveSecondAfter12h(second?.time??null,second?.observedAt??null,mark,own.some((row)=>(row.source_key.endsWith(":penalty:one-attack")||row.source_key.includes(":penalty:early-second:"))&&(()=>{const event=row.event_id?eventMap.get(Number(row.event_id)):null;return !event?.activity?.startsWith("Penalidade removida:");})()),own.some((row)=>row.source_key.endsWith(":penalty:no-attacks")&&(()=>{const event=row.event_id?eventMap.get(Number(row.event_id)):null;return !event?.activity?.startsWith("Penalidade removida:");})())),
             firstMirror:first?own.some((row)=>row.source_key.endsWith(`:mirror:${first.order}`))?true:own.some((row)=>row.source_key.endsWith(`:penalty:off-mirror:${first.order}`)&&(()=>{const event=row.event_id?eventMap.get(Number(row.event_id)):null;return !event?.activity?.startsWith("Penalidade removida:");})())?false:null:null}];
         });
     const participantCount=roster.length;
