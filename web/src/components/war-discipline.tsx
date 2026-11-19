@@ -5,7 +5,6 @@ import { createSupabaseAdmin } from "@/lib/supabase/admin";
 import "./war-discipline.css";
 
 type Check = boolean | null;
-type Player = { name: string; player_tag: string | null };
 type Completion = { war_key: string; started_at: string; ended_at: string };
 type AutomationRow = { war_key: string; source_key: string; player_tag: string; event_id: string | null };
 type WarEvent = { id: number; battle_time: string | null; created_at: string; activity: string | null };
