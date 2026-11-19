@@ -133,9 +133,9 @@ async function loadHistory() {
           }).filter((attack)=>attack.order>0).sort((a,b)=>a.order-b.order);
           const first=attacks[0], second=attacks[1];
           return [{tag,name:snapshot.player,attacks:Number(snapshot.war_attacks??attacks.length),
-            firstWithin12h:resolveFirstWithin12h(first?.time??null,first?.observedAt??null,mark),
-            secondAfter12h:resolveSecondAfter12h(second?.time??null,second?.observedAt??null,mark),
-            firstMirror:first?own.some((row)=>row.source_key.endsWith(`:mirror:${first.order}`)):null}];
+            firstWithin12h:first?.time==null?null:first.time<=mark,
+            secondAfter12h:second?.time==null?null:second.time>=mark,
+            firstMirror:first?own.some((row)=>row.source_key.endsWith(`:mirror:${first.order}`))?true:own.some((row)=>row.source_key.endsWith(`:penalty:off-mirror:${first.order}`))?false:null:null}];
         })
       : players.flatMap((player)=>{
           const tag=(player.player_tag??"").trim().toUpperCase();
