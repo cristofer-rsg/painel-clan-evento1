@@ -109,7 +109,7 @@ def sync_war_preferences(db, war, war_key, token):
             on_conflict="war_key,player_tag",
             ignore_duplicates=False,
         ).execute()
-    print(f"Preferências de guerra registradas: {len(snapshots)}/{len(missing)}")
+    print(f"Preferências de guerra registradas: {len(snapshots)}/{len(members_to_refresh)}")
     return len(snapshots)
 
 
