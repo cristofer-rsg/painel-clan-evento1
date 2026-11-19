@@ -22,7 +22,7 @@ async function loadCurrentWar() {
   if (!response.ok) throw new Error(`Falha ao consultar a guerra atual (HTTP ${response.status}).`);
   const war = await response.json() as {
     state?: string; startTime?: string; clan?: { tag?: string; members?: Array<{ tag: string; name: string; mapPosition: number; attacks?: Array<{ order: number; battleTime?: string; defenderTag?: string }> }> };
-    opponent?: { tag?: string; members?: Array<{ tag: string; mapPosition: number }> };
+    opponent?: { tag?: string; members?: Array<{ tag: string; name?: string; mapPosition: number; attacks?: Array<{ order: number; battleTime?: string; defenderTag?: string }> }> };
   };
   if (war.state === "notInWar") return { state: "notInWar", startedAt: null, members: [] as Array<{tag:string;name:string;mapPosition:number;attacks:Array<{order:number;battleTime:number|null;defenderTag:string|null}>}> };
   if (!war.startTime || !Array.isArray(war.clan?.members) || !Array.isArray(war.opponent?.members)) throw new Error("A API retornou dados incompletos da guerra atual.");
@@ -30,7 +30,7 @@ async function loadCurrentWar() {
   const enemy = own === war.clan ? war.opponent : war.clan;
   const positions = new Map((enemy.members ?? []).map((member) => [member.tag.toUpperCase(), member.mapPosition]));
   return { state: war.state ?? "unknown", startedAt: parseClashTime(war.startTime)?.toISOString() ?? null,
-    members: (own.members ?? []).map((member) => ({ tag: member.tag.toUpperCase(), name: member.name, mapPosition: member.mapPosition,
+    members: (own.members ?? []).map((member) => ({ tag: member.tag.toUpperCase(), name: member.name ?? member.tag, mapPosition: member.mapPosition,
       attacks: (member.attacks ?? []).map((attack) => ({ order: attack.order, battleTime: attack.battleTime ? parseClashTime(attack.battleTime)?.getTime() ?? null : null, defenderTag: attack.defenderTag?.toUpperCase() ?? null, defenderPosition: attack.defenderTag ? positions.get(attack.defenderTag.toUpperCase()) ?? null : null })) })) };
 }
 function parseClashTime(value: string) {
