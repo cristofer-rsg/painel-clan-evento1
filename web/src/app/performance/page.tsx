@@ -140,7 +140,7 @@ export default async function PerformancePage({ searchParams }: Props) {
           ];
           return <article className={showGeneralPerformance ? "performance-card" : "performance-card performance-card-event"} key={row.player}>
             <div className="performance-card-head">
-              <b><span className="performance-position-badge">{row.position}</span><span className="performance-player-name">{row.player}</span></b>
+              <b><span className="performance-position-badge">{row.position}</span><span className="performance-player-name">{row.player}</span>{row.role && <span className={`performance-leader-role ${row.role === "leader" || row.role === "coLeader" ? "role-leadership" : row.role === "elder" ? "role-elder" : "role-member"}`}>{row.role === "leader" ? "LÍDER" : row.role === "coLeader" ? "CO-LÍDER" : row.role === "elder" ? "ANCIÃO" : "MEMBRO"}</span>}</b>
               {!showGeneralPerformance
                 ? <span className="performance-event-badges">{resultBadges.map((badge, index) => <span className={`performance-event-inline ${badge.className}`} key={`${badge.label}-${index}`}>{badge.label}</span>)}</span>
                 : <strong>{fmt(row.index)}%</strong>}
