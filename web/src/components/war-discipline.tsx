@@ -22,10 +22,26 @@ async function loadCurrentWar() {
   if(!latestWar)return {state:"notInWar",startedAt:null,members:[] as Array<{tag:string;name:string;mapPosition:number;attacks:Array<{order:number;battleTime:number|null;observedAt:number|null;defenderTag:string|null;defenderPosition:number|null}>;warPreference:WarPreference;mirrorOrders:number[];offMirrorOrders:number[];earlySecondOrders:number[];syncedAttackCount:number}>};
   const match=latestWar.source_key.match(/^war:(.+):#[A-Z0-9]+$/);
   const warKey=match?.[1]??"";
-  const warRows=snapshots.filter((row)=>row.source_key.startsWith(`war:${warKey}:`));
-  const preferenceResult=await db.from("clan_war_preferences").select("player_tag,war_preference").eq("war_key",warKey);
+  const snapshotWarRows=snapshots.filter((row)=>row.source_key.startsWith(`war:${warKey}:`));
+  const preferenceResult=await db.from("clan_war_preferences").select("player_tag,player_name,war_preference").eq("war_key",warKey);
   if(preferenceResult.error)throw new Error("Não foi possível carregar as preferências de guerra.");
-  const preferences=new Map((preferenceResult.data??[]).map((row)=>[row.player_tag.trim().toUpperCase(),row.war_preference as WarPreference]));
+  const preferenceRows=(preferenceResult.data??[]) as Array<{player_tag:string;player_name:string;war_preference:WarPreference}>;
+  const preferences=new Map(preferenceRows.map((row)=>[row.player_tag.trim().toUpperCase(),row.war_preference]));
+  const warRowsByTag=new Map<string,typeof snapshotWarRows[number]>();
+  for(const row of snapshotWarRows){if(row.player_tag)warRowsByTag.set(row.player_tag.trim().toUpperCase(),row);}
+  for(const row of preferenceRows){
+    const tag=row.player_tag.trim().toUpperCase();
+    if(tag&&!warRowsByTag.has(tag)&&row.player_name.trim()){
+      warRowsByTag.set(tag,{
+        source_key:`war:${warKey}:${row.player_tag}`,
+        player_tag:row.player_tag,
+        player:row.player_name,
+        war_attacks:null,
+        updated_at:null,
+      });
+    }
+  }
+  const warRows=[...warRowsByTag.values()];
   const startMatch=warKey.match(/:(\d{8}T\d{6}(?:\.\d+)?Z)$/);
   const startedAt=startMatch?parseClashTime(startMatch[1]):null;
   if(!startedAt)throw new Error("A sincronização não contém o início válido da guerra.");
