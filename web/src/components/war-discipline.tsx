@@ -113,7 +113,7 @@ async function loadHistory() {
   if (automationResult.error) throw new Error(automationResult.error.message);
   const automation = (automationResult.data ?? []) as AutomationRow[];
   const eventIds = [...new Set(automation.map((row)=>row.event_id).filter((id):id is string=>Boolean(id)))];
-  const eventsResult = eventIds.length ? await db.from("events").select("id,battle_time").in("id",eventIds.map(Number)) : {data:[],error:null};
+  const eventsResult = eventIds.length ? await db.from("events").select("id,battle_time,created_at").in("id",eventIds.map(Number)) : {data:[],error:null};
   if (eventsResult.error) throw new Error(eventsResult.error.message);
   const eventMap = new Map<number,WarEvent>();
   for (const event of (eventsResult.data ?? []) as WarEvent[]) eventMap.set(event.id,event);
@@ -144,8 +144,8 @@ async function loadHistory() {
           if(!own.some((row)=>row.source_key.endsWith(":participation")))return[];
           const attacks=own.filter((row)=>row.source_key.includes(":attack:")&&row.source_key.endsWith(":stars")).map((row)=>{
             const match=row.source_key.match(/:attack:(\d+):stars$/);
-            const time=row.event_id?eventMap.get(Number(row.event_id))?.battle_time:null;
-            return {order:match?Number(match[1]):0,time:time?new Date(time).getTime():null};
+            const event=row.event_id?eventMap.get(Number(row.event_id)):null;
+            return {order:match?Number(match[1]):0,time:event?.battle_time?new Date(event.battle_time).getTime():null,observedAt:event?.created_at?new Date(event.created_at).getTime():null};
           }).filter((attack)=>attack.order>0).sort((a,b)=>a.order-b.order);
           const first=attacks[0], second=attacks[1];
           return [{tag,name:player.name,attacks:attacks.length,
