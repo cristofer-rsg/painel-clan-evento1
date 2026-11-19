@@ -20,7 +20,7 @@ async function loadCurrentWar() {
   if (snapshotsResult.error) throw new Error("Não foi possível carregar a sincronização da guerra.");
   const snapshots=(snapshotsResult.data??[]) as Array<{source_key:string;player_tag:string|null;player:string|null;war_attacks:number|null;updated_at:string|null}>;
   const latestWar=snapshots.find((row)=>/^war:.+:#([A-Z0-9]+)$/.test(row.source_key));
-  if(!latestWar)return {state:"notInWar",startedAt:null,members:[] as Array<{tag:string;name:string;mapPosition:number;attacks:Array<{order:number;battleTime:number|null;observedAt:number|null;defenderTag:string|null;defenderPosition:number|null}>;mirrorOrders:number[];offMirrorOrders:number[];earlySecondOrders:number[];syncedAttackCount:number}>};
+  if(!latestWar)return {state:"notInWar",startedAt:null,members:[] as Array<{tag:string;name:string;mapPosition:number;attacks:Array<{order:number;battleTime:number|null;observedAt:number|null;defenderTag:string|null;defenderPosition:number|null}>;warPreference:WarPreference;mirrorOrders:number[];offMirrorOrders:number[];earlySecondOrders:number[];syncedAttackCount:number}>};
   const match=latestWar.source_key.match(/^war:(.+):#[A-Z0-9]+$/);
   const warKey=match?.[1]??"";
   const warRows=snapshots.filter((row)=>row.source_key.startsWith(`war:${warKey}:`));
