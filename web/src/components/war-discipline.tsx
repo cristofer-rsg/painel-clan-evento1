@@ -89,7 +89,7 @@ async function loadCurrentWar() {
       mirrorOrders:own.flatMap((entry)=>{const m=entry.source_key.match(/:mirror:(\d+)$/);return m?[Number(m[1])]:[];}),
       offMirrorOrders:own.flatMap((entry)=>{const m=entry.source_key.match(/:penalty:off-mirror:(\d+)$/);return m&&isActivePenalty(entry)?[Number(m[1])]:[];}),
       earlySecondOrders:own.flatMap((entry)=>{const m=entry.source_key.match(/:penalty:early-second:(\d+)$/);return m&&isActivePenalty(entry)?[Number(m[1])]:[];}),
-      syncedAttackCount:Number(row.war_attacks??attacks.length)}];
+      syncedAttackCount:Number(row.war_attacks??attacks.length),hasStatSnapshot:row.war_attacks!==null}];
   });
   return {state,startedAt:startedAt.toISOString(),endsAt:warEnd.toISOString(),members};
 }
@@ -216,11 +216,12 @@ async function loadHistory() {
             return {order,time:battleTime?new Date(battleTime).getTime():null,observedAt};
           });
           const expectedAttacks=Number(snapshot.war_attacks??attacks.length);
+          const hasStatSnapshot=snapshot.war_attacks!==null;
           const timelineComplete=attacks.length===expectedAttacks;
           const first=timelineComplete?attacks[0]:undefined, second=timelineComplete?attacks[1]:undefined;
           const isActivePenalty=(row:AutomationRow)=>{const event=row.event_id?eventMap.get(Number(row.event_id)):null;return !event?.activity?.startsWith("Penalidade removida:");};
-          const noAttacks=own.some((row)=>row.source_key.endsWith(":penalty:no-attacks")&&isActivePenalty(row));
-          const oneAttack=own.some((row)=>row.source_key.endsWith(":penalty:one-attack")&&isActivePenalty(row));
+          const noAttacks=own.some((row)=>row.source_key.endsWith(":penalty:no-attacks")&&isActivePenalty(row))||(hasStatSnapshot&&expectedAttacks===0);
+          const oneAttack=own.some((row)=>row.source_key.endsWith(":penalty:one-attack")&&isActivePenalty(row))||(hasStatSnapshot&&expectedAttacks===1);
           const earlySecond=own.some((row)=>row.source_key.includes(":penalty:early-second:")&&isActivePenalty(row));
           const offMirrorOrders=own.flatMap((row)=>{const match=row.source_key.match(/:penalty:off-mirror:(\d+)$/);return match&&isActivePenalty(row)?[Number(match[1])]:[];});
           return [{tag,name:snapshot.player,attacks:expectedAttacks,warPreference:preferences.get(`${war.war_key}|${tag}`)??null,
@@ -249,8 +250,8 @@ export default async function WarDiscipline() {
     const first=timelineComplete?attacks[0]:undefined, second=timelineComplete?attacks[1]:undefined;
     const firstMirror=first?(member.offMirrorOrders.includes(first.order)?false:member.mirrorOrders.includes(first.order)?true:first.battleTime!==null&&currentMark!==null&&first.battleTime>=currentMark?true:null):null;
     return {tag:member.tag,name:member.name,attacks:member.syncedAttackCount,warPreference:member.warPreference,
-      firstWithin12h:currentMark===null?null:first?resolveFirstWithin12h(first.battleTime,first.observedAt,currentMark):null,
-      secondAfter12h:currentMark===null?null:second?(member.earlySecondOrders.includes(second.order)?false:resolveSecondAfter12h(second.battleTime,second.observedAt,currentMark)):null,
+      firstWithin12h:currentMark===null?null:current?.state==="warEnded"&&member.hasStatSnapshot&&member.syncedAttackCount===0?false:first?resolveFirstWithin12h(first.battleTime,first.observedAt,currentMark):null,
+      secondAfter12h:currentMark===null?null:current?.state==="warEnded"&&member.hasStatSnapshot&&member.syncedAttackCount<2?false:second?(member.earlySecondOrders.includes(second.order)?false:resolveSecondAfter12h(second.battleTime,second.observedAt,currentMark)):null,
       firstMirror};
   }).sort((a,b)=>a.name.localeCompare(b.name,"pt-BR"));
   const auditedCurrent=currentPlayers.filter((p)=>p.firstWithin12h!==null&&p.secondAfter12h!==null&&p.firstMirror!==null).length;
