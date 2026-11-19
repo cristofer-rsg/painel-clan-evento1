@@ -3,7 +3,9 @@ from datetime import datetime, timedelta, timezone
 
 from scripts.war_rules import (
     resolve_war_end,
+    resolve_war_state,
     should_penalize_early_second_attack,
+    should_penalize_off_mirror,
 )
 
 
@@ -25,6 +27,44 @@ class WarPenaltyWindowTests(unittest.TestCase):
         war_end = resolve_war_end(self.started_at, None, "inWar")
         observed_at = self.started_at + timedelta(hours=13)
         self.assertFalse(should_penalize_early_second_attack(2, observed_at, war_end))
+
+    def test_official_attack_time_overrides_first_observation(self):
+        war_end = resolve_war_end(self.started_at, None, "inWar")
+        observed_after_cutoff = self.started_at + timedelta(hours=13)
+        actual_attack_before_cutoff = self.started_at + timedelta(hours=4)
+        self.assertTrue(should_penalize_early_second_attack(
+            2, observed_after_cutoff, war_end, actual_attack_before_cutoff
+        ))
+
+    def test_first_attack_after_cutoff_is_not_penalized_when_observed_early(self):
+        war_end = resolve_war_end(self.started_at, None, "inWar")
+        observed_early = self.started_at + timedelta(hours=4)
+        actual_attack_late = self.started_at + timedelta(hours=13)
+        self.assertFalse(should_penalize_off_mirror(
+            1, observed_early, war_end, actual_attack_late
+        ))
+
+    def test_missing_attack_time_after_cutoff_is_not_treated_as_proof(self):
+        war_end = resolve_war_end(self.started_at, None, "inWar")
+        observed_after_cutoff = self.started_at + timedelta(hours=13)
+        self.assertFalse(should_penalize_early_second_attack(
+            2, observed_after_cutoff, war_end
+        ))
+
+    def test_war_state_uses_the_24_hour_end(self):
+        war_end = self.started_at + timedelta(hours=24)
+        self.assertEqual(
+            resolve_war_state(self.started_at, war_end, self.started_at - timedelta(seconds=1)),
+            "preparation",
+        )
+        self.assertEqual(
+            resolve_war_state(self.started_at, war_end, self.started_at + timedelta(hours=23)),
+            "inWar",
+        )
+        self.assertEqual(
+            resolve_war_state(self.started_at, war_end, self.started_at + timedelta(hours=24)),
+            "warEnded",
+        )
 
     def test_ended_war_uses_valid_official_end_time(self):
         official_end = self.started_at + timedelta(hours=23, minutes=50)
