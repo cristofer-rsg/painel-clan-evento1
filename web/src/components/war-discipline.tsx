@@ -12,26 +12,41 @@ type WarEvent = { id: number; battle_time: string | null };
 type DisciplinePlayer = { tag: string; name: string; attacks: number; firstWithin12h: Check; secondAfter12h: Check; firstMirror: Check };
 
 async function loadCurrentWar() {
-  const token = process.env.CLASH_API_TOKEN?.replace(/\\s+/g, "");
-  if (!token) throw new Error("A chave da API do Clash of Clans não está configurada.");
-  const response = await fetch("https://cocproxy.royaleapi.dev/v1/clans/%232GCGP0RQ9/currentwar", {
-    headers: { Authorization: `Bearer ${token}`, Accept: "application/json", "User-Agent": "GhostHunt/1.0" },
-    cache: "no-store",
-    signal: AbortSignal.timeout(20000),
+  const db = createSupabaseAdmin();
+  const snapshotsResult = await db.from("player_monthly_stat_sources")
+    .select("source_key,player_tag,player,war_attacks,updated_at")
+    .like("source_key","war:%").order("updated_at",{ascending:false}).limit(5000);
+  if (snapshotsResult.error) throw new Error("Não foi possível carregar a sincronização da guerra.");
+  const snapshots=(snapshotsResult.data??[]) as Array<{source_key:string;player_tag:string|null;player:string|null;war_attacks:number|null;updated_at:string|null}>;
+  const latestWar=snapshots.find((row)=>/^war:.+:#([A-Z0-9]+)$/.test(row.source_key));
+  if(!latestWar)return {state:"notInWar",startedAt:null,members:[] as Array<{tag:string;name:string;mapPosition:number;attacks:Array<{order:number;battleTime:number|null;defenderTag:string|null;defenderPosition:number|null}>}>};
+  const match=latestWar.source_key.match(/^war:(.+):#[A-Z0-9]+$/);
+  const warKey=match?.[1]??"";
+  const warRows=snapshots.filter((row)=>row.source_key.startsWith(`war:${warKey}:`));
+  const startMatch=warKey.match(/:(\d{8}T\d{6}(?:\.\d+)?Z)$/);
+  const startedAt=startMatch?parseClashTime(startMatch[1]):null;
+  if(!startedAt)throw new Error("A sincronização não contém o início válido da guerra.");
+  const automationResult=await db.from("clash_war_automation").select("source_key,player_tag,event_id").eq("war_key",warKey);
+  if(automationResult.error)throw new Error("Não foi possível carregar os ataques sincronizados.");
+  const automation=(automationResult.data??[]) as Array<{source_key:string;player_tag:string;event_id:string|null}>;
+  const eventIds=[...new Set(automation.map((row)=>row.event_id).filter((id):id is string=>Boolean(id)))];
+  const eventsResult=eventIds.length?await db.from("events").select("id,battle_time").in("id",eventIds.map(Number)):{data:[],error:null};
+  if(eventsResult.error)throw new Error("Não foi possível carregar os horários dos ataques.");
+  const eventTimes=new Map<number,number>();
+  for(const event of (eventsResult.data??[]) as Array<{id:number;battle_time:string|null}>){if(event.battle_time)eventTimes.set(event.id,new Date(event.battle_time).getTime());}
+  const members=warRows.flatMap((row)=>{
+    if(!row.player_tag||!row.player)return[];
+    const tag=row.player_tag.trim().toUpperCase();
+    const own=automation.filter((entry)=>entry.player_tag.trim().toUpperCase()===tag);
+    const attacks=own.filter((entry)=>entry.source_key.includes(":attack:")&&entry.source_key.endsWith(":stars"))
+      .map((entry)=>{const m=entry.source_key.match(/:attack:(\d+):stars$/);return {order:m?Number(m[1]):0,battleTime:entry.event_id?eventTimes.get(Number(entry.event_id))??null:null,defenderTag:null,defenderPosition:null};})
+      .filter((attack)=>attack.order>0).sort((a,b)=>a.order-b.order);
+    return [{tag,name:row.player,mapPosition:0,attacks,
+      mirrorOrders:own.flatMap((entry)=>{const m=entry.source_key.match(/:mirror:(\d+)$/);return m?[Number(m[1])]:[];}),
+      offMirrorOrders:own.flatMap((entry)=>{const m=entry.source_key.match(/:penalty:off-mirror:(\d+)$/);return m?[Number(m[1])]:[];}),
+      syncedAttackCount:Number(row.war_attacks??attacks.length)}];
   });
-  if (!response.ok) throw new Error(`Falha ao consultar a guerra atual (HTTP ${response.status}).`);
-  const war = await response.json() as {
-    state?: string; startTime?: string; clan?: { tag?: string; members?: Array<{ tag: string; name: string; mapPosition: number; attacks?: Array<{ order: number; battleTime?: string; defenderTag?: string }> }> };
-    opponent?: { tag?: string; members?: Array<{ tag: string; name?: string; mapPosition: number; attacks?: Array<{ order: number; battleTime?: string; defenderTag?: string }> }> };
-  };
-  if (war.state === "notInWar") return { state: "notInWar", startedAt: null, members: [] as Array<{tag:string;name:string;mapPosition:number;attacks:Array<{order:number;battleTime:number|null;defenderTag:string|null}>}> };
-  if (!war.startTime || !Array.isArray(war.clan?.members) || !Array.isArray(war.opponent?.members)) throw new Error("A API retornou dados incompletos da guerra atual.");
-  const own = war.clan.tag?.toUpperCase() === "#2GCGP0RQ9" ? war.clan : war.opponent;
-  const enemy = own === war.clan ? war.opponent : war.clan;
-  const positions = new Map((enemy.members ?? []).map((member) => [member.tag.toUpperCase(), member.mapPosition]));
-  return { state: war.state ?? "unknown", startedAt: parseClashTime(war.startTime)?.toISOString() ?? null,
-    members: (own.members ?? []).map((member) => ({ tag: member.tag.toUpperCase(), name: member.name ?? member.tag, mapPosition: member.mapPosition,
-      attacks: (member.attacks ?? []).map((attack) => ({ order: attack.order, battleTime: attack.battleTime ? parseClashTime(attack.battleTime)?.getTime() ?? null : null, defenderTag: attack.defenderTag?.toUpperCase() ?? null, defenderPosition: attack.defenderTag ? positions.get(attack.defenderTag.toUpperCase()) ?? null : null })) })) };
+  return {state:Date.now()-startedAt.getTime()>36*60*60*1000?"warEnded":"inWar",startedAt:startedAt.toISOString(),members};
 }
 function parseClashTime(value: string) {
   const normalized = value.replace(/(\\d{4})(\\d{2})(\\d{2})T(\\d{2})(\\d{2})(\\d{2})(?:\\.\\d+)?Z/, "$1-$2-$3T$4:$5:$6Z");
