@@ -11,6 +11,14 @@ type WarEvent = { id: number; battle_time: string | null; created_at: string; ac
 type WarPreference = "in" | "out" | "unknown" | null;
 type DisciplinePlayer = { tag: string; name: string; attacks: number; warPreference: WarPreference; firstWithin12h: Check; secondAfter12h: Check; firstMirror: Check };
 
+function extractAttackOrder(sourceKey:string):number|null {
+  const match=sourceKey.match(/:attack:(\d+):(?:stars|observed-time|battle-time)$|:mirror:(\d+)$|:penalty:(?:off-mirror|early-second):(\d+)$/);
+  const rawOrder=match?.[1]??match?.[2]??match?.[3];
+  if(!rawOrder)return null;
+  const order=Number(rawOrder);
+  return Number.isInteger(order)&&order>0?order:null;
+}
+
 async function loadCurrentWar() {
   const db = createSupabaseAdmin();
   const snapshotsResult = await db.from("player_monthly_stat_sources")
@@ -19,16 +27,39 @@ async function loadCurrentWar() {
   if (snapshotsResult.error) throw new Error("Não foi possível carregar a sincronização da guerra.");
   const snapshots=(snapshotsResult.data??[]) as Array<{source_key:string;player_tag:string|null;player:string|null;war_attacks:number|null;updated_at:string|null}>;
   const latestWar=snapshots.find((row)=>/^war:.+:#([A-Z0-9]+)$/.test(row.source_key));
-  if(!latestWar)return {state:"notInWar",startedAt:null,members:[] as Array<{tag:string;name:string;mapPosition:number;attacks:Array<{order:number;battleTime:number|null;observedAt:number|null;defenderTag:string|null;defenderPosition:number|null}>;warPreference:WarPreference;mirrorOrders:number[];offMirrorOrders:number[];earlySecondOrders:number[];syncedAttackCount:number}>};
+  if(!latestWar)return {state:"notInWar",startedAt:null,members:[] as Array<{tag:string;name:string;mapPosition:number;attacks:Array<{order:number;battleTime:number|null;observedAt:number|null;defenderTag:string|null;defenderPosition:number|null}>;warPreference:WarPreference;mirrorOrders:number[];offMirrorOrders:number[];earlySecondOrders:number[];syncedAttackCount:number;hasStatSnapshot:boolean}>};
   const match=latestWar.source_key.match(/^war:(.+):#[A-Z0-9]+$/);
   const warKey=match?.[1]??"";
-  const warRows=snapshots.filter((row)=>row.source_key.startsWith(`war:${warKey}:`));
-  const preferenceResult=await db.from("clan_war_preferences").select("player_tag,war_preference").eq("war_key",warKey);
+  const snapshotWarRows=snapshots.filter((row)=>row.source_key.startsWith(`war:${warKey}:`));
+  const preferenceResult=await db.from("clan_war_preferences").select("player_tag,player_name,war_preference").eq("war_key",warKey);
   if(preferenceResult.error)throw new Error("Não foi possível carregar as preferências de guerra.");
-  const preferences=new Map((preferenceResult.data??[]).map((row)=>[row.player_tag.trim().toUpperCase(),row.war_preference as WarPreference]));
+  const preferenceRows=(preferenceResult.data??[]) as Array<{player_tag:string;player_name:string;war_preference:WarPreference}>;
+  const preferences=new Map(preferenceRows.map((row)=>[row.player_tag.trim().toUpperCase(),row.war_preference]));
+  const warRowsByTag=new Map<string,typeof snapshotWarRows[number]>();
+  for(const row of snapshotWarRows){if(row.player_tag)warRowsByTag.set(row.player_tag.trim().toUpperCase(),row);}
+  for(const row of preferenceRows){
+    const tag=row.player_tag.trim().toUpperCase();
+    if(tag&&!warRowsByTag.has(tag)&&row.player_name.trim()){
+      warRowsByTag.set(tag,{
+        source_key:`war:${warKey}:${row.player_tag}`,
+        player_tag:row.player_tag,
+        player:row.player_name,
+        war_attacks:null,
+        updated_at:null,
+      });
+    }
+  }
+  const warRows=[...warRowsByTag.values()];
   const startMatch=warKey.match(/:(\d{8}T\d{6}(?:\.\d+)?Z)$/);
   const startedAt=startMatch?parseClashTime(startMatch[1]):null;
   if(!startedAt)throw new Error("A sincronização não contém o início válido da guerra.");
+  const completionResult=await db.from("clan_war_completions").select("ended_at").eq("war_key",warKey).maybeSingle();
+  if(completionResult.error)throw new Error("Não foi possível consultar o encerramento oficial da guerra.");
+  const recordedEnd=completionResult.data?.ended_at?new Date(completionResult.data.ended_at):null;
+  const scheduledEnd=new Date(startedAt.getTime()+24*60*60*1000);
+  const warEnd=recordedEnd&&Number.isFinite(recordedEnd.getTime())&&recordedEnd.getTime()>startedAt.getTime()?recordedEnd:scheduledEnd;
+  const now=Date.now();
+  const state=now<startedAt.getTime()?"preparation":now>=warEnd.getTime()?"warEnded":"inWar";
   const automationResult=await db.from("clash_war_automation").select("source_key,player_tag,event_id").eq("war_key",warKey);
   if(automationResult.error)throw new Error("Não foi possível carregar os ataques sincronizados.");
   const automation=(automationResult.data??[]) as Array<{source_key:string;player_tag:string;event_id:string|null}>;
@@ -48,27 +79,37 @@ async function loadCurrentWar() {
     const observedMatch=entry.source_key.match(/:attack:(\d+):observed-time$/);
     if(!observedMatch||!entry.event_id)continue;
     const eventId=Number(entry.event_id);
-    const observed=eventTimes.get(eventId)??attackEventTimes.get(eventId);
+    const observed=attackEventTimes.get(eventId);
     if(observed!==undefined)observedTimes.set(Number(observedMatch[1]),observed);
   }
   const members=warRows.flatMap((row)=>{
     if(!row.player_tag||!row.player)return[];
     const tag=row.player_tag.trim().toUpperCase();
     const own=automation.filter((entry)=>entry.player_tag.trim().toUpperCase()===tag);
-    const attackOrders=[...new Set(own.flatMap((entry)=>{const m=entry.source_key.match(/:attack:(\d+):(stars|observed-time|battle-time)$/);return m?[Number(m[1])]:[];}))].sort((a,b)=>a-b);
+    const attackOrders=[...new Set(own.flatMap((entry)=>{const order=extractAttackOrder(entry.source_key);return order!==null?[order]:[];}))].sort((a,b)=>a-b);
     const attacks=attackOrders.map((order)=>{
       const starEntry=own.find((entry)=>entry.source_key.endsWith(`:attack:${order}:stars`));
       const timeEntry=own.find((entry)=>entry.source_key.endsWith(`:attack:${order}:battle-time`));
-      return {order,battleTime:(starEntry?.event_id?eventTimes.get(Number(starEntry.event_id)):undefined)??(timeEntry?.event_id?eventTimes.get(Number(timeEntry.event_id)):undefined)??null,observedAt:earliestObservedTime(observedTimes.get(order),starEntry?.event_id?attackEventTimes.get(Number(starEntry.event_id)):undefined,timeEntry?.event_id?attackEventTimes.get(Number(timeEntry.event_id)):undefined),defenderTag:null,defenderPosition:null};
+      const mirrorEntry=own.find((entry)=>entry.source_key.endsWith(`:mirror:${order}`));
+      const offMirrorPenaltyEntry=own.find((entry)=>entry.source_key.endsWith(`:penalty:off-mirror:${order}`));
+      const earlySecondPenaltyEntry=own.find((entry)=>entry.source_key.endsWith(`:penalty:early-second:${order}`));
+      return {order,battleTime:(starEntry?.event_id?eventTimes.get(Number(starEntry.event_id)):undefined)??(timeEntry?.event_id?eventTimes.get(Number(timeEntry.event_id)):undefined)??null,observedAt:earliestObservedTime(
+        observedTimes.get(order),
+        starEntry?.event_id?attackEventTimes.get(Number(starEntry.event_id)):undefined,
+        timeEntry?.event_id?attackEventTimes.get(Number(timeEntry.event_id)):undefined,
+        mirrorEntry?.event_id?attackEventTimes.get(Number(mirrorEntry.event_id)):undefined,
+        offMirrorPenaltyEntry?.event_id?attackEventTimes.get(Number(offMirrorPenaltyEntry.event_id)):undefined,
+        earlySecondPenaltyEntry?.event_id?attackEventTimes.get(Number(earlySecondPenaltyEntry.event_id)):undefined,
+      ),defenderTag:null,defenderPosition:null};
     });
     const isActivePenalty=(entry:{event_id:string|null})=>{const activity=entry.event_id?eventActivities.get(Number(entry.event_id)):null;return !activity?.startsWith("Penalidade removida:");};
     return [{tag,name:row.player,mapPosition:0,attacks,warPreference:preferences.get(tag)??null,
       mirrorOrders:own.flatMap((entry)=>{const m=entry.source_key.match(/:mirror:(\d+)$/);return m?[Number(m[1])]:[];}),
       offMirrorOrders:own.flatMap((entry)=>{const m=entry.source_key.match(/:penalty:off-mirror:(\d+)$/);return m&&isActivePenalty(entry)?[Number(m[1])]:[];}),
       earlySecondOrders:own.flatMap((entry)=>{const m=entry.source_key.match(/:penalty:early-second:(\d+)$/);return m&&isActivePenalty(entry)?[Number(m[1])]:[];}),
-      syncedAttackCount:Number(row.war_attacks??attacks.length)}];
+      syncedAttackCount:Number(row.war_attacks??attacks.length),hasStatSnapshot:row.war_attacks!==null}];
   });
-  return {state:Date.now()-startedAt.getTime()>36*60*60*1000?"warEnded":"inWar",startedAt:startedAt.toISOString(),members};
+  return {state,startedAt:startedAt.toISOString(),endsAt:warEnd.toISOString(),members};
 }
 function parseClashTime(value: string) {
   const normalized = value.replace(/(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})(?:\.\d+)?Z/, "$1-$2-$3T$4:$5:$6Z");
@@ -149,7 +190,7 @@ async function loadHistory() {
   for (const event of (eventsResult.data ?? []) as WarEvent[]) eventMap.set(event.id,event);
   return wars.map((war)=>{
     const rows = automation.filter((row)=>row.war_key===war.war_key);
-    const mark = new Date(war.started_at).getTime()+12*3600000;
+    const mark = new Date(war.ended_at).getTime()-12*3600000;
     const snapshotRoster=warSnapshots.filter((row)=>row.source_key.startsWith(`war:${war.war_key}:`));
     const rosterByTag = new Map<string,{player_tag:string;player:string;war_attacks:number|null}>();
     for (const snapshot of snapshotRoster) {
@@ -180,30 +221,44 @@ async function loadHistory() {
           for(const row of own){
             const observedMatch=row.source_key.match(/:attack:(\d+):observed-time$/);
             const event=row.event_id?eventMap.get(Number(row.event_id)):null;
-            if(observedMatch&&event)observedTimes.set(Number(observedMatch[1]),new Date(event.battle_time??event.created_at).getTime());
+            if(observedMatch&&event)observedTimes.set(Number(observedMatch[1]),new Date(event.created_at).getTime());
           }
-          const attackOrders=[...new Set(own.flatMap((row)=>{const match=row.source_key.match(/:attack:(\d+):(stars|observed-time|battle-time)$/);return match?[Number(match[1])]:[];}))].sort((a,b)=>a-b);
+          const attackOrders=[...new Set(own.flatMap((row)=>{const order=extractAttackOrder(row.source_key);return order!==null?[order]:[];}))].sort((a,b)=>a-b);
           const attacks=attackOrders.map((order)=>{
             const starRow=own.find((row)=>row.source_key.endsWith(`:attack:${order}:stars`));
             const timeRow=own.find((row)=>row.source_key.endsWith(`:attack:${order}:battle-time`));
+            const mirrorRow=own.find((row)=>row.source_key.endsWith(`:mirror:${order}`));
+            const offMirrorPenaltyRow=own.find((row)=>row.source_key.endsWith(`:penalty:off-mirror:${order}`));
+            const earlySecondPenaltyRow=own.find((row)=>row.source_key.endsWith(`:penalty:early-second:${order}`));
             const starEvent=starRow?.event_id?eventMap.get(Number(starRow.event_id)):null;
             const timeEvent=timeRow?.event_id?eventMap.get(Number(timeRow.event_id)):null;
+            const mirrorEvent=mirrorRow?.event_id?eventMap.get(Number(mirrorRow.event_id)):null;
+            const offMirrorPenaltyEvent=offMirrorPenaltyRow?.event_id?eventMap.get(Number(offMirrorPenaltyRow.event_id)):null;
+            const earlySecondPenaltyEvent=earlySecondPenaltyRow?.event_id?eventMap.get(Number(earlySecondPenaltyRow.event_id)):null;
             const battleTime=starEvent?.battle_time??timeEvent?.battle_time??null;
-            const observedAt=earliestObservedTime(observedTimes.get(order),starEvent?new Date(starEvent.created_at).getTime():undefined,timeEvent?new Date(timeEvent.created_at).getTime():undefined);
+            const observedAt=earliestObservedTime(
+              observedTimes.get(order),
+              starEvent?new Date(starEvent.created_at).getTime():undefined,
+              timeEvent?new Date(timeEvent.created_at).getTime():undefined,
+              mirrorEvent?new Date(mirrorEvent.created_at).getTime():undefined,
+              offMirrorPenaltyEvent?new Date(offMirrorPenaltyEvent.created_at).getTime():undefined,
+              earlySecondPenaltyEvent?new Date(earlySecondPenaltyEvent.created_at).getTime():undefined,
+            );
             return {order,time:battleTime?new Date(battleTime).getTime():null,observedAt};
           });
           const expectedAttacks=Number(snapshot.war_attacks??attacks.length);
+          const hasStatSnapshot=snapshot.war_attacks!==null;
           const timelineComplete=attacks.length===expectedAttacks;
           const first=timelineComplete?attacks[0]:undefined, second=timelineComplete?attacks[1]:undefined;
           const isActivePenalty=(row:AutomationRow)=>{const event=row.event_id?eventMap.get(Number(row.event_id)):null;return !event?.activity?.startsWith("Penalidade removida:");};
-          const noAttacks=own.some((row)=>row.source_key.endsWith(":penalty:no-attacks")&&isActivePenalty(row));
-          const oneAttack=own.some((row)=>row.source_key.endsWith(":penalty:one-attack")&&isActivePenalty(row));
+          const noAttacks=own.some((row)=>row.source_key.endsWith(":penalty:no-attacks")&&isActivePenalty(row))||(hasStatSnapshot&&expectedAttacks===0);
+          const oneAttack=own.some((row)=>row.source_key.endsWith(":penalty:one-attack")&&isActivePenalty(row))||(hasStatSnapshot&&expectedAttacks===1);
           const earlySecond=own.some((row)=>row.source_key.includes(":penalty:early-second:")&&isActivePenalty(row));
           const offMirrorOrders=own.flatMap((row)=>{const match=row.source_key.match(/:penalty:off-mirror:(\d+)$/);return match&&isActivePenalty(row)?[Number(match[1])]:[];});
           return [{tag,name:snapshot.player,attacks:expectedAttacks,warPreference:preferences.get(`${war.war_key}|${tag}`)??null,
             firstWithin12h:noAttacks?false:first?resolveFirstWithin12h(first.time,first.observedAt,mark):null,
             secondAfter12h:noAttacks||oneAttack||earlySecond?false:second?resolveSecondAfter12h(second.time,second.observedAt,mark):null,
-            firstMirror:first?(offMirrorOrders.includes(first.order)?false:own.some((row)=>row.source_key.endsWith(`:mirror:${first.order}`))?true:null):null}];
+            firstMirror:first?(first.time!==null&&first.time>=mark?true:offMirrorOrders.includes(first.order)?false:own.some((row)=>row.source_key.endsWith(`:mirror:${first.order}`))?true:null):null}];
         })
     const participantCount=roster.length;
     const passed=roster.filter((player)=>player.firstWithin12h===true&&player.secondAfter12h===true&&player.firstMirror===true).length;
@@ -219,15 +274,15 @@ export default async function WarDiscipline() {
   const currentMembers = current?.members ?? [];
   const currentCount = currentMembers.length;
   const currentStart = current?.startedAt;
-  const currentMark = currentStart ? new Date(currentStart).getTime()+12*3600000 : null;
+  const currentMark = current?.endsAt ? new Date(current.endsAt).getTime()-12*3600000 : null;
   const currentPlayers = currentMembers.map((member)=>{
     const attacks=[...member.attacks].sort((a,b)=>a.order-b.order);
     const timelineComplete=attacks.length===member.syncedAttackCount;
     const first=timelineComplete?attacks[0]:undefined, second=timelineComplete?attacks[1]:undefined;
-    const firstMirror=first?(member.offMirrorOrders.includes(first.order)?false:member.mirrorOrders.includes(first.order)?true:null):null;
+    const firstMirror=first?(first.battleTime!==null&&currentMark!==null&&first.battleTime>=currentMark?true:member.offMirrorOrders.includes(first.order)?false:member.mirrorOrders.includes(first.order)?true:null):null;
     return {tag:member.tag,name:member.name,attacks:member.syncedAttackCount,warPreference:member.warPreference,
-      firstWithin12h:currentMark===null?null:first?resolveFirstWithin12h(first.battleTime,first.observedAt,currentMark):null,
-      secondAfter12h:currentMark===null?null:second?(member.earlySecondOrders.includes(second.order)?false:resolveSecondAfter12h(second.battleTime,second.observedAt,currentMark)):null,
+      firstWithin12h:currentMark===null?null:current?.state==="warEnded"&&member.hasStatSnapshot&&member.syncedAttackCount===0?false:first?resolveFirstWithin12h(first.battleTime,first.observedAt,currentMark):null,
+      secondAfter12h:currentMark===null?null:current?.state==="warEnded"&&member.hasStatSnapshot&&member.syncedAttackCount<2?false:second?(member.earlySecondOrders.includes(second.order)?false:resolveSecondAfter12h(second.battleTime,second.observedAt,currentMark)):null,
       firstMirror};
   }).sort((a,b)=>a.name.localeCompare(b.name,"pt-BR"));
   const auditedCurrent=currentPlayers.filter((p)=>p.firstWithin12h!==null&&p.secondAfter12h!==null&&p.firstMirror!==null).length;

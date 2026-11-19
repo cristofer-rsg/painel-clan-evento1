@@ -241,7 +241,6 @@ def build_war_events(war, players_by_tag):
                     player_tag,
                     f"Ataque detectado pela sincronização em {observed_at.astimezone(TZ).strftime('%d/%m/%Y %H:%M:%S')} (Brasília)",
                     0,
-                    observed_at,
                 )
 
             if battle_time is not None:
