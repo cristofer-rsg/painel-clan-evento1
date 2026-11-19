@@ -67,13 +67,13 @@ async function loadHistory() {
   const [playersResult, warsResult, snapshotsResult] = await Promise.all([
     db.from("players").select("name,player_tag").order("name", { ascending: true }),
     db.from("clan_war_completions").select("war_key,started_at,ended_at").order("ended_at", { ascending: false }).limit(6),
-    db.from("player_monthly_stat_sources").select("source_key,player_tag,player,war_attacks").like("source_key", "war:%").order("updated_at", { ascending: false }).limit(5000),
+    db.from("player_monthly_stat_sources").select("source_key,player_tag,player,war_attacks,updated_at").like("source_key", "war:%").order("updated_at", { ascending: false }).limit(5000),
   ]);
   if (playersResult.error) throw new Error(playersResult.error.message);
   if (warsResult.error) throw new Error(warsResult.error.message);
   if (snapshotsResult.error) throw new Error(snapshotsResult.error.message);
   const players = (playersResult.data ?? []) as Player[];
-  const warSnapshots = (snapshotsResult.data ?? []) as Array<{source_key:string;player_tag:string|null;player:string|null;war_attacks:number|null}>;
+  const warSnapshots = (snapshotsResult.data ?? []) as Array<{source_key:string;player_tag:string|null;player:string|null;war_attacks:number|null;updated_at:string|null}>;
   let wars = (warsResult.data ?? []) as Completion[];
   if (!wars.length) {
     const latest = new Map<string, string>();
