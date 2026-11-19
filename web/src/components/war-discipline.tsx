@@ -11,6 +11,14 @@ type WarEvent = { id: number; battle_time: string | null; created_at: string; ac
 type WarPreference = "in" | "out" | "unknown" | null;
 type DisciplinePlayer = { tag: string; name: string; attacks: number; warPreference: WarPreference; firstWithin12h: Check; secondAfter12h: Check; firstMirror: Check };
 
+function extractAttackOrder(sourceKey:string):number|null {
+  const match=sourceKey.match(/:attack:(\d+):(?:stars|observed-time|battle-time)$|:mirror:(\d+)$|:penalty:(?:off-mirror|early-second):(\d+)$/);
+  const rawOrder=match?.[1]??match?.[2]??match?.[3];
+  if(!rawOrder)return null;
+  const order=Number(rawOrder);
+  return Number.isInteger(order)&&order>0?order:null;
+}
+
 async function loadCurrentWar() {
   const db = createSupabaseAdmin();
   const snapshotsResult = await db.from("player_monthly_stat_sources")
@@ -78,7 +86,7 @@ async function loadCurrentWar() {
     if(!row.player_tag||!row.player)return[];
     const tag=row.player_tag.trim().toUpperCase();
     const own=automation.filter((entry)=>entry.player_tag.trim().toUpperCase()===tag);
-    const attackOrders=[...new Set(own.flatMap((entry)=>{const m=entry.source_key.match(/:attack:(\d+):(stars|observed-time|battle-time)$/);return m?[Number(m[1])]:[];}))].sort((a,b)=>a-b);
+    const attackOrders=[...new Set(own.flatMap((entry)=>{const order=extractAttackOrder(entry.source_key);return order!==null?[order]:[];}))].sort((a,b)=>a-b);
     const attacks=attackOrders.map((order)=>{
       const starEntry=own.find((entry)=>entry.source_key.endsWith(`:attack:${order}:stars`));
       const timeEntry=own.find((entry)=>entry.source_key.endsWith(`:attack:${order}:battle-time`));
@@ -205,7 +213,7 @@ async function loadHistory() {
             const event=row.event_id?eventMap.get(Number(row.event_id)):null;
             if(observedMatch&&event)observedTimes.set(Number(observedMatch[1]),new Date(event.created_at).getTime());
           }
-          const attackOrders=[...new Set(own.flatMap((row)=>{const match=row.source_key.match(/:attack:(\d+):(stars|observed-time|battle-time)$/);return match?[Number(match[1])]:[];}))].sort((a,b)=>a-b);
+          const attackOrders=[...new Set(own.flatMap((row)=>{const order=extractAttackOrder(row.source_key);return order!==null?[order]:[];}))].sort((a,b)=>a-b);
           const attacks=attackOrders.map((order)=>{
             const starRow=own.find((row)=>row.source_key.endsWith(`:attack:${order}:stars`));
             const timeRow=own.find((row)=>row.source_key.endsWith(`:attack:${order}:battle-time`));
