@@ -244,7 +244,7 @@ export default async function WarDiscipline() {
         const resultLabel=isPerfect?"Perfeito":hasFailure?"Ruim":"Em análise";
         return <article className="wd-player-card" key={player.tag}>
           <strong className="wd-player-name">{player.name}</strong>
-          <span className={`wd-shield ${resultClass}`} aria-label={resultLabel}>
+          <span className={`wd-shield ${player.attacks > 0 ? "is-green" : "is-red"}`} aria-label={player.attacks > 0 ? `Escudo verde: participou da guerra, ${player.attacks} ataque(s) registrado(s)` : "Escudo vermelho: não participou da guerra; nenhum ataque registrado"} title={player.attacks > 0 ? `Participou da guerra: ${player.attacks} ataque(s) registrado(s)` : "Não participou da guerra: nenhum ataque registrado"}>
             <svg viewBox="0 0 24 28" aria-hidden="true"><path d="M12 1.5 21 5v7.2c0 6.2-3.8 11.2-9 14.3-5.2-3.1-9-8.1-9-14.3V5l9-3.5Z" /></svg>
           </span>
           <span className={`wd-result-seal ${resultClass}`}>{resultLabel}</span>
@@ -256,7 +256,7 @@ export default async function WarDiscipline() {
       {!wars.length?<p className="wd-message">Ainda não há guerras concluídas para auditar.</p>:wars.map((war,index)=><details className="wd-war" key={war.war_key} open={index===0}><summary><span><strong>{index===0?"Última guerra concluída":`Guerra anterior ${index}`}</strong><small>{formatDate(war.started_at)} · {war.participants} participantes</small></span><b>{war.passed}/{war.participants}</b></summary><div className="wd-history-list">{war.roster.map((player)=>{const hasFailure=player.firstWithin12h===false||player.secondAfter12h===false||player.firstMirror===false;
         const isPerfect=player.firstWithin12h===true&&player.secondAfter12h===true&&player.firstMirror===true;
         const resultClass=isPerfect?"is-pass":hasFailure?"is-fail":"is-unknown";
-        const resultLabel=isPerfect?"Perfeito":hasFailure?"Ruim":"Em análise";return <article className="wd-history-player" key={player.tag}><strong className="wd-player-name">{player.name}</strong><span className={`wd-shield ${resultClass}`} aria-label={resultLabel}><svg viewBox="0 0 24 28" aria-hidden="true"><path d="M12 1.5 21 5v7.2c0 6.2-3.8 11.2-9 14.3-5.2-3.1-9-8.1-9-14.3V5l9-3.5Z" /></svg></span><span className={`wd-result-seal ${resultClass}`}>{resultLabel}</span></article>;})}</div></details>)}
+        const resultLabel=isPerfect?"Perfeito":hasFailure?"Ruim":"Em análise";return <article className="wd-history-player" key={player.tag}><strong className="wd-player-name">{player.name}</strong><span className={`wd-shield ${player.attacks > 0 ? "is-green" : "is-red"}`} aria-label={player.attacks > 0 ? `Escudo verde: participou da guerra, ${player.attacks} ataque(s) registrado(s)` : "Escudo vermelho: não participou da guerra; nenhum ataque registrado"} title={player.attacks > 0 ? `Participou da guerra: ${player.attacks} ataque(s) registrado(s)` : "Não participou da guerra: nenhum ataque registrado"}><svg viewBox="0 0 24 28" aria-hidden="true"><path d="M12 1.5 21 5v7.2c0 6.2-3.8 11.2-9 14.3-5.2-3.1-9-8.1-9-14.3V5l9-3.5Z" /></svg></span><span className={`wd-result-seal ${resultClass}`}>{resultLabel}</span></article>;})}</div></details>)}
     </section>
     <p className="wd-note">A auditoria é informativa e não altera pontos, penalidades ou classificação.</p>
   </section>;
