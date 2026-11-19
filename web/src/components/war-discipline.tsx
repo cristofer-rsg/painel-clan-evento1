@@ -19,7 +19,7 @@ async function loadCurrentWar() {
   if (snapshotsResult.error) throw new Error("Não foi possível carregar a sincronização da guerra.");
   const snapshots=(snapshotsResult.data??[]) as Array<{source_key:string;player_tag:string|null;player:string|null;war_attacks:number|null;updated_at:string|null}>;
   const latestWar=snapshots.find((row)=>/^war:.+:#([A-Z0-9]+)$/.test(row.source_key));
-  if(!latestWar)return {state:"notInWar",startedAt:null,members:[] as Array<{tag:string;name:string;mapPosition:number;attacks:Array<{order:number;battleTime:number|null;observedAt:number|null;defenderTag:string|null;defenderPosition:number|null}>;mirrorOrders:number[];offMirrorOrders:number[];syncedAttackCount:number}>};
+  if(!latestWar)return {state:"notInWar",startedAt:null,members:[] as Array<{tag:string;name:string;mapPosition:number;attacks:Array<{order:number;battleTime:number|null;observedAt:number|null;defenderTag:string|null;defenderPosition:number|null}>;mirrorOrders:number[];offMirrorOrders:number[];earlySecondOrders:number[];syncedAttackCount:number}>};
   const match=latestWar.source_key.match(/^war:(.+):#[A-Z0-9]+$/);
   const warKey=match?.[1]??"";
   const warRows=snapshots.filter((row)=>row.source_key.startsWith(`war:${warKey}:`));
@@ -34,9 +34,11 @@ async function loadCurrentWar() {
   if(eventsResult.error)throw new Error("Não foi possível carregar os horários dos ataques.");
   const eventTimes=new Map<number,number>();
   const attackEventTimes=new Map<number,number>();
-  for(const event of (eventsResult.data??[]) as Array<{id:number;battle_time:string|null;created_at:string}>){
+  const eventActivities=new Map<number,string|null>();
+  for(const event of (eventsResult.data??[]) as Array<{id:number;battle_time:string|null;created_at:string;activity:string|null}>){
     if(event.battle_time)eventTimes.set(event.id,new Date(event.battle_time).getTime());
     attackEventTimes.set(event.id,new Date(event.created_at).getTime());
+    eventActivities.set(event.id,event.activity);
   }
   const observedTimes=new Map<number,number>();
   for(const entry of automation){
@@ -54,11 +56,13 @@ async function loadCurrentWar() {
     const attacks=attackOrders.map((order)=>{
       const starEntry=own.find((entry)=>entry.source_key.endsWith(`:attack:${order}:stars`));
       const timeEntry=own.find((entry)=>entry.source_key.endsWith(`:attack:${order}:battle-time`));
-      return {order,battleTime:(starEntry?.event_id?eventTimes.get(Number(starEntry.event_id)):undefined)??(timeEntry?.event_id?eventTimes.get(Number(timeEntry.event_id)):undefined)??null,observedAt:observedTimes.get(order)??(starEntry?.event_id?attackEventTimes.get(Number(starEntry.event_id)):undefined)??(timeEntry?.event_id?attackEventTimes.get(Number(timeEntry.event_id)):undefined)??null,defenderTag:null,defenderPosition:null};
+      return {order,battleTime:(starEntry?.event_id?eventTimes.get(Number(starEntry.event_id)):undefined)??(timeEntry?.event_id?eventTimes.get(Number(timeEntry.event_id)):undefined)??null,observedAt:earliestObservedTime(observedTimes.get(order),starEntry?.event_id?attackEventTimes.get(Number(starEntry.event_id)):undefined,timeEntry?.event_id?attackEventTimes.get(Number(timeEntry.event_id)):undefined),defenderTag:null,defenderPosition:null};
     });
+    const isActivePenalty=(entry:{event_id:string|null})=>{const activity=entry.event_id?eventActivities.get(Number(entry.event_id)):null;return !activity?.startsWith("Penalidade removida:");};
     return [{tag,name:row.player,mapPosition:0,attacks,
       mirrorOrders:own.flatMap((entry)=>{const m=entry.source_key.match(/:mirror:(\d+)$/);return m?[Number(m[1])]:[];}),
-      offMirrorOrders:own.flatMap((entry)=>{const m=entry.source_key.match(/:penalty:off-mirror:(\d+)$/);return m?[Number(m[1])]:[];}),
+      offMirrorOrders:own.flatMap((entry)=>{const m=entry.source_key.match(/:penalty:off-mirror:(\d+)$/);return m&&isActivePenalty(entry)?[Number(m[1])]:[];}),
+      earlySecondOrders:own.flatMap((entry)=>{const m=entry.source_key.match(/:penalty:early-second:(\d+)$/);return m&&isActivePenalty(entry)?[Number(m[1])]:[];}),
       syncedAttackCount:Number(row.war_attacks??attacks.length)}];
   });
   return {state:Date.now()-startedAt.getTime()>36*60*60*1000?"warEnded":"inWar",startedAt:startedAt.toISOString(),members};
@@ -68,24 +72,19 @@ function parseClashTime(value: string) {
   const date = new Date(normalized);
   return Number.isFinite(date.getTime()) ? date : null;
 }
-const OBSERVATION_TOLERANCE_MS=5*60*1000;
+function earliestObservedTime(...values: Array<number | null | undefined>): number | null {
+  const valid=values.filter((value):value is number=>value!==null&&value!==undefined&&Number.isFinite(value));
+  return valid.length?Math.min(...valid):null;
+}
 function resolveFirstWithin12h(actual:number|null,observed:number|null,mark:number,noAttacks=false):Check {
   if(noAttacks)return false;
   if(actual!==null)return actual<=mark;
-  if(observed!==null){
-    if(observed<=mark)return true;
-    if(observed>mark+OBSERVATION_TOLERANCE_MS)return false;
-  }
-  return null;
+  return observed!==null&&observed<=mark?true:null;
 }
 function resolveSecondAfter12h(actual:number|null,observed:number|null,mark:number,missedSecond=false,noAttacks=false):Check {
   if(noAttacks||missedSecond)return false;
   if(actual!==null)return actual>=mark;
-  if(observed!==null){
-    if(observed<mark)return false;
-    if(observed>=mark+OBSERVATION_TOLERANCE_MS)return true;
-  }
-  return null;
+  return observed!==null&&observed<mark?false:null;
 }
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeZone: "America/Sao_Paulo" }).format(new Date(value));
@@ -117,7 +116,7 @@ async function loadHistory() {
     }
   }
   const inferredWars = [...latestSnapshots.entries()].flatMap(([war_key, snapshotAt]) => {
-    const match = war_key.match(/:(\\d{8}T\\d{6}(?:\\.\\d+)?Z)$/);
+    const match = war_key.match(/:(\d{8}T\d{6}(?:\\.\d+)?Z)$/);
     if (!match) return [];
     const startedAt = parseClashTime(match[1]);
     if (!startedAt) return [];
@@ -153,34 +152,32 @@ async function loadHistory() {
           const own=rows.filter((row)=>row.player_tag.trim().toUpperCase()===tag);
           const observedTimes=new Map<number,number>();
           for(const row of own){
-            const observedMatch=row.source_key.match(/:attack:(\\d+):observed-time$/);
+            const observedMatch=row.source_key.match(/:attack:(\d+):observed-time$/);
             const event=row.event_id?eventMap.get(Number(row.event_id)):null;
             if(observedMatch&&event)observedTimes.set(Number(observedMatch[1]),new Date(event.battle_time??event.created_at).getTime());
           }
-          const attackOrders=[...new Set(own.flatMap((row)=>{const match=row.source_key.match(/:attack:(\\d+):(stars|observed-time|battle-time)$/);return match?[Number(match[1])]:[];}))].sort((a,b)=>a-b);
+          const attackOrders=[...new Set(own.flatMap((row)=>{const match=row.source_key.match(/:attack:(\d+):(stars|observed-time|battle-time)$/);return match?[Number(match[1])]:[];}))].sort((a,b)=>a-b);
           const attacks=attackOrders.map((order)=>{
             const starRow=own.find((row)=>row.source_key.endsWith(`:attack:${order}:stars`));
             const timeRow=own.find((row)=>row.source_key.endsWith(`:attack:${order}:battle-time`));
             const starEvent=starRow?.event_id?eventMap.get(Number(starRow.event_id)):null;
             const timeEvent=timeRow?.event_id?eventMap.get(Number(timeRow.event_id)):null;
             const battleTime=starEvent?.battle_time??timeEvent?.battle_time??null;
-            const observedAt=observedTimes.get(order)??(starEvent?new Date(starEvent.created_at).getTime():undefined)??(timeEvent?new Date(timeEvent.created_at).getTime():undefined)??null;
+            const observedAt=earliestObservedTime(observedTimes.get(order),starEvent?new Date(starEvent.created_at).getTime():undefined,timeEvent?new Date(timeEvent.created_at).getTime():undefined);
             return {order,time:battleTime?new Date(battleTime).getTime():null,observedAt};
           });
           const expectedAttacks=Number(snapshot.war_attacks??attacks.length);
-          const observationTimes=attacks.filter((attack)=>attack.time===null).map((attack)=>attack.observedAt).filter((value):value is number=>value!==null);
-          const sameObservationTime=observationTimes.length>1&&observationTimes.every((value)=>value===observationTimes[0]);
-          const timelineComplete=attacks.length===expectedAttacks&&!sameObservationTime;
+          const timelineComplete=attacks.length===expectedAttacks;
           const first=timelineComplete?attacks[0]:undefined, second=timelineComplete?attacks[1]:undefined;
           const isActivePenalty=(row:AutomationRow)=>{const event=row.event_id?eventMap.get(Number(row.event_id)):null;return !event?.activity?.startsWith("Penalidade removida:");};
           const noAttacks=own.some((row)=>row.source_key.endsWith(":penalty:no-attacks")&&isActivePenalty(row));
           const oneAttack=own.some((row)=>row.source_key.endsWith(":penalty:one-attack")&&isActivePenalty(row));
           const earlySecond=own.some((row)=>row.source_key.includes(":penalty:early-second:")&&isActivePenalty(row));
-          const offMirror=own.some((row)=>row.source_key.includes(":penalty:off-mirror:")&&isActivePenalty(row));
+          const offMirrorOrders=own.flatMap((row)=>{const match=row.source_key.match(/:penalty:off-mirror:(\d+)$/);return match&&isActivePenalty(row)?[Number(match[1])]:[];});
           return [{tag,name:snapshot.player,attacks:expectedAttacks,
             firstWithin12h:noAttacks?false:first?resolveFirstWithin12h(first.time,first.observedAt,mark):null,
             secondAfter12h:noAttacks||oneAttack||earlySecond?false:second?resolveSecondAfter12h(second.time,second.observedAt,mark):null,
-            firstMirror:offMirror?false:first?own.some((row)=>row.source_key.endsWith(`:mirror:${first.order}`))?true:null:null}];
+            firstMirror:first?(offMirrorOrders.includes(first.order)?false:own.some((row)=>row.source_key.endsWith(`:mirror:${first.order}`))?true:null):null}];
         })
       : players.flatMap((player)=>{
           const tag=(player.player_tag??"").trim().toUpperCase();
@@ -200,7 +197,7 @@ async function loadHistory() {
             const starEvent=starRow?.event_id?eventMap.get(Number(starRow.event_id)):null;
             const timeEvent=timeRow?.event_id?eventMap.get(Number(timeRow.event_id)):null;
             const battleTime=starEvent?.battle_time??timeEvent?.battle_time??null;
-            return {order,time:battleTime?new Date(battleTime).getTime():null,observedAt:observedTimes.get(order)??null};
+            return {order,time:battleTime?new Date(battleTime).getTime():null,observedAt:earliestObservedTime(observedTimes.get(order),starEvent?new Date(starEvent.created_at).getTime():undefined,timeEvent?new Date(timeEvent.created_at).getTime():undefined)};
           });
           const first=attacks[0], second=attacks[1];
           return [{tag,name:player.name,attacks:attacks.length,
@@ -225,15 +222,12 @@ export default async function WarDiscipline() {
   const currentMark = currentStart ? new Date(currentStart).getTime()+12*3600000 : null;
   const currentPlayers = currentMembers.map((member)=>{
     const attacks=[...member.attacks].sort((a,b)=>a.order-b.order);
-    const sameObservationTime=attacks.length>1&&attacks.every((attack)=>attack.battleTime===null&&attack.observedAt!==null&&attack.observedAt===attacks[0].observedAt);
-    const timelineComplete=attacks.length===member.syncedAttackCount&&!sameObservationTime;
+    const timelineComplete=attacks.length===member.syncedAttackCount;
     const first=timelineComplete?attacks[0]:undefined, second=timelineComplete?attacks[1]:undefined;
-    const firstMirror=member.offMirrorOrders.length>0?false:first
-      ? member.mirrorOrders.includes(first.order) ? true : null
-      : null;
+    const firstMirror=first?(member.offMirrorOrders.includes(first.order)?false:member.mirrorOrders.includes(first.order)?true:null):null;
     return {tag:member.tag,name:member.name,attacks:member.syncedAttackCount,
       firstWithin12h:currentMark===null?null:first?resolveFirstWithin12h(first.battleTime,first.observedAt,currentMark):null,
-      secondAfter12h:currentMark===null?null:second?resolveSecondAfter12h(second.battleTime,second.observedAt,currentMark):null,
+      secondAfter12h:currentMark===null?null:second?(member.earlySecondOrders.includes(second.order)?false:resolveSecondAfter12h(second.battleTime,second.observedAt,currentMark)):null,
       firstMirror};
   }).sort((a,b)=>a.name.localeCompare(b.name,"pt-BR"));
   const auditedCurrent=currentPlayers.filter((p)=>p.firstWithin12h!==null&&p.secondAfter12h!==null&&p.firstMirror!==null).length;
