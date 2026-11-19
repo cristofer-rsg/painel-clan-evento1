@@ -136,8 +136,11 @@ export default async function WarDiscipline() {
   const currentPlayers = currentMembers.map((member)=>{
     const attacks=[...member.attacks].sort((a,b)=>a.order-b.order);
     const first=attacks[0], second=attacks[1];
-    const firstMirror=first ? ("defenderPosition" in first && typeof first.defenderPosition === "number" ? first.defenderPosition===member.mapPosition : null) : null;
-    return {tag:member.tag,name:member.name,attacks:attacks.length,
+    const firstMirror=first
+      ? member.mirrorOrders.includes(first.order) ? true
+        : member.offMirrorOrders.includes(first.order) ? false : null
+      : null;
+    return {tag:member.tag,name:member.name,attacks:member.syncedAttackCount,
       firstWithin12h:first?.battleTime==null||currentMark===null?null:first.battleTime<=currentMark,
       secondAfter12h:second?.battleTime==null||currentMark===null?null:second.battleTime>=currentMark,
       firstMirror};
