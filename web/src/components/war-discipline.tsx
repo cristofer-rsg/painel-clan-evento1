@@ -90,7 +90,17 @@ async function loadCurrentWar() {
     const attacks=attackOrders.map((order)=>{
       const starEntry=own.find((entry)=>entry.source_key.endsWith(`:attack:${order}:stars`));
       const timeEntry=own.find((entry)=>entry.source_key.endsWith(`:attack:${order}:battle-time`));
-      return {order,battleTime:(starEntry?.event_id?eventTimes.get(Number(starEntry.event_id)):undefined)??(timeEntry?.event_id?eventTimes.get(Number(timeEntry.event_id)):undefined)??null,observedAt:earliestObservedTime(observedTimes.get(order),starEntry?.event_id?attackEventTimes.get(Number(starEntry.event_id)):undefined,timeEntry?.event_id?attackEventTimes.get(Number(timeEntry.event_id)):undefined),defenderTag:null,defenderPosition:null};
+      const mirrorEntry=own.find((entry)=>entry.source_key.endsWith(`:mirror:${order}`));
+      const offMirrorPenaltyEntry=own.find((entry)=>entry.source_key.endsWith(`:penalty:off-mirror:${order}`));
+      const earlySecondPenaltyEntry=own.find((entry)=>entry.source_key.endsWith(`:penalty:early-second:${order}`));
+      return {order,battleTime:(starEntry?.event_id?eventTimes.get(Number(starEntry.event_id)):undefined)??(timeEntry?.event_id?eventTimes.get(Number(timeEntry.event_id)):undefined)??null,observedAt:earliestObservedTime(
+        observedTimes.get(order),
+        starEntry?.event_id?attackEventTimes.get(Number(starEntry.event_id)):undefined,
+        timeEntry?.event_id?attackEventTimes.get(Number(timeEntry.event_id)):undefined,
+        mirrorEntry?.event_id?attackEventTimes.get(Number(mirrorEntry.event_id)):undefined,
+        offMirrorPenaltyEntry?.event_id?attackEventTimes.get(Number(offMirrorPenaltyEntry.event_id)):undefined,
+        earlySecondPenaltyEntry?.event_id?attackEventTimes.get(Number(earlySecondPenaltyEntry.event_id)):undefined,
+      ),defenderTag:null,defenderPosition:null};
     });
     const isActivePenalty=(entry:{event_id:string|null})=>{const activity=entry.event_id?eventActivities.get(Number(entry.event_id)):null;return !activity?.startsWith("Penalidade removida:");};
     return [{tag,name:row.player,mapPosition:0,attacks,warPreference:preferences.get(tag)??null,
@@ -217,10 +227,23 @@ async function loadHistory() {
           const attacks=attackOrders.map((order)=>{
             const starRow=own.find((row)=>row.source_key.endsWith(`:attack:${order}:stars`));
             const timeRow=own.find((row)=>row.source_key.endsWith(`:attack:${order}:battle-time`));
+            const mirrorRow=own.find((row)=>row.source_key.endsWith(`:mirror:${order}`));
+            const offMirrorPenaltyRow=own.find((row)=>row.source_key.endsWith(`:penalty:off-mirror:${order}`));
+            const earlySecondPenaltyRow=own.find((row)=>row.source_key.endsWith(`:penalty:early-second:${order}`));
             const starEvent=starRow?.event_id?eventMap.get(Number(starRow.event_id)):null;
             const timeEvent=timeRow?.event_id?eventMap.get(Number(timeRow.event_id)):null;
+            const mirrorEvent=mirrorRow?.event_id?eventMap.get(Number(mirrorRow.event_id)):null;
+            const offMirrorPenaltyEvent=offMirrorPenaltyRow?.event_id?eventMap.get(Number(offMirrorPenaltyRow.event_id)):null;
+            const earlySecondPenaltyEvent=earlySecondPenaltyRow?.event_id?eventMap.get(Number(earlySecondPenaltyRow.event_id)):null;
             const battleTime=starEvent?.battle_time??timeEvent?.battle_time??null;
-            const observedAt=earliestObservedTime(observedTimes.get(order),starEvent?new Date(starEvent.created_at).getTime():undefined,timeEvent?new Date(timeEvent.created_at).getTime():undefined);
+            const observedAt=earliestObservedTime(
+              observedTimes.get(order),
+              starEvent?new Date(starEvent.created_at).getTime():undefined,
+              timeEvent?new Date(timeEvent.created_at).getTime():undefined,
+              mirrorEvent?new Date(mirrorEvent.created_at).getTime():undefined,
+              offMirrorPenaltyEvent?new Date(offMirrorPenaltyEvent.created_at).getTime():undefined,
+              earlySecondPenaltyEvent?new Date(earlySecondPenaltyEvent.created_at).getTime():undefined,
+            );
             return {order,time:battleTime?new Date(battleTime).getTime():null,observedAt};
           });
           const expectedAttacks=Number(snapshot.war_attacks??attacks.length);
