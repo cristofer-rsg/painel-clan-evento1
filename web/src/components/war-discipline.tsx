@@ -75,7 +75,7 @@ async function loadCurrentWar() {
       earlySecondOrders:own.flatMap((entry)=>{const m=entry.source_key.match(/:penalty:early-second:(\d+)$/);return m&&isActivePenalty(entry)?[Number(m[1])]:[];}),
       syncedAttackCount:Number(row.war_attacks??attacks.length)}];
   });
-  return {state,startedAt:startedAt.toISOString(),members};
+  return {state,startedAt:startedAt.toISOString(),endsAt:warEnd.toISOString(),members};
 }
 function parseClashTime(value: string) {
   const normalized = value.replace(/(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})(?:\.\d+)?Z/, "$1-$2-$3T$4:$5:$6Z");
@@ -156,7 +156,7 @@ async function loadHistory() {
   for (const event of (eventsResult.data ?? []) as WarEvent[]) eventMap.set(event.id,event);
   return wars.map((war)=>{
     const rows = automation.filter((row)=>row.war_key===war.war_key);
-    const mark = new Date(war.started_at).getTime()+12*3600000;
+    const mark = new Date(war.ended_at).getTime()-12*3600000;
     const snapshotRoster=warSnapshots.filter((row)=>row.source_key.startsWith(`war:${war.war_key}:`));
     const rosterByTag = new Map<string,{player_tag:string;player:string;war_attacks:number|null}>();
     for (const snapshot of snapshotRoster) {
@@ -226,7 +226,7 @@ export default async function WarDiscipline() {
   const currentMembers = current?.members ?? [];
   const currentCount = currentMembers.length;
   const currentStart = current?.startedAt;
-  const currentMark = currentStart ? new Date(currentStart).getTime()+12*3600000 : null;
+  const currentMark = current?.endsAt ? new Date(current.endsAt).getTime()-12*3600000 : null;
   const currentPlayers = currentMembers.map((member)=>{
     const attacks=[...member.attacks].sort((a,b)=>a.order-b.order);
     const timelineComplete=attacks.length===member.syncedAttackCount;
