@@ -136,9 +136,9 @@ async function loadHistory() {
             secondAfter12h:second?.time==null?null:second.time>=mark,
             firstMirror:first?own.some((row)=>row.source_key.endsWith(`:mirror:${first.order}`)):null}];
         });
-    const participants=roster.length;
-    const passed=participants.filter((player)=>player.firstWithin12h===true&&player.secondAfter12h===true&&player.firstMirror===true).length;
-    return {...war,roster,participants,passed};
+    const participantCount=roster.length;
+    const passed=roster.filter((player)=>player.firstWithin12h===true&&player.secondAfter12h===true&&player.firstMirror===true).length;
+    return {...war,roster,participants:participantCount,passed};
   });
 }
 export default async function WarDiscipline() {
