@@ -258,7 +258,7 @@ async function loadHistory() {
           return [{tag,name:snapshot.player,attacks:expectedAttacks,warPreference:preferences.get(`${war.war_key}|${tag}`)??null,
             firstWithin12h:noAttacks?false:first?resolveFirstWithin12h(first.time,first.observedAt,mark):null,
             secondAfter12h:noAttacks||oneAttack||earlySecond?false:second?resolveSecondAfter12h(second.time,second.observedAt,mark):null,
-            firstMirror:first?(offMirrorOrders.includes(first.order)?false:own.some((row)=>row.source_key.endsWith(`:mirror:${first.order}`))?true:first.time!==null&&first.time>=mark?true:null):null}];
+            firstMirror:first?(first.time!==null&&first.time>=mark?true:offMirrorOrders.includes(first.order)?false:own.some((row)=>row.source_key.endsWith(`:mirror:${first.order}`))?true:null):null}];
         })
     const participantCount=roster.length;
     const passed=roster.filter((player)=>player.firstWithin12h===true&&player.secondAfter12h===true&&player.firstMirror===true).length;
@@ -279,7 +279,7 @@ export default async function WarDiscipline() {
     const attacks=[...member.attacks].sort((a,b)=>a.order-b.order);
     const timelineComplete=attacks.length===member.syncedAttackCount;
     const first=timelineComplete?attacks[0]:undefined, second=timelineComplete?attacks[1]:undefined;
-    const firstMirror=first?(member.offMirrorOrders.includes(first.order)?false:member.mirrorOrders.includes(first.order)?true:first.battleTime!==null&&currentMark!==null&&first.battleTime>=currentMark?true:null):null;
+    const firstMirror=first?(first.battleTime!==null&&currentMark!==null&&first.battleTime>=currentMark?true:member.offMirrorOrders.includes(first.order)?false:member.mirrorOrders.includes(first.order)?true:null):null;
     return {tag:member.tag,name:member.name,attacks:member.syncedAttackCount,warPreference:member.warPreference,
       firstWithin12h:currentMark===null?null:current?.state==="warEnded"&&member.hasStatSnapshot&&member.syncedAttackCount===0?false:first?resolveFirstWithin12h(first.battleTime,first.observedAt,currentMark):null,
       secondAfter12h:currentMark===null?null:current?.state==="warEnded"&&member.hasStatSnapshot&&member.syncedAttackCount<2?false:second?(member.earlySecondOrders.includes(second.order)?false:resolveSecondAfter12h(second.battleTime,second.observedAt,currentMark)):null,
