@@ -1,7 +1,6 @@
 import { getDashboardData } from "@/lib/ghost-hunt/dashboard";
 import RankingList from "@/components/ranking-list";
 import PublicNavigation from "@/components/public-navigation";
-import { createSupabaseAdmin } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 
@@ -13,31 +12,14 @@ function getPreviousMonthKey(monthKey: string) {
 
 export default async function RankingPage() {
   const data = await getDashboardData();
-  let ranking = data.ranking;
-
-  if (data.connected) {
-    const supabase = createSupabaseAdmin();
-    const { data: previousWinners, error } = await supabase
-      .from("monthly_rankings")
-      .select("player,player_tag")
-      .eq("month_key", getPreviousMonthKey(data.monthKey))
-      .in("position", [1, 2])
-      .is("archived_at", null);
-
-    if (error) throw new Error(`Falha ao consultar os vencedores do mês anterior: ${error.message}`);
-
-    const winnerTags = new Set((previousWinners ?? [])
-      .map((winner) => (winner.player_tag ?? "").trim().toUpperCase())
-      .filter(Boolean));
-    const winnerNames = new Set((previousWinners ?? [])
-      .map((winner) => (winner.player ?? "").trim().toLocaleLowerCase("pt-BR"))
-      .filter(Boolean));
-
-    ranking = ranking
-      .filter((player) => !winnerTags.has(player.tag.trim().toUpperCase())
-        && !winnerNames.has(player.player.trim().toLocaleLowerCase("pt-BR")))
-      .map((player, index) => ({ ...player, position: index + 1 }));
-  }
+  const previousData = await getDashboardData(getPreviousMonthKey(data.monthKey));
+  const previousWinners = previousData.connected ? previousData.ranking.filter((player) => player.position <= 2) : [];
+  const winnerTags = new Set(previousWinners.map((player) => player.tag.trim().toUpperCase()).filter(Boolean));
+  const winnerNames = new Set(previousWinners.map((player) => player.player.trim().toLocaleLowerCase("pt-BR")));
+  const ranking = data.ranking
+    .filter((player) => !winnerTags.has(player.tag.trim().toUpperCase())
+      && !winnerNames.has(player.player.trim().toLocaleLowerCase("pt-BR")))
+    .map((player, index) => ({ ...player, position: index + 1 }));
 
   return <main className="admin-shell">
     <header className="admin-header">
