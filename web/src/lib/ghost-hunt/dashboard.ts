@@ -101,7 +101,7 @@ async function fetchAllEvents(start: string, end: string): Promise<EventRow[]> {
 }
 
 export async function getDashboardData(monthOverride?: string): Promise<DashboardData> {
-  const monthKey = monthOverride && /^\\d{4}-(0[1-9]|1[0-2])$/.test(monthOverride) ? monthOverride : getSaoPauloMonth();
+  const monthKey = monthOverride && /^\d{4}-(0[1-9]|1[0-2])$/.test(monthOverride) ? monthOverride : getSaoPauloMonth();
   const monthLabel = new Intl.DateTimeFormat("pt-BR", {
     month: "long",
     year: "numeric",
