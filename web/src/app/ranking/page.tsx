@@ -13,6 +13,7 @@ function getPreviousMonthKey(monthKey: string) {
 export default async function RankingPage() {
   const data = await getDashboardData();
   const previousData = await getDashboardData(getPreviousMonthKey(data.monthKey));
+  if (data.connected && !previousData.connected) throw new Error(previousData.error ?? "Não foi possível validar os vencedores do mês anterior.");
   const previousWinners = previousData.connected ? previousData.ranking.filter((player) => player.position <= 2) : [];
   const winnerTags = new Set(previousWinners.map((player) => player.tag.trim().toUpperCase()).filter(Boolean));
   const winnerNames = new Set(previousWinners.map((player) => player.player.trim().toLocaleLowerCase("pt-BR")));
