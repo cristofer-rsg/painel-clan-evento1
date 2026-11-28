@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 
 from scripts.war_rules import (
     resolve_war_end,
+    find_matching_warlog_entry,
     resolve_war_state,
     should_penalize_early_second_attack,
     should_penalize_off_mirror,
@@ -50,6 +51,48 @@ class WarPenaltyWindowTests(unittest.TestCase):
         self.assertFalse(should_penalize_early_second_attack(
             2, observed_after_cutoff, war_end
         ))
+
+    def test_warlog_recovers_the_matching_completed_war(self):
+        warlog_items = [
+            {
+                "endTime": "20261127T222441.000Z",
+                "clan": {"tag": "#2GCGP0RQ9"},
+            }
+        ]
+        match = find_matching_warlog_entry(
+            warlog_items,
+            "#2GCGP0RQ9",
+            datetime(2026, 11, 26, 22, 24, 41, tzinfo=timezone.utc),
+        )
+        self.assertIsNotNone(match)
+
+    def test_warlog_does_not_match_another_clan(self):
+        warlog_items = [
+            {
+                "endTime": "20261127T222441.000Z",
+                "clan": {"tag": "#OTHERCLAN"},
+            }
+        ]
+        match = find_matching_warlog_entry(
+            warlog_items,
+            "#2GCGP0RQ9",
+            datetime(2026, 11, 26, 22, 24, 41, tzinfo=timezone.utc),
+        )
+        self.assertIsNone(match)
+
+    def test_warlog_does_not_match_a_different_war_date(self):
+        warlog_items = [
+            {
+                "endTime": "20261128T222441.000Z",
+                "clan": {"tag": "#2GCGP0RQ9"},
+            }
+        ]
+        match = find_matching_warlog_entry(
+            warlog_items,
+            "#2GCGP0RQ9",
+            datetime(2026, 11, 26, 22, 24, 41, tzinfo=timezone.utc),
+        )
+        self.assertIsNone(match)
 
     def test_war_state_uses_the_24_hour_end(self):
         war_end = self.started_at + timedelta(hours=24)

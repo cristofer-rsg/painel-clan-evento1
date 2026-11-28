@@ -14,6 +14,7 @@ from scripts.war_rules import (
     should_penalize_early_second_attack,
     should_penalize_off_mirror,
     resolve_war_end,
+    find_matching_warlog_entry,
 )
 
 CLAN_TAG = "#2GCGP0RQ9"
@@ -117,6 +118,81 @@ def parse_coc_time(value):
     if not value:
         return None
     return datetime.strptime(value[:15], "%Y%m%dT%H%M%S").replace(tzinfo=timezone.utc)
+
+
+def recover_completed_wars_from_warlog(db, token):
+    """Recover completion markers when currentwar no longer exposes the ended war."""
+    source_result = (
+        db.table("player_monthly_stat_sources")
+        .select("source_key")
+        .like("source_key", f"war:{CLAN_TAG}:%")
+        .order("updated_at", desc=True)
+        .limit(500)
+        .execute()
+    )
+    completed_result = (
+        db.table("clan_war_completions")
+        .select("war_key")
+        .execute()
+    )
+    completed_keys = {
+        row.get("war_key")
+        for row in (completed_result.data or [])
+        if row.get("war_key")
+    }
+
+    pending_starts = set()
+    for row in source_result.data or []:
+        source_key = row.get("source_key") or ""
+        if not source_key.startswith(f"war:{CLAN_TAG}:"):
+            continue
+        parts = source_key.split(":")
+        if len(parts) < 4:
+            continue
+        start_time = parts[2]
+        war_key = f"{CLAN_TAG}:{start_time}"
+        if war_key not in completed_keys and parse_coc_time(start_time):
+            pending_starts.add(start_time)
+
+    if not pending_starts:
+        print("Nenhuma guerra pendente de finalização encontrada no banco.")
+        return 0
+
+    try:
+        warlog = api_get(
+            f"/clans/{quote(CLAN_TAG, safe='')}/warlog?limit=50",
+            token,
+        )
+    except Exception as error:
+        print(f"Não foi possível consultar o histórico oficial de guerras: {error}")
+        return 0
+
+    recovered = 0
+    for start_time in sorted(pending_starts):
+        war_started = parse_coc_time(start_time)
+        entry = find_matching_warlog_entry(
+            warlog.get("items") or [],
+            CLAN_TAG,
+            war_started,
+        )
+        if not entry:
+            continue
+
+        ended_at = parse_coc_time(entry.get("endTime"))
+        if ended_at is None:
+            continue
+
+        war_key = f"{CLAN_TAG}:{start_time}"
+        db.table("clan_war_completions").upsert({
+            "war_key": war_key,
+            "started_at": war_started.isoformat(),
+            "ended_at": ended_at.isoformat(),
+        }, on_conflict="war_key").execute()
+        recovered += 1
+        print(f"Conclusão recuperada pelo histórico oficial: {war_key}")
+
+    print(f"Guerras finalizadas recuperadas: {recovered}")
+    return recovered
 
 
 def build_war_events(war, players_by_tag):
@@ -341,12 +417,17 @@ def main():
             "SUPABASE_URL ou SUPABASE_SECRET_KEY inválida."
         )
 
+    db = create_client(supabase_url, supabase_key)
     clan_tag = quote(CLAN_TAG, safe="")
     war = api_get(f"/clans/{clan_tag}/currentwar", token)
 
     if war.get("state") == "notInWar":
-            print("O clã não está em guerra. Nenhum lançamento será feito.")
-            return
+        print(
+            "A API não disponibiliza uma guerra atual. "
+            "Verificando guerras encerradas ainda não registradas..."
+        )
+        recover_completed_wars_from_warlog(db, token)
+        return
 
     start_time = war.get("startTime")
 
@@ -361,8 +442,6 @@ def main():
 
     cutoff = datetime(2026, 11, 6, 13, 50, tzinfo=timezone.utc)
     allow_points = war_started > cutoff
-
-    db = create_client(supabase_url, supabase_key)
 
     roster = (
         db.table("players")

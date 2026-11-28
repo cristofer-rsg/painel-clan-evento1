@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 
 
 def resolve_war_end(war_start, war_end, war_state=None):
@@ -15,6 +15,34 @@ def resolve_war_end(war_start, war_end, war_state=None):
         return war_end
 
     return scheduled_end
+
+
+def find_matching_warlog_entry(warlog_items, clan_tag, war_start, tolerance_minutes=30):
+    """Find a public war-log entry matching a known war start and clan."""
+    if war_start is None:
+        return None
+
+    expected_end = war_start + timedelta(hours=24)
+    normalized_clan_tag = (clan_tag or "").strip().upper()
+
+    for entry in warlog_items or []:
+        clan = entry.get("clan") or {}
+        entry_clan_tag = (clan.get("tag") or "").strip().upper()
+        end_time_value = entry.get("endTime")
+        if entry_clan_tag != normalized_clan_tag or not end_time_value:
+            continue
+
+        try:
+            end_time = datetime.strptime(
+                end_time_value[:15], "%Y%m%dT%H%M%S"
+            ).replace(tzinfo=timezone.utc)
+        except (TypeError, ValueError):
+            continue
+
+        if abs((end_time - expected_end).total_seconds()) <= tolerance_minutes * 60:
+            return entry
+
+    return None
 
 
 def is_before_final_twelve_hours(observed_at, war_end, attack_battle_time=None):
