@@ -421,12 +421,15 @@ def main():
     clan_tag = quote(CLAN_TAG, safe="")
     war = api_get(f"/clans/{clan_tag}/currentwar", token)
 
+    # Recupera guerras encerradas pendentes mesmo quando uma nova guerra
+    # já começou e currentwar retorna preparation ou inWar.
+    recover_completed_wars_from_warlog(db, token)
+
     if war.get("state") == "notInWar":
         print(
             "A API não disponibiliza uma guerra atual. "
-            "Verificando guerras encerradas ainda não registradas..."
+            "Verificação do histórico oficial concluída."
         )
-        recover_completed_wars_from_warlog(db, token)
         return
 
     start_time = war.get("startTime")
