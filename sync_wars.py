@@ -417,14 +417,6 @@ def main():
             "SUPABASE_URL ou SUPABASE_SECRET_KEY inválida."
         )
 
-    supabase_url = os.environ["SUPABASE_URL"].strip().rstrip("/")
-    supabase_key = os.environ["SUPABASE_SECRET_KEY"].strip()
-
-    if not supabase_url.startswith("https://") or not supabase_key:
-        raise RuntimeError(
-            "SUPABASE_URL ou SUPABASE_SECRET_KEY inválida."
-        )
-
     db = create_client(supabase_url, supabase_key)
     clan_tag = quote(CLAN_TAG, safe="")
     war = api_get(f"/clans/{clan_tag}/currentwar", token)
